@@ -2189,9 +2189,9 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
         </div>
         <div class="ex-body">
           <div class="yt-wrap">
-            <div class="yt-ph" onclick="loadYT(this,'${item.ytId}')">
+            <div class="yt-ph" onclick="loadYT(this,'${item.name.replace(/'/g,"\\'")}')">
               <div class="yt-play"></div>
-              <div class="yt-lbl">▶ CLICK TO LOAD DEMONSTRATION VIDEO</div>
+              <div class="yt-lbl">▶ CLICK TO WATCH DEMONSTRATION</div>
             </div>
           </div>
           <div class="ex-desc">${item.desc||item.detail||''}</div>
@@ -2277,8 +2277,24 @@ function toggleEx(bodyEl, itemId) {
   if (bodyEl) bodyEl.classList.toggle('open');
 }
 
-function loadYT(ph, id) {
-  ph.parentElement.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" allow="autoplay;encrypted-media" allowfullscreen></iframe>`;
+function loadYT(ph, exerciseName) {
+  // Opens YouTube search for the exercise — never goes unavailable
+  const query = encodeURIComponent(exerciseName + ' exercise tutorial how to');
+  const searchUrl = `https://www.youtube.com/results?search_query=${query}`;
+
+  // Replace placeholder with a clickable link that opens YouTube search
+  ph.parentElement.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+      height:160px;background:var(--bg3);border:1px solid var(--border);text-align:center;padding:20px;gap:12px;">
+      <div style="font-size:2rem;">▶</div>
+      <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);letter-spacing:.1em;">${exerciseName}</div>
+      <a href="${searchUrl}" target="_blank" rel="noopener"
+        style="font-family:var(--font-mono);font-size:0.65rem;padding:8px 18px;
+        background:var(--accent);color:var(--bg);text-decoration:none;letter-spacing:.1em;display:inline-block;">
+        WATCH ON YOUTUBE ↗
+      </a>
+      <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);">Opens YouTube search — always current results</div>
+    </div>`;
 }
 // ═══════════════════════════════════════════════════════════
 // PHASE CONTENT
