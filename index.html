@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 /* ═══════════════════════════════════════
    THEME VARIABLES
@@ -547,6 +549,10 @@ body.theme-female .header::after{
         <label>PASSWORD</label>
         <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password">
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <input type="checkbox" id="li-remember" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+        <label for="li-remember" style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);cursor:pointer;letter-spacing:0.1em;">REMEMBER ME FOR 30 DAYS</label>
+      </div>
       <button class="btn-full" onclick="doLogin()">ENTER</button>
       <div class="auth-error" id="li-err"></div>
     </div>
@@ -607,6 +613,7 @@ body.theme-female .header::after{
     <button class="nav-btn" onclick="nav('decomp')">DECOMPRESS</button>
     <button class="nav-btn" onclick="nav('log')">LOG DATA</button>
     <button class="nav-btn" id="adminNavBtn" style="display:none;" onclick="nav('admin')">⚙ ADMIN</button>
+    <button class="nav-btn" onclick="nav('syscheck')">SYS CHECK</button>
   </nav>
 
   <div class="container">
@@ -930,15 +937,37 @@ body.theme-female .header::after{
   </div><!-- /container -->
 </div><!-- /appScreen -->
 
+<!-- SYS CHECK SECTION (inside container) -->
+<div class="container" id="syscheckContainer" style="display:none;">
+<div class="section active" id="sec-syscheck">
+  <div class="page-title">SYS<br><span>CHECK</span></div>
+  <div class="page-sub">// LIVE DIAGNOSTIC — FIREBASE CONNECTION · SESSION · DATA STATUS //</div>
+  <button class="btn btn-p mb16" onclick="runSysCheck()" style="margin-bottom:16px;">⟳ REFRESH</button>
+  <div id="syscheckOutput"></div>
+</div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════════
+// FIREBASE INIT
+// ═══════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyBbFkivfcy6McwvmrGkUQt03oe84Wvr5l0",
+  authDomain: "operatorfit-9d323.firebaseapp.com",
+  projectId: "operatorfit-9d323",
+  storageBucket: "operatorfit-9d323.firebasestorage.app",
+  messagingSenderId: "270542613965",
+  appId: "1:270542613965:web:c029ec9760a738124a6884"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ═══════════════════════════════════════════════════════════
 // CRYPTO ENGINE — AES-256-GCM + PBKDF2
 // ═══════════════════════════════════════════════════════════
-
-const ADMIN_USER = 'admin';
 const ITER = 100000;
 
 async function deriveKey(password, salt) {
@@ -949,17 +978,10 @@ async function deriveKey(password, salt) {
     keyMat, { name:'AES-GCM', length:256 }, true, ['encrypt','decrypt']
   );
 }
-
 async function exportKeyRaw(key) {
   const raw = await crypto.subtle.exportKey('raw', key);
   return btoa(String.fromCharCode(...new Uint8Array(raw)));
 }
-
-async function importKeyRaw(b64) {
-  const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-  return crypto.subtle.importKey('raw', raw, { name:'AES-GCM' }, true, ['encrypt','decrypt']);
-}
-
 async function encryptStr(key, plaintext) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const enc = new TextEncoder();
@@ -968,7 +990,6 @@ async function encryptStr(key, plaintext) {
   combined.set(iv, 0); combined.set(new Uint8Array(ct), iv.byteLength);
   return btoa(String.fromCharCode(...combined));
 }
-
 async function decryptStr(key, b64) {
   const combined = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
   const iv = combined.slice(0, 12);
@@ -976,30 +997,85 @@ async function decryptStr(key, b64) {
   const pt = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ct);
   return new TextDecoder().decode(pt);
 }
-
 async function sha256hex(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
 // ═══════════════════════════════════════════════════════════
-// USER STORE — localStorage-based
+// FIREBASE DATA LAYER — replaces localStorage
 // ═══════════════════════════════════════════════════════════
 
-function getUsers() {
-  return JSON.parse(localStorage.getItem('op_users') || '{}');
+// Users collection: /users/{username}
+async function getUsers() {
+  const snap = await db.collection('users').get();
+  const users = {};
+  snap.forEach(doc => { users[doc.id] = doc.data(); });
+  return users;
 }
-function saveUsers(u) {
-  localStorage.setItem('op_users', JSON.stringify(u));
+async function getUser(username) {
+  const doc = await db.collection('users').doc(username).get();
+  return doc.exists ? doc.data() : null;
+}
+async function saveUser(username, data) {
+  await db.collection('users').doc(username).set(data, { merge: true });
 }
 
-// Per-user data key prefix
-function userDataKey(username, type) {
-  return `op_data_${username}_${type}`;
+// User data: /userdata/{username}/{type}/entries (single doc per type)
+async function encryptedSave(type, entries) {
+  const json = JSON.stringify(entries);
+  const enc = await encryptStr(SESSION.dek, json);
+  await db.collection('userdata').doc(SESSION.username)
+    .collection(type).doc('entries').set({ data: enc, updated: new Date().toISOString() });
+}
+async function encryptedLoad(type) {
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection(type).doc('entries').get();
+    if (!doc.exists) return [];
+    const dec = await decryptStr(SESSION.dek, doc.data().data);
+    return JSON.parse(dec);
+  } catch { return []; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// REMEMBER ME — localStorage token only (no sensitive data)
+// ═══════════════════════════════════════════════════════════
+const SESSION_KEY = 'op_session_token';
+const SESSION_DAYS = 30;
+
+async function saveRememberToken(username, passHash) {
+  const token = { username, passHash, expires: Date.now() + SESSION_DAYS * 86400000 };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(token));
+}
+function clearRememberToken() {
+  localStorage.removeItem(SESSION_KEY);
+}
+async function tryAutoLogin() {
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return false;
+  try {
+    const token = JSON.parse(raw);
+    if (Date.now() > token.expires) { clearRememberToken(); return false; }
+    const user = await getUser(token.username);
+    if (!user || user.passHash !== token.passHash) { clearRememberToken(); return false; }
+    // Re-derive DEK — we stored passHash which was sha256(pass+salt+'_verify')
+    // We cannot re-derive DEK without the original password
+    // So auto-login shows the login screen pre-filled instead
+    document.getElementById('li-user').value = token.username;
+    document.getElementById('li-remember').checked = true;
+    showAutoLoginHint(token.username, user.displayName);
+    return false; // Still need password for DEK derivation
+  } catch { clearRememberToken(); return false; }
+}
+function showAutoLoginHint(username, displayName) {
+  const err = document.getElementById('li-err');
+  err.style.color = 'var(--accent2)';
+  err.textContent = `WELCOME BACK ${displayName.toUpperCase()} — ENTER YOUR PASSWORD`;
 }
 
 // Session state
-let SESSION = null; // { username, displayName, gender, dek (CryptoKey), isAdmin }
+let SESSION = null;
 
 // ═══════════════════════════════════════════════════════════
 // AUTH
@@ -1025,11 +1101,8 @@ function previewTheme() {
 }
 
 function applyTheme(gender) {
-  if (gender === 'female') {
-    document.body.classList.add('theme-female');
-  } else {
-    document.body.classList.remove('theme-female');
-  }
+  if (gender === 'female') document.body.classList.add('theme-female');
+  else document.body.classList.remove('theme-female');
 }
 
 function authTab(tab) {
@@ -1050,47 +1123,46 @@ async function doRegister() {
   if (pass.length < 8) return err.textContent = 'PASSWORD MIN 8 CHARACTERS';
   if (pass !== pass2) return err.textContent = 'PASSWORDS DO NOT MATCH';
 
-  const users = getUsers();
-  if (users[username]) return err.textContent = 'USERNAME ALREADY TAKEN';
+  err.textContent = 'CHECKING USERNAME...';
+  const existing = await getUser(username);
+  if (existing) return err.textContent = 'USERNAME ALREADY TAKEN';
 
   err.textContent = 'CREATING ACCOUNT...';
-
-  const salt = username; // deterministic salt per user
+  const salt = username;
   const dek = await deriveKey(pass, salt + '_dek');
   const dekRaw = await exportKeyRaw(dek);
   const passHash = await sha256hex(pass + salt + '_verify');
 
-  // Wrap DEK with admin key placeholder — admin sets their key separately
-  // Store wrapped DEK hint for admin recovery (admin wraps on first export)
-  users[username] = {
-    displayName,
-    gender: regGender,
-    passHash,
-    dekHint: dekRaw, // stored only so admin can wrap it — still needs user pw to derive
-    joinDate: new Date().toISOString(),
-    isAdmin: Object.keys(users).length === 0 // first user is admin
-  };
-  saveUsers(users);
+  // Count existing users to determine if first (admin)
+  const allUsers = await getUsers();
+  const isAdmin = Object.keys(allUsers).length === 0;
+
+  await saveUser(username, {
+    displayName, gender: regGender, passHash,
+    dekHint: dekRaw, joinDate: new Date().toISOString(), isAdmin
+  });
 
   err.style.color = 'var(--success)';
-  err.textContent = 'ACCOUNT CREATED — SIGNING IN...';
+  err.textContent = 'ACCOUNT SAVED TO FIREBASE ✓ — SIGNING IN...';
   setTimeout(() => {
     document.getElementById('li-user').value = username;
     document.getElementById('li-pass').value = pass;
     authTab('login');
     doLogin();
-  }, 800);
+  }, 900);
 }
 
 async function doLogin() {
   const username = document.getElementById('li-user').value.trim().toLowerCase();
   const pass = document.getElementById('li-pass').value;
+  const remember = document.getElementById('li-remember').checked;
   const err = document.getElementById('li-err');
 
   if (!username || !pass) return err.textContent = 'ENTER USERNAME AND PASSWORD';
+  err.style.color = 'var(--danger)';
+  err.textContent = 'CONNECTING TO FIREBASE...';
 
-  const users = getUsers();
-  const user = users[username];
+  const user = await getUser(username);
   if (!user) return err.textContent = 'USER NOT FOUND';
 
   const salt = username;
@@ -1098,9 +1170,11 @@ async function doLogin() {
   if (hash !== user.passHash) return err.textContent = 'INCORRECT PASSWORD';
 
   err.textContent = 'AUTHENTICATING...';
-
   const dek = await deriveKey(pass, salt + '_dek');
   SESSION = { username, displayName: user.displayName, gender: user.gender, dek, isAdmin: user.isAdmin };
+
+  if (remember) await saveRememberToken(username, user.passHash);
+  else clearRememberToken();
 
   err.textContent = '';
   launchApp();
@@ -1108,7 +1182,10 @@ async function doLogin() {
 
 function doLogout() {
   SESSION = null;
+  clearRememberToken();
   document.getElementById('appScreen').classList.remove('visible');
+  document.getElementById('syscheckContainer').style.display = 'none';
+  document.getElementById('appScreen').style.display = '';
   document.getElementById('authScreen').style.display = 'flex';
   document.getElementById('li-user').value = '';
   document.getElementById('li-pass').value = '';
@@ -1123,20 +1200,13 @@ function launchApp() {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('appScreen').classList.add('visible');
   applyTheme(SESSION.gender);
-
-  // Set UI text
   document.getElementById('headerUser').textContent = SESSION.displayName.toUpperCase();
   document.getElementById('appLogo').textContent = SESSION.gender === 'female' ? 'BLOOMFIT' : 'OPERATORFIT';
-  if (SESSION.isAdmin) {
-    document.getElementById('adminNavBtn').style.display = '';
-  }
-
-  // Set gender-specific text
+  if (SESSION.isAdmin) document.getElementById('adminNavBtn').style.display = '';
   const isF = SESSION.gender === 'female';
   document.getElementById('workoutSub').textContent = isF
     ? '// 6-DAY SPLIT · GLUTE & CORE FOCUS · HOME + HOTEL VARIANTS //'
     : '// 6-DAY SPLIT · UPPER/LOWER/CORE · HOME + HOTEL VARIANTS //';
-
   setTodayCard();
   buildWeekGrid();
   buildDayTabs();
@@ -1149,60 +1219,32 @@ function launchApp() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// ENCRYPTED DATA LAYER
-// ═══════════════════════════════════════════════════════════
-async function encryptedSave(type, entries) {
-  const json = JSON.stringify(entries);
-  const enc = await encryptStr(SESSION.dek, json);
-  localStorage.setItem(userDataKey(SESSION.username, type), enc);
-}
-
-async function encryptedLoad(type) {
-  const raw = localStorage.getItem(userDataKey(SESSION.username, type));
-  if (!raw) return [];
-  try {
-    const dec = await decryptStr(SESSION.dek, raw);
-    return JSON.parse(dec);
-  } catch { return []; }
-}
-
-// ═══════════════════════════════════════════════════════════
 // LOG ENTRIES
 // ═══════════════════════════════════════════════════════════
 async function saveEntry(type) {
   const today = new Date().toISOString().split('T')[0];
   let entry = { saved: new Date().toISOString() };
-
   if (type === 'workout') {
-    entry = { ...entry,
-      date: v('l-date') || today, day: v('l-day'), location: v('l-loc'),
+    entry = { ...entry, date: v('l-date')||today, day: v('l-day'), location: v('l-loc'),
       duration: v('l-dur'), energy: v('l-energy'), decomp: v('l-decomp'),
-      exercises: v('l-exs'), notes: v('l-notes')
-    };
+      exercises: v('l-exs'), notes: v('l-notes') };
   } else if (type === 'steps') {
-    entry = { ...entry,
-      date: v('s-date') || today, total: v('s-total'),
-      morning: v('s-morn'), lunch: v('s-lunch'), pre: v('s-pre'), post: v('s-post')
-    };
+    entry = { ...entry, date: v('s-date')||today, total: v('s-total'),
+      morning: v('s-morn'), lunch: v('s-lunch'), pre: v('s-pre'), post: v('s-post') };
   } else if (type === 'body') {
-    entry = { ...entry,
-      date: v('b-date') || today, weight: v('b-weight'), waist: v('b-waist'),
+    entry = { ...entry, date: v('b-date')||today, weight: v('b-weight'), waist: v('b-waist'),
       chest: v('b-chest'), hips: v('b-hips'), neck: v('b-neck'),
-      sleep: v('b-sleep'), stress: v('b-stress'),
-      glutes: v('b-glutes'), thighs: v('b-thighs')
-    };
+      sleep: v('b-sleep'), stress: v('b-stress'), glutes: v('b-glutes'), thighs: v('b-thighs') };
   } else if (type === 'nutrition') {
-    entry = { ...entry,
-      date: v('n-date') || today, calories: v('n-cal'), protein: v('n-prot'),
-      carbs: v('n-carb'), fat: v('n-fat'), water: v('n-water'), notes: v('n-notes')
-    };
+    entry = { ...entry, date: v('n-date')||today, calories: v('n-cal'), protein: v('n-prot'),
+      carbs: v('n-carb'), fat: v('n-fat'), water: v('n-water'), notes: v('n-notes') };
   }
-
+  toast('SAVING...');
   const existing = await encryptedLoad(type);
   existing.unshift(entry);
   await encryptedSave(type, existing);
   loadStats();
-  toast('✓ SAVED & ENCRYPTED');
+  toast('✓ SAVED & ENCRYPTED TO FIREBASE');
 }
 
 function v(id) { const el = document.getElementById(id); return el ? el.value : ''; }
@@ -1224,10 +1266,12 @@ async function showHist(type) {
 }
 
 async function clearData() {
-  if (!confirm('CLEAR ALL YOUR DATA? This is permanent and cannot be undone.')) return;
-  ['workout','steps','body','nutrition'].forEach(t => localStorage.removeItem(userDataKey(SESSION.username, t)));
+  if (!confirm('CLEAR ALL YOUR DATA? This cannot be undone.')) return;
+  for (const t of ['workout','steps','body','nutrition']) {
+    await db.collection('userdata').doc(SESSION.username).collection(t).doc('entries').delete();
+  }
   loadStats();
-  toast('ALL DATA CLEARED');
+  toast('ALL DATA CLEARED FROM FIREBASE');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1236,25 +1280,16 @@ async function clearData() {
 async function loadStats() {
   const workouts = await encryptedLoad('workout');
   const steps = await encryptedLoad('steps');
-
   document.getElementById('st-workouts').textContent = workouts.length;
-
-  // Streak
   const today = new Date(); today.setHours(0,0,0,0);
-  const dates = [...new Set(workouts.map(w => { const d = new Date(w.date); d.setHours(0,0,0,0); return d.getTime(); }))].sort((a,b)=>b-a);
+  const dates = [...new Set(workouts.map(w => { const d=new Date(w.date); d.setHours(0,0,0,0); return d.getTime(); }))].sort((a,b)=>b-a);
   let streak = 0;
-  for (let i = 0; i < dates.length; i++) {
-    const exp = new Date(today); exp.setDate(exp.getDate()-i);
-    if (dates[i] === exp.getTime()) streak++;
-    else break;
-  }
+  for (let i=0;i<dates.length;i++) { const exp=new Date(today); exp.setDate(exp.getDate()-i); if(dates[i]===exp.getTime()) streak++; else break; }
   document.getElementById('st-streak').textContent = streak;
-
   if (workouts.length > 0) {
     const first = new Date(workouts[workouts.length-1].date);
     document.getElementById('st-weeks').textContent = Math.max(1, Math.ceil((new Date()-first)/(7*24*60*60*1000)));
   }
-
   const avgSteps = steps.length ? Math.round(steps.slice(0,7).reduce((a,s)=>a+(+s.total||0),0)/Math.min(steps.length,7)) : 0;
   document.getElementById('st-steps').textContent = avgSteps > 999 ? (avgSteps/1000).toFixed(1)+'k' : avgSteps;
 }
@@ -1263,6 +1298,17 @@ async function loadStats() {
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════
 function nav(id) {
+  // Handle syscheck separately — it lives outside main container
+  if (id === 'syscheck') {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('syscheckContainer').style.display = 'block';
+    document.querySelectorAll('.nav-btn').forEach(b => { if(b.textContent.includes('SYS')) b.classList.add('active'); });
+    runSysCheck();
+    window.scrollTo(0,0);
+    return;
+  }
+  document.getElementById('syscheckContainer').style.display = 'none';
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   const s = document.getElementById('sec-'+id);
@@ -1283,6 +1329,165 @@ function logTab(t) {
   });
   if (t==='history') showHist('workout');
 }
+
+// ═══════════════════════════════════════════════════════════
+// SYS CHECK
+// ═══════════════════════════════════════════════════════════
+async function runSysCheck() {
+  const out = document.getElementById('syscheckOutput');
+  out.innerHTML = '<div class="mono dim" style="padding:16px;">Running diagnostics...</div>';
+
+  const rows = [];
+  const addRow = (label, status, detail) => rows.push({ label, status, detail });
+
+  // Firebase connection
+  try {
+    await db.collection('users').limit(1).get();
+    addRow('Firebase connection', 'ok', 'Firestore reachable — reads working');
+  } catch(e) {
+    addRow('Firebase connection', 'err', `FAILED: ${e.message}`);
+  }
+
+  // Session
+  if (SESSION) {
+    addRow('Current session', 'ok', `Logged in as @${SESSION.username} (${SESSION.gender})`);
+    addRow('DEK (encryption key)', 'ok', 'In-memory AES-256 key present');
+  } else {
+    addRow('Current session', 'err', 'Not logged in');
+  }
+
+  // Remember me token
+  const token = localStorage.getItem(SESSION_KEY);
+  if (token) {
+    try {
+      const t = JSON.parse(token);
+      const daysLeft = Math.ceil((t.expires - Date.now()) / 86400000);
+      addRow('Remember me token', 'ok', `Stored — expires in ${daysLeft} day${daysLeft!==1?'s':''} · username: ${t.username}`);
+    } catch { addRow('Remember me token', 'warn', 'Token exists but is malformed'); }
+  } else {
+    addRow('Remember me token', 'info', 'No token — user did not check "Remember me"');
+  }
+
+  // User registry in Firebase
+  try {
+    const users = await getUsers();
+    const unames = Object.keys(users);
+    if (unames.length === 0) {
+      addRow('Firebase user registry', 'warn', 'No users registered yet');
+    } else {
+      addRow('Firebase user registry', 'ok', `${unames.length} user${unames.length!==1?'s':''} registered: ${unames.join(', ')}`);
+      unames.forEach(u => {
+        const info = users[u];
+        addRow(`  @${u}`, info.passHash ? 'ok' : 'err',
+          `${info.displayName} · ${info.gender} · joined ${info.joinDate?info.joinDate.slice(0,10):'?'} · ${info.isAdmin?'ADMIN':'user'} · passHash: ${info.passHash?info.passHash.slice(0,12)+'…':'MISSING'}`);
+      });
+    }
+  } catch(e) {
+    addRow('Firebase user registry', 'err', `Could not read users: ${e.message}`);
+  }
+
+  // Encrypted data for current user
+  if (SESSION) {
+    for (const type of ['workout','steps','body','nutrition']) {
+      try {
+        const doc = await db.collection('userdata').doc(SESSION.username).collection(type).doc('entries').get();
+        if (doc.exists) {
+          const entries = await encryptedLoad(type);
+          addRow(`Data: ${type}`, 'ok', `${entries.length} entr${entries.length!==1?'ies':'y'} · encrypted blob: ${doc.data().data.slice(0,24)}…`);
+        } else {
+          addRow(`Data: ${type}`, 'info', 'No entries logged yet');
+        }
+      } catch(e) {
+        addRow(`Data: ${type}`, 'err', `Read error: ${e.message}`);
+      }
+    }
+  }
+
+  // Render
+  const statusColor = { ok:'var(--success)', err:'var(--danger)', warn:'var(--accent)', info:'var(--border2)' };
+  const statusLabel = { ok:'OK', err:'FAIL', warn:'WARN', info:'INFO' };
+  out.innerHTML = `
+    <div class="card">
+      <div class="card-label">DIAGNOSTIC RESULTS</div>
+      <div class="card-title">SYSTEM STATUS</div>
+      <table class="tbl" style="width:100%">
+        <tr><th>CHECK</th><th>STATUS</th><th>DETAIL</th></tr>
+        ${rows.map(r => `<tr>
+          <td class="mono" style="font-size:0.75rem;color:var(--text)">${r.label}</td>
+          <td><span style="font-family:var(--font-mono);font-size:0.65rem;padding:2px 8px;background:${statusColor[r.status]}22;color:${statusColor[r.status]};border:1px solid ${statusColor[r.status]}44;">${statusLabel[r.status]}</span></td>
+          <td class="mono" style="font-size:0.7rem;color:var(--text-dim)">${r.detail}</td>
+        </tr>`).join('')}
+      </table>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN PANEL
+// ═══════════════════════════════════════════════════════════
+async function loadAdminPanel() {
+  const users = await getUsers();
+  const rows = Object.entries(users).map(([uname, u]) => `
+    <tr>
+      <td style="color:var(--accent2)">${uname}</td>
+      <td>${u.displayName}</td>
+      <td>${u.gender||'—'}</td>
+      <td>${u.joinDate ? new Date(u.joinDate).toLocaleDateString() : '—'}</td>
+      <td style="color:${u.isAdmin?'var(--accent2)':'var(--text-dim)'}">${u.isAdmin?'ADMIN':'USER'}</td>
+    </tr>`).join('');
+  document.getElementById('adminUserList').innerHTML = `
+    <table class="tbl">
+      <tr><th>USERNAME</th><th>NAME</th><th>GENDER</th><th>JOINED</th><th>ROLE</th></tr>
+      ${rows || '<tr><td colspan="5" class="dim">No users yet</td></tr>'}
+    </table>`;
+}
+
+async function exportAllUsers() {
+  const masterKey = document.getElementById('adminMasterKey').value;
+  const err = document.getElementById('adminErr');
+  if (!masterKey || masterKey.length < 8) { err.textContent = 'MASTER KEY REQUIRED (min 8 chars)'; return; }
+  err.style.color = 'var(--accent2)';
+  err.textContent = 'PULLING FROM FIREBASE...';
+  const users = await getUsers();
+  const allData = {};
+  for (const [uname, uinfo] of Object.entries(users)) {
+    allData[uname] = { info: uinfo };
+    for (const type of ['workout','steps','body','nutrition']) {
+      const doc = await db.collection('userdata').doc(uname).collection(type).doc('entries').get();
+      allData[uname][type] = doc.exists ? `[ENCRYPTED — ${doc.data().data.length} chars]` : '[]';
+    }
+  }
+  const payload = { exportDate: new Date().toISOString(), exportedBy: SESSION.username, users: allData };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `operatorfit_export_${new Date().toISOString().split('T')[0]}.json`; a.click();
+  err.textContent = 'EXPORT COMPLETE';
+}
+
+async function reEncryptAll() {
+  document.getElementById('adminErr').textContent = 'Re-encryption: enter old + new master key. Coming in next version.';
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimeout;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('li-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  document.getElementById('rg-pass2').addEventListener('keydown', e => { if(e.key==='Enter') doRegister(); });
+  // Check for remember-me token on load
+  await tryAutoLogin();
+});
 
 // ═══════════════════════════════════════════════════════════
 // DASHBOARD
@@ -1814,15 +2019,12 @@ async function exportAllUsers() {
 
   for (const [uname, uinfo] of Object.entries(users)) {
     allData[uname] = { info: uinfo, workout:[], steps:[], body:[], nutrition:[] };
-    // We can only read data if admin key matches the derivation
-    // For this architecture: we re-derive using stored passHash hint — admin reads encrypted blobs and exports them
     for (const type of ['workout','steps','body','nutrition']) {
-      const raw = localStorage.getItem(userDataKey(uname, type));
-      if (raw) allData[uname][type] = `[ENCRYPTED — ${raw.length} chars]`;
+      const doc = await db.collection('userdata').doc(uname).collection(type).doc('entries').get();
+      allData[uname][type] = doc.exists ? `[ENCRYPTED — ${doc.data().data.length} chars]` : '[]';
     }
   }
 
-  // Generate downloadable JSON export (admin decrypts offline)
   const exportPayload = {
     exportDate: new Date().toISOString(),
     exportedBy: SESSION.username,
