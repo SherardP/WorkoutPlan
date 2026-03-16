@@ -1403,6 +1403,7 @@ function nav(id) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('syscheckContainer').style.display = 'block';
     document.getElementById('syscheckNavBtn').classList.add('active');
+    // Always auto-run on every visit
     runSysCheck();
     window.scrollTo(0,0);
     return;
@@ -1434,14 +1435,24 @@ function logTab(t) {
 // ═══════════════════════════════════════════════════════════
 async function runSysCheck() {
   const out = document.getElementById('syscheckOutput');
+  if (!out) return;
+
   const dbDot = document.getElementById('dbDot');
   const dbStatus = document.getElementById('dbStatus');
   const userCountBadge = document.getElementById('userCountBadge');
   const sessionBadge = document.getElementById('sessionBadge');
 
-  out.innerHTML = '<div class="mono dim" style="padding:16px;">Running diagnostics...</div>';
-  dbDot.style.background = '#ffaa00';
-  dbStatus.textContent = 'CONNECTING...';
+  // Immediately show loading state
+  out.innerHTML = `<div style="padding:20px;font-family:var(--font-mono);font-size:0.75rem;color:var(--accent2);
+    letter-spacing:.1em;text-align:center;">
+    <div style="font-size:1.5rem;margin-bottom:8px;">⟳</div>
+    RUNNING DIAGNOSTICS...
+  </div>`;
+
+  if (dbDot) { dbDot.style.background = '#ffaa00'; dbDot.style.boxShadow = '0 0 6px #ffaa00'; }
+  if (dbStatus) { dbStatus.textContent = 'CONNECTING...'; dbStatus.style.color = '#ffaa00'; }
+  if (userCountBadge) userCountBadge.textContent = '…';
+  if (sessionBadge) sessionBadge.textContent = '…';
 
   const rows = [];
   const addRow = (label, status, detail) => rows.push({ label, status, detail });
@@ -1451,26 +1462,22 @@ async function runSysCheck() {
   try {
     await db.collection('users').limit(1).get();
     firebaseOk = true;
-    dbDot.style.background = '#4caf50';
-    dbDot.style.boxShadow = '0 0 8px #4caf50';
-    dbStatus.textContent = 'CONNECTED';
-    dbStatus.style.color = '#4caf50';
+    if (dbDot) { dbDot.style.background = '#4caf50'; dbDot.style.boxShadow = '0 0 8px #4caf50'; }
+    if (dbStatus) { dbStatus.textContent = 'CONNECTED'; dbStatus.style.color = '#4caf50'; }
     addRow('Firebase connection', 'ok', 'Firestore reachable — reads working');
   } catch(e) {
-    dbDot.style.background = '#f44336';
-    dbDot.style.boxShadow = '0 0 8px #f44336';
-    dbStatus.textContent = 'DISCONNECTED';
-    dbStatus.style.color = '#f44336';
+    if (dbDot) { dbDot.style.background = '#f44336'; dbDot.style.boxShadow = '0 0 8px #f44336'; }
+    if (dbStatus) { dbStatus.textContent = 'DISCONNECTED'; dbStatus.style.color = '#f44336'; }
     addRow('Firebase connection', 'err', `FAILED: ${e.message}`);
   }
 
   // Session
   if (SESSION) {
-    sessionBadge.textContent = `@${SESSION.username}`;
+    if (sessionBadge) sessionBadge.textContent = `@${SESSION.username}`;
     addRow('Current session', 'ok', `Logged in as @${SESSION.username} (${SESSION.gender})`);
     addRow('DEK (encryption key)', 'ok', 'In-memory AES-256 key present');
   } else {
-    sessionBadge.textContent = 'NONE';
+    if (sessionBadge) sessionBadge.textContent = 'NONE';
     addRow('Current session', 'err', 'Not logged in');
   }
 
@@ -1490,7 +1497,7 @@ async function runSysCheck() {
   try {
     const users = await getUsers();
     const unames = Object.keys(users);
-    userCountBadge.textContent = unames.length;
+    if (userCountBadge) userCountBadge.textContent = unames.length;
     if (unames.length === 0) {
       addRow('User registry', 'warn', 'No users registered yet');
     } else {
@@ -1502,7 +1509,7 @@ async function runSysCheck() {
       });
     }
   } catch(e) {
-    userCountBadge.textContent = 'ERR';
+    if (userCountBadge) userCountBadge.textContent = 'ERR';
     addRow('User registry', 'err', `Could not read: ${e.message}`);
   }
 
@@ -1642,71 +1649,80 @@ async function saveProfile() {
   const newPass2 = document.getElementById('prof-new-pass2').value;
   const err = document.getElementById('prof-err');
 
-  if (!newName) return err.textContent = 'DISPLAY NAME REQUIRED';
-  if (!currPass) return err.textContent = 'CURRENT PASSWORD REQUIRED TO SAVE CHANGES';
+  const showErr = (msg) => { err.style.color = 'var(--danger)'; err.textContent = msg; };
+  const showInfo = (msg) => { err.style.color = 'var(--accent2)'; err.textContent = msg; };
 
-  err.style.color = 'var(--danger)';
-  err.textContent = 'VERIFYING...';
+  if (!newName) return showErr('DISPLAY NAME REQUIRED');
+  if (!currPass) return showErr('CURRENT PASSWORD REQUIRED TO SAVE CHANGES');
 
-  // Verify current password
-  const salt = SESSION.username;
-  const hash = await sha256hex(currPass + salt + '_verify');
-  const user = await getUser(SESSION.username);
-  if (hash !== user.passHash) return err.textContent = 'CURRENT PASSWORD IS INCORRECT';
+  showInfo('VERIFYING...');
 
-  // Validate new password if provided
-  let newPassHash = user.passHash;
-  let newDek = SESSION.dek;
-  if (newPass) {
-    if (newPass.length < 8) return err.textContent = 'NEW PASSWORD MIN 8 CHARACTERS';
-    if (newPass !== newPass2) return err.textContent = 'NEW PASSWORDS DO NOT MATCH';
-    newPassHash = await sha256hex(newPass + salt + '_verify');
-    newDek = await deriveKey(newPass, salt + '_dek');
-    const newDekRaw = await exportKeyRaw(newDek);
+  try {
+    // Verify current password
+    const salt = SESSION.username;
+    const hash = await sha256hex(currPass + salt + '_verify');
+    const user = await getUser(SESSION.username);
+    if (!user) return showErr('USER NOT FOUND — TRY LOGGING OUT AND BACK IN');
+    if (hash !== user.passHash) return showErr('CURRENT PASSWORD IS INCORRECT');
 
-    // Re-encrypt all user data with new DEK
-    err.style.color = 'var(--accent2)';
-    err.textContent = 'RE-ENCRYPTING DATA WITH NEW PASSWORD...';
-    for (const type of ['workout','steps','body','nutrition']) {
-      try {
-        const entries = await encryptedLoad(type);
-        if (entries.length > 0) {
-          const json = JSON.stringify(entries);
-          const enc = await encryptStr(newDek, json);
-          await db.collection('userdata').doc(SESSION.username)
-            .collection(type).doc('entries').set({ data: enc, updated: new Date().toISOString() });
-        }
-      } catch(e) { /* no data for this type */ }
+    // Validate new password if provided
+    let newPassHash = user.passHash;
+    let newDek = SESSION.dek;
+
+    if (newPass) {
+      if (newPass.length < 8) return showErr('NEW PASSWORD MIN 8 CHARACTERS');
+      if (newPass !== newPass2) return showErr('NEW PASSWORDS DO NOT MATCH');
+      newPassHash = await sha256hex(newPass + salt + '_verify');
+      newDek = await deriveKey(newPass, salt + '_dek');
+      const newDekRaw = await exportKeyRaw(newDek);
+
+      // Re-encrypt all user data with new DEK
+      showInfo('RE-ENCRYPTING DATA...');
+      for (const type of ['workout','steps','body','nutrition']) {
+        try {
+          // Load with OLD dek (still in SESSION.dek)
+          const entries = await encryptedLoad(type);
+          if (entries.length > 0) {
+            const json = JSON.stringify(entries);
+            const enc = await encryptStr(newDek, json);
+            await db.collection('userdata').doc(SESSION.username)
+              .collection(type).doc('entries').set({ data: enc, updated: new Date().toISOString() });
+          }
+        } catch(e) { /* no data for this type — skip */ }
+      }
+      await saveUser(SESSION.username, { dekHint: newDekRaw });
     }
-    await saveUser(SESSION.username, { dekHint: newDekRaw });
+
+    showInfo('SAVING...');
+
+    // Save updated profile to Firebase
+    await saveUser(SESSION.username, {
+      displayName: newName,
+      gender: profGender,
+      passHash: newPassHash,
+      email: newEmail
+    });
+
+    // Update session in memory
+    SESSION.displayName = newName;
+    SESSION.gender = profGender;
+    SESSION.email = newEmail;
+    SESSION.dek = newDek;
+
+    // Update remember-me token if password changed
+    if (newPass) await saveRememberToken(SESSION.username, newPassHash);
+
+    // Update UI immediately
+    document.getElementById('headerUser').textContent = newName.toUpperCase();
+    document.getElementById('appLogo').textContent = profGender === 'female' ? 'BLOOMFIT' : 'OPERATORFIT';
+    applyTheme(profGender);
+
+    closeProfile();
+    toast('✓ PROFILE UPDATED SUCCESSFULLY');
+
+  } catch(e) {
+    showErr('ERROR: ' + e.message);
   }
-
-  err.textContent = 'SAVING...';
-
-  // Save updated profile
-  await saveUser(SESSION.username, {
-    displayName: newName,
-    gender: profGender,
-    passHash: newPassHash,
-    email: newEmail
-  });
-
-  // Update session
-  SESSION.displayName = newName;
-  SESSION.gender = profGender;
-  SESSION.email = newEmail;
-  SESSION.dek = newDek;
-  if (newPass && document.getElementById('li-remember')?.checked) {
-    await saveRememberToken(SESSION.username, newPassHash);
-  }
-
-  // Update UI
-  document.getElementById('headerUser').textContent = newName.toUpperCase();
-  document.getElementById('appLogo').textContent = profGender === 'female' ? 'BLOOMFIT' : 'OPERATORFIT';
-  applyTheme(profGender);
-
-  closeProfile();
-  toast('✓ PROFILE UPDATED');
 }
 
 // Close modal if clicking outside
@@ -2278,23 +2294,70 @@ function toggleEx(bodyEl, itemId) {
 }
 
 function loadYT(ph, exerciseName) {
-  // Opens YouTube search for the exercise — never goes unavailable
   const query = encodeURIComponent(exerciseName + ' exercise tutorial how to');
   const searchUrl = `https://www.youtube.com/results?search_query=${query}`;
 
-  // Replace placeholder with a clickable link that opens YouTube search
-  ph.parentElement.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-      height:160px;background:var(--bg3);border:1px solid var(--border);text-align:center;padding:20px;gap:12px;">
-      <div style="font-size:2rem;">▶</div>
-      <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);letter-spacing:.1em;">${exerciseName}</div>
-      <a href="${searchUrl}" target="_blank" rel="noopener"
-        style="font-family:var(--font-mono);font-size:0.65rem;padding:8px 18px;
-        background:var(--accent);color:var(--bg);text-decoration:none;letter-spacing:.1em;display:inline-block;">
-        WATCH ON YOUTUBE ↗
-      </a>
-      <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);">Opens YouTube search — always current results</div>
-    </div>`;
+  // Try to find a known good video ID for this exercise
+  const knownIds = {
+    'BENCH PRESS': 'vcBig73ojpE', 'OVERHEAD PRESS': '2yjwXTZbrDM',
+    'INCLINE DB PRESS': '8iPEnn-ltC8', 'LATERAL RAISES': '3VcKaXpzqRo',
+    'PUSH-UP BURNOUT': 'IODxDxX7oi4', 'PUSH-UP VARIATIONS': 'IODxDxX7oi4',
+    'GOBLET SQUAT': 'MxsFDhcyFyE', 'ROMANIAN DEADLIFT': 'JCXUYuzwNrM',
+    'BULGARIAN SPLIT SQUAT': '2C-uNgbwi_k', 'HIP THRUST': 'wPM8icPu6H8',
+    'GLUTE BRIDGE': 'wPM8icPu6H8', 'SQUAT BURNOUT': 'aclHkVaku9U',
+    'SUMO SQUAT': 'MxsFDhcyFyE', 'DONKEY KICK': 'SJ1iYTLBgpI',
+    'DB ROW (SINGLE ARM)': 'roCP442LA5g', 'BENT-OVER ROW': 'FWJR5Ve8bnQ',
+    'BICEP CURL': 'ykJmrZ5v0Oo', 'HAMMER CURL': '0xyZbNqL_U0',
+    'REAR DELT RAISE': 'Rep-GkxHMKU', 'ROW BURNOUT': 'FWJR5Ve8bnQ',
+    'PLANK VARIATIONS': 'pSHjTRCQxIw', 'DEAD BUG': '4XLEnwUr1d8',
+    'BICYCLE CRUNCH': 'Iwyvozckjak', 'MOUNTAIN CLIMBERS': 'nmwgirgXLYM',
+    'BURPEE FINISHER': 'dZgVxmf6jkA', 'FLOOR PRESS': 'uUGDRwge4F8',
+    'ARCHER PUSH-UP': '44DbxOftzgw', 'RENEGADE ROW': 'Lge5ZPpGQu4',
+    'TRICEP DIPS': '0326dy_-CzM', 'REVERSE LUNGE': 'xrjMX9RLuHs',
+    'WALL SIT': 'y-wV4Venusw', 'LEG RAISES': 'JB2oyawG9KI',
+    'SINGLE-LEG DEADLIFT': 'JCXUYuzwNrM', 'WALKING LUNGE': 'D7KaRcUTQeE',
+    'TRICEP OVERHEAD EXT.': '_gsUck-7f74', 'HANGING LEG RAISE': 'JB2oyawG9KI',
+    'SIDE PLANK HIP DIP': 'Bk_VYqG83CQ', 'RUSSIAN TWIST': 'JyUqwkVpsi8',
+    'GLUTE KICKBACK': 'SJ1iYTLBgpI', 'LATERAL BAND WALK': 'a5G4RJfVi2U',
+  };
+
+  const videoId = knownIds[exerciseName.toUpperCase()];
+  const container = ph.parentElement;
+
+  if (videoId) {
+    // Show iframe + fallback link below it
+    container.innerHTML = `
+      <div style="position:relative;">
+        <iframe id="yt-${videoId}" src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0"
+          allow="autoplay;encrypted-media" allowfullscreen
+          style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+          onerror="this.parentElement.parentElement.innerHTML=ytFallback('${exerciseName.replace(/'/g,"\\'")}','${searchUrl}')">
+        </iframe>
+      </div>
+      <div style="text-align:center;padding:6px 0;">
+        <a href="${searchUrl}" target="_blank" rel="noopener"
+          style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);text-decoration:none;letter-spacing:.08em;">
+          ↗ Search YouTube for more videos
+        </a>
+      </div>`;
+  } else {
+    // No known ID — go straight to search
+    container.innerHTML = ytFallback(exerciseName, searchUrl);
+  }
+}
+
+function ytFallback(name, searchUrl) {
+  return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:160px;background:var(--bg3);border:1px solid var(--border);text-align:center;padding:20px;gap:10px;">
+    <div style="font-size:1.8rem;">▶</div>
+    <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);letter-spacing:.1em;">${name}</div>
+    <a href="${searchUrl}" target="_blank" rel="noopener"
+      style="font-family:var(--font-mono);font-size:0.65rem;padding:8px 20px;
+      background:var(--accent);color:var(--bg);text-decoration:none;letter-spacing:.1em;display:inline-block;">
+      WATCH ON YOUTUBE ↗
+    </a>
+    <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);">Opens YouTube search — always current results</div>
+  </div>`;
 }
 // ═══════════════════════════════════════════════════════════
 // PHASE CONTENT
