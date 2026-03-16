@@ -2280,59 +2280,6 @@ function toggleEx(bodyEl, itemId) {
 function loadYT(ph, id) {
   ph.parentElement.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" allow="autoplay;encrypted-media" allowfullscreen></iframe>`;
 }
-    exercises:[
-      {name:'BENCH PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'60% 1RM',phase2:'75–85% 1RM',phase3:'85–95% 1RM',ytId:'vcBig73ojpE',desc:'Flat bench, grip slightly wider than shoulder-width. Lower to chest 2–3 sec, drive explosively up. Shoulder blades retracted throughout.',hotel:'FLOOR PUSH-UP 5×5 — elevate feet on bed for incline'},
-      {name:'OVERHEAD PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'60%',phase2:'75–85%',phase3:'85–95%',ytId:'2yjwXTZbrDM',desc:'Standing, bar/dumbbell at shoulders. Press directly overhead, full extension. Core braced, no lower back arch.',hotel:'PIKE PUSH-UP 5×5 — hips high, pressing straight down'},
-      {name:'INCLINE DB PRESS',badge:'SECONDARY',sets:'3×10',rest:'90 sec',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'8iPEnn-ltC8',desc:'Bench 30–45°. Dumbbells at chest level, elbows 45° to body. Press up and slightly inward. Lower slowly.',hotel:'DECLINE PUSH-UP 3×10 — feet on bed edge'},
-      {name:'LATERAL RAISES',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Light',phase2:'Progressive',phase3:'Heavy+slow neg',ytId:'3VcKaXpzqRo',desc:'Raise arms to shoulder height, slight forward lean, tiny elbow bend. Avoid swinging.',hotel:'Pike hold isometric 30 sec ×3'},
-      {name:'PUSH-UP BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4 only',phase2:'Full',phase3:'Weighted/elevated',ytId:'IODxDxX7oi4',desc:'Military-style burnout. To absolute failure, rest 20 sec, repeat 3 rounds. Metabolic flush finisher.',hotel:'SAME — works perfectly'}
-    ]},
-  tue:{title:'LOWER BODY',sub:'Quads · Hamstrings · Glutes',warmup:'Hip circles ×20, leg swings ×15, glute bridges ×15, BW squats ×15',
-    exercises:[
-      {name:'GOBLET SQUAT',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light DB',phase2:'Heavy DB',phase3:'Max load',ytId:'MxsFDhcyFyE',desc:'Hold DB vertically at chest. Feet shoulder-width, toes out. Hip crease below parallel. Drive through whole foot.',hotel:'TEMPO SQUAT 5×5 — 4-sec descent'},
-      {name:'ROMANIAN DEADLIFT',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light',phase2:'Heavy',phase3:'Max load',ytId:'JCXUYuzwNrM',desc:'DBs at thighs. Hinge at hips, push back, lower along legs. Feel deep hamstring stretch, drive hips forward.',hotel:'SINGLE-LEG DEADLIFT 5×5 — bodyweight, balance + hamstring stretch'},
-      {name:'BULGARIAN SPLIT SQUAT',badge:'SECONDARY',sets:'3×8/leg',rest:'90 sec',phase1:'BW',phase2:'Add DBs',phase3:'Heavy DBs',ytId:'2C-uNgbwi_k',desc:'Rear foot on bench. Lower back knee to floor, front shin vertical. Unilateral strength + imbalance fix.',hotel:'SAME — use bed for rear foot'},
-      {name:'GLUTE BRIDGE',badge:'SECONDARY',sets:'3×15',rest:'60 sec',phase1:'BW',phase2:'DB on hips',phase3:'Heavy + pause',ytId:'wPM8icPu6H8',desc:'Lie back, feet flat. Drive hips up squeezing glutes, pause 1–2 sec. Lower controlled. No lower back.',hotel:'SAME — floor exercise'},
-      {name:'SQUAT BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Jump squats',ytId:'aclHkVaku9U',desc:'BW squats to failure. 20-sec rest. Repeat × 3.',hotel:'SAME'}
-    ]},
-  wed:{title:'UPPER PULL',sub:'Back · Biceps · Rear Delts',warmup:'Band pull-aparts ×20, face pulls ×15, scapular retractions ×15',
-    exercises:[
-      {name:'DB ROW (single)',badge:'5×5 STRENGTH',sets:'5×5/side',rest:'2–3 min',phase1:'60%',phase2:'75–85%',phase3:'Max',ytId:'roCP442LA5g',desc:'Hand and knee on bench. Drive elbow back and up, lead with elbow. Squeeze lat at top. Do not rotate.',hotel:'TOWEL-DOOR ROW — loop towel around door handle, row bodyweight'},
-      {name:'BENT-OVER ROW',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light',phase2:'Heavy',phase3:'Max',ytId:'FWJR5Ve8bnQ',desc:'Hinge forward, back flat. Row to lower chest, squeeze shoulder blades. Control descent.',hotel:'BED-FRAME ROW — lie under bed edge, grip frame, row chest up'},
-      {name:'BICEP CURL',badge:'SECONDARY',sets:'3×10',rest:'60 sec',phase1:'Light',phase2:'Progressive',phase3:'Heavy+neg',ytId:'ykJmrZ5v0Oo',desc:'Supinate at top. Lower slowly over 3 sec. Elbows anchored.',hotel:'TOWEL CURL — step on towel ends, curl against resistance'},
-      {name:'REAR DELT RAISE',badge:'SECONDARY',sets:'3×15',rest:'60 sec',phase1:'Very light',phase2:'Progressive',phase3:'Load+tempo',ytId:'Rep-GkxHMKU',desc:'Bent over, raise arms scarecrow-style. Crucial for shoulder health.',hotel:'PRONE REAR DELT RAISE — face down on bed edge'},
-      {name:'ROW BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Full',ytId:'FWJR5Ve8bnQ',desc:'Light rows to failure. 20-sec rest. ×3.',hotel:'BED-FRAME ROW BURNOUT'}
-    ]},
-  thu:{title:'CORE + HIIT',sub:'Abs · Obliques · Conditioning',warmup:'Dead bug ×10, bird dog ×10, hollow hold 20 sec, plank 30 sec',
-    exercises:[
-      {name:'PLANK VARIATIONS',badge:'CORE',sets:'3×45–90 sec',rest:'60 sec',phase1:'Standard',phase2:'RKC plank',phase3:'Weighted',ytId:'pSHjTRCQxIw',desc:'Squeeze everything. No hip sag. Breathe slowly. Add 5 sec per week.',hotel:'SAME'},
-      {name:'DEAD BUG',badge:'CORE',sets:'3×10/side',rest:'60 sec',phase1:'BW',phase2:'DB reach',phase3:'Heavy DB',ytId:'4XLEnwUr1d8',desc:'Press lower back to floor. Opposite arm+leg toward floor. Anti-extension training.',hotel:'SAME'},
-      {name:'BICYCLE CRUNCH',badge:'SECONDARY',sets:'3×20',rest:'45 sec',phase1:'Slow',phase2:'Controlled',phase3:'Weighted',ytId:'Iwyvozckjak',desc:'Full thoracic rotation. Slow beats fast.',hotel:'SAME'},
-      {name:'MOUNTAIN CLIMBERS',badge:'HIIT P2+',sets:'4×30sec on/15 off',rest:'15 sec',phase1:'NOT YET — sub plank',phase2:'Full HIIT',phase3:'Explosive',ytId:'nmwgirgXLYM',desc:'Drive knees alternately, hips level. Heart rate spikes.',hotel:'SAME'},
-      {name:'BURPEE FINISHER',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'NOT YET',phase2:'Full',phase3:'+ push-up',ytId:'dZgVxmf6jkA',desc:'Full burpees to failure. 20-sec rest. ×3.',hotel:'SAME'}
-    ]},
-  fri:{title:'FULL UPPER COMPOUND',sub:'Compound Upper Body Strength',warmup:'Full Monday + Wednesday warmup combined — 10 minutes',
-    exercises:[
-      {name:'FLOOR PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'60%',phase2:'75–85%',phase3:'85–95%',ytId:'uUGDRwge4F8',desc:'Lie on floor. Upper arms rest between reps, eliminating stretch reflex. Builds lockout strength.',hotel:'SAME — this IS the hotel exercise'},
-      {name:'ARCHER PUSH-UP',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Standard push-up',phase2:'Archer push-up',phase3:'One-arm progression',ytId:'44DbxOftzgw',desc:'Body shifts side to side. Equivalent to 75%+ bench. Progresses toward one-arm push-up.',hotel:'SAME'},
-      {name:'RENEGADE ROW',badge:'SECONDARY',sets:'3×8/side',rest:'90 sec',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'Lge5ZPpGQu4',desc:'Push-up position, row one DB while stabilizing. Anti-rotation core + pull strength.',hotel:'Plank to alternating shoulder taps (no DBs)'},
-      {name:'TRICEP DIPS',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Wide grip',phase2:'Narrow grip',phase3:'Weighted',ytId:'0326dy_-CzM',desc:'Bench edge, fingers forward. 90° elbow, elbows close to body.',hotel:'CHAIR DIPS or BED EDGE'},
-      {name:'PUSH-UP BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Hardest variation',ytId:'IODxDxX7oi4',desc:'Full upper burnout to cap Friday.',hotel:'SAME'}
-    ]},
-  sat:{title:'LEGS + CORE + RECOVERY',sub:'Full Legs · Core · Mobility',warmup:'10-min hip mobility: pigeon, hip flexor, hamstring floss, glute activation',
-    exercises:[
-      {name:'REVERSE LUNGE',badge:'PRIMARY',sets:'4×8/leg',rest:'90 sec',phase1:'BW',phase2:'DB hold',phase3:'Heavy DBs',ytId:'xrjMX9RLuHs',desc:'Step back, lower back knee. Drive front heel. Higher reps, active recovery focus.',hotel:'SAME'},
-      {name:'WALL SIT',badge:'ISOMETRIC',sets:'3×60 sec',rest:'60 sec',phase1:'30–45 sec',phase2:'60–75 sec',phase3:'90 sec + DB',ytId:'y-wV4Venusw',desc:'Thighs parallel, knees 90°. Isometric quad endurance without spinal load.',hotel:'SAME — just need a wall'},
-      {name:'LEG RAISES',badge:'CORE',sets:'3×15',rest:'60 sec',phase1:'Bent knee',phase2:'Straight leg',phase3:'Weighted',ytId:'JB2oyawG9KI',desc:'Lower abdominal + hip flexor. Slow, controlled.',hotel:'SAME'},
-      {name:'MOBILITY FLOW',badge:'RECOVERY',sets:'10–15 min',rest:'Flow',phase1:'Beginner',phase2:'Deeper range',phase3:'Advanced',ytId:'4pKly2JojMw',desc:'Thoracic rotations, hip 90/90, pigeon, hamstring floss, shoulder CARs.',hotel:'SAME — floor only'},
-      {name:'LUNGE BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Jump lunges',ytId:'xrjMX9RLuHs',desc:'Alternating lunges to failure. Saturday\'s lower intensity burnout.',hotel:'SAME'}
-    ]}
-};
-
-function getWorkouts() {
-  return SESSION.gender === 'female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
-}
-
 // ═══════════════════════════════════════════════════════════
 // PHASE CONTENT
 // ═══════════════════════════════════════════════════════════
