@@ -1867,17 +1867,18 @@ document.addEventListener('click', e => {
 // ═══════════════════════════════════════════════════════════
 
 const DEFAULT_WALK_SECTIONS = [
-  {id:'morning', label:'MORNING WALK',     time:'7–8 AM',    pct:0.1875, note:'Cortisol alignment · fat-burning zone',              star:false},
-  {id:'lunch',   label:'LUNCH WALK',       time:'12–1 PM',   pct:0.25,   note:'Blood sugar control · break sedentary sitting',      star:false},
-  {id:'pre',     label:'PRE-WORKOUT WALK', time:'5–5:30 PM', pct:0.1875, note:'Transitions out of work-stress mode',                star:false},
-  {id:'post',    label:'POST-WORKOUT WALK',time:'After gym', pct:0.1875, note:'★ MOST IMPORTANT — drives cortisol down before sleep',star:true},
-  {id:'organic', label:'ORGANIC STEPS',   time:'All day',   pct:0.1875, note:'Stairs, parking farther, walking meetings',          star:false},
+  {id:'morning', label:'MORNING WALK',      time:'7–8 AM',    pct:0.20,  note:'Cortisol alignment · fat-burning zone',               star:false},
+  {id:'lunch',   label:'LUNCH WALK',         time:'12–1 PM',   pct:0.25,  note:'Blood sugar control · breaks sedentary sitting',      star:false},
+  {id:'pre',     label:'PRE-WORKOUT WALK',   time:'5–5:30 PM', pct:0.20,  note:'Transitions out of work-stress mode',                 star:false},
+  {id:'post',    label:'POST-WORKOUT WALK',  time:'After gym', pct:0.20,  note:'★ MOST IMPORTANT — drives cortisol down before sleep', star:true},
+  {id:'evening', label:'EVENING WALK',       time:'After 7 PM',pct:0.15,  note:'Wind-down · final daily activity',                    star:false},
 ];
 
-let userGoals = { stepGoal:16000, workoutFreq:6, workoutDays:['mon','tue','wed','thu','fri','sat'], sessionDuration:90 };
+let userGoals = { stepGoal:10000, workoutFreq:6, workoutDays:['mon','tue','wed','thu','fri','sat'], sessionDuration:90 };
 let selectedDays = new Set(['mon','tue','wed','thu','fri','sat']);
 let currentFreqGoal = 6;
 let currentDurationGoal = 90;
+// todayStepData stores per-section: { id: { steps, startSteps, endSteps } }
 let todayStepData = {};
 
 async function loadGoals() {
@@ -2009,8 +2010,8 @@ function renderRecommendedSplit() {
       schedule:['Push','Pull','Legs','Rest','Upper','Legs','Rest']},
     6:{name:'6-DAY OPERATORFIT',desc:'Full program — optimally sequenced for fat loss and strength.',
       schedule:['Upper Push','Lower','Upper Pull','Core+HIIT','Full Upper','Legs+Core','REST']},
-    7:{name:'DAILY TRAINING',desc:'Daily active training. Include deload weeks every 4th week.',
-      schedule:['Upper Push','Lower','Pull','Core','Full Upper','Legs','Active Recovery']}
+    7:{name:'DAILY TRAINING (7×)',desc:'Daily active training. Alternate intensity — heavy/light/moderate. Mandatory deload week every 4th week.',
+      schedule:['Upper Push','Lower','Pull','Core','Full Upper','Legs','Active Rec.']}
   };
   const split=splits[freq]||splits[6];
   const days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
@@ -2036,8 +2037,16 @@ async function loadStepsPage() {
   await loadGoals();
   const today = new Date().toISOString().split('T')[0];
   try {
-    const doc = await db.collection('userdata').doc(SESSION.username).collection('steplog').doc(today).get();
-    todayStepData = doc.exists ? (doc.data().sections || {}) : {};
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(today).get();
+    if (doc.exists) {
+      const raw = doc.data().sections || {};
+      // Migrate old format (plain number) to new format { steps, startSteps, endSteps }
+      todayStepData = {};
+      for (const [k, v] of Object.entries(raw)) {
+        todayStepData[k] = (typeof v === 'object') ? v : { steps: v, startSteps: null, endSteps: null };
+      }
+    } else { todayStepData = {}; }
   } catch(e) { todayStepData = {}; }
   renderStepSections();
   updateStepProgress();
@@ -2045,69 +2054,218 @@ async function loadStepsPage() {
 
 function renderStepSections() {
   const el = document.getElementById('stepSections'); if(!el) return;
-  const goal = userGoals.stepGoal || 16000;
-  el.innerHTML = DEFAULT_WALK_SECTIONS.map(s => {
+  const goal = userGoals.stepGoal || 10000;
+
+  el.innerHTML = DEFAULT_WALK_SECTIONS.map((s, idx) => {
+    const saved = todayStepData[s.id] || {};
+    const done = saved.steps || 0;
+    const savedStart = saved.startSteps || '';
+    const savedEnd = saved.endSteps || '';
     const target = Math.round(goal * s.pct);
-    const done = todayStepData[s.id] || 0;
-    const pct = Math.min(100, Math.round(done/target*100));
+    const pct = Math.min(100, Math.round(done / target * 100));
     const complete = done >= target;
-    return `<div class="card mb16" style="border-left:4px solid ${complete?'#4caf50':s.star?'var(--accent2)':'var(--border)'};">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+
+    // Auto-chain: pre-fill start from previous section's end steps
+    const prevSection = idx > 0 ? DEFAULT_WALK_SECTIONS[idx - 1] : null;
+    const prevEnd = prevSection ? (todayStepData[prevSection.id]?.endSteps || '') : '';
+    const autoStart = savedStart || prevEnd;
+
+    return `<div class="card mb16" id="stepcard-${s.id}"
+      style="border-left:4px solid ${complete?'#4caf50':s.star?'var(--accent2)':'var(--border)'};">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
         <div>
-          <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.15em;">${s.time}</div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.15em;">${s.time}</div>
           <div style="font-family:var(--font-display);font-size:1.1rem;color:${s.star?'var(--accent2)':'var(--text-bright)'};">${s.label}</div>
-          <div style="font-family:var(--font-mono);font-size:0.6rem;color:${s.star?'var(--accent2)':'var(--text-dim)'};">${s.note}</div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:${s.star?'var(--accent2)':'var(--text-dim)'};">${s.note}</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-family:var(--font-display);font-size:1.8rem;color:${complete?'#4caf50':'var(--accent2)'};">${done.toLocaleString()}</div>
-          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">of ${target.toLocaleString()} target</div>
+          <div style="font-family:var(--font-display);font-size:2rem;color:${complete?'#4caf50':'var(--accent2)'};">${done.toLocaleString()}</div>
+          <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);">of ${target.toLocaleString()} · ${pct}%</div>
         </div>
       </div>
-      <div style="height:4px;background:var(--bg3);border-radius:2px;margin-bottom:12px;">
-        <div style="height:100%;width:${pct}%;background:${complete?'#4caf50':'var(--accent2)'};border-radius:2px;transition:width 0.4s;"></div>
+
+      <!-- Progress bar -->
+      <div style="height:4px;background:var(--bg3);border-radius:2px;margin-bottom:14px;">
+        <div style="height:100%;width:${pct}%;background:${complete?'#4caf50':'var(--accent2)'};border-radius:2px;transition:width 0.5s;"></div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="number" id="stepinput-${s.id}" value="${done||''}" placeholder="Enter steps from watch"
-          min="0" max="50000" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-          font-family:var(--font-mono);font-size:0.85rem;padding:8px 10px;outline:none;">
-        <button class="btn btn-p" onclick="saveStepSection('${s.id}')"
-          style="white-space:nowrap;font-size:0.65rem;padding:8px 14px;">${complete?'✓ UPDATE':'SAVE WALK'}</button>
+
+      <!-- Mode toggle -->
+      <div style="display:flex;gap:0;margin-bottom:12px;border:1px solid var(--border);overflow:hidden;">
+        <button id="modetab-total-${s.id}" onclick="switchStepMode('${s.id}','total')"
+          style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:.1em;cursor:pointer;border:none;
+          background:var(--bg3);color:var(--text-dim);border-right:1px solid var(--border);">
+          TOTAL STEPS
+        </button>
+        <button id="modetab-range-${s.id}" onclick="switchStepMode('${s.id}','range')"
+          style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:.1em;cursor:pointer;border:none;
+          background:var(--bg3);color:var(--text-dim);">
+          START → END
+        </button>
       </div>
-      ${complete?`<div style="font-family:var(--font-mono);font-size:0.62rem;color:#4caf50;margin-top:6px;">✓ SECTION COMPLETE</div>`:''}
+
+      <!-- Total mode -->
+      <div id="stepmode-total-${s.id}" style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="stepinput-${s.id}" value="${done||''}"
+          placeholder="Enter step count for this walk" min="0" max="50000"
+          style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;">
+        <button class="btn btn-p" onclick="saveStepSection('${s.id}','total')"
+          style="white-space:nowrap;font-size:0.65rem;padding:9px 14px;">
+          ${complete?'✓ UPDATE':'SAVE'}
+        </button>
+      </div>
+
+      <!-- Range mode (start → end) -->
+      <div id="stepmode-range-${s.id}" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:8px;">
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">START STEPS</div>
+            <input type="number" id="stepstart-${s.id}" value="${autoStart}"
+              placeholder="Watch reading at start" min="0"
+              oninput="calcStepDiff('${s.id}')"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">
+          </div>
+          <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--border2);padding-top:20px;">→</div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">END STEPS</div>
+            <input type="number" id="stepend-${s.id}" value="${savedEnd||''}"
+              placeholder="Watch reading at end" min="0"
+              oninput="calcStepDiff('${s.id}')"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">
+          </div>
+        </div>
+        <div id="stepdiff-${s.id}" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);
+          text-align:center;margin-bottom:8px;min-height:18px;">
+          ${savedStart && savedEnd ? `= ${(savedEnd - savedStart).toLocaleString()} steps this walk` : ''}
+        </div>
+        <button class="btn btn-p" onclick="saveStepSection('${s.id}','range')"
+          style="width:100%;font-size:0.65rem;padding:9px;">
+          ${complete?'✓ UPDATE':'SAVE WALK'}
+        </button>
+      </div>
+
+      ${complete ? `<div style="font-family:var(--font-mono);font-size:0.62rem;color:#4caf50;margin-top:8px;text-align:center;">✓ SECTION TARGET MET</div>` : ''}
     </div>`;
   }).join('');
+
+  // Set active mode tabs based on saved data
+  DEFAULT_WALK_SECTIONS.forEach(s => {
+    const saved = todayStepData[s.id] || {};
+    const hasRange = saved.startSteps || saved.endSteps;
+    if (hasRange) switchStepMode(s.id, 'range', false);
+    else highlightModeTab(s.id, 'total');
+  });
 }
 
-async function saveStepSection(sectionId) {
-  const input = document.getElementById('stepinput-'+sectionId);
-  const steps = parseInt(input?.value) || 0;
-  todayStepData[sectionId] = steps;
+function switchStepMode(sectionId, mode, highlight=true) {
+  const totalPanel = document.getElementById(`stepmode-total-${sectionId}`);
+  const rangePanel = document.getElementById(`stepmode-range-${sectionId}`);
+  if (totalPanel) totalPanel.style.display = mode==='total' ? 'flex' : 'none';
+  if (rangePanel) rangePanel.style.display = mode==='range' ? 'block' : 'none';
+  if (highlight) highlightModeTab(sectionId, mode);
+}
+
+function highlightModeTab(sectionId, activeMode) {
+  ['total','range'].forEach(m => {
+    const btn = document.getElementById(`modetab-${m}-${sectionId}`);
+    if (!btn) return;
+    btn.style.background = m===activeMode ? 'var(--accent-dim)' : 'var(--bg3)';
+    btn.style.color = m===activeMode ? 'var(--accent2)' : 'var(--text-dim)';
+  });
+}
+
+function calcStepDiff(sectionId) {
+  const startEl = document.getElementById(`stepstart-${sectionId}`);
+  const endEl = document.getElementById(`stepend-${sectionId}`);
+  const diffEl = document.getElementById(`stepdiff-${sectionId}`);
+  if (!startEl || !endEl || !diffEl) return;
+  const start = parseInt(startEl.value) || 0;
+  const end = parseInt(endEl.value) || 0;
+  if (start > 0 && end > start) {
+    const diff = end - start;
+    diffEl.textContent = `= ${diff.toLocaleString()} steps this walk`;
+    diffEl.style.color = 'var(--accent2)';
+  } else if (end > 0 && end <= start) {
+    diffEl.textContent = 'End steps must be greater than start steps';
+    diffEl.style.color = 'var(--danger)';
+  } else {
+    diffEl.textContent = '';
+  }
+}
+
+async function saveStepSection(sectionId, mode) {
+  let steps = 0, startSteps = null, endSteps = null;
+
+  if (mode === 'range') {
+    startSteps = parseInt(document.getElementById(`stepstart-${sectionId}`)?.value) || 0;
+    endSteps   = parseInt(document.getElementById(`stepend-${sectionId}`)?.value)   || 0;
+    if (endSteps <= startSteps) { toast('END STEPS MUST BE GREATER THAN START STEPS'); return; }
+    steps = endSteps - startSteps;
+  } else {
+    steps = parseInt(document.getElementById(`stepinput-${sectionId}`)?.value) || 0;
+  }
+
+  // Save into todayStepData keyed by id
+  todayStepData[sectionId] = { steps, startSteps, endSteps };
+
+  // Auto-chain: pre-fill next section's start with this section's endSteps
+  if (mode === 'range' && endSteps) {
+    const idx = DEFAULT_WALK_SECTIONS.findIndex(s => s.id === sectionId);
+    const next = DEFAULT_WALK_SECTIONS[idx + 1];
+    if (next) {
+      // Only pre-fill if next section not already saved
+      if (!todayStepData[next.id]?.startSteps) {
+        const nextStartEl = document.getElementById(`stepstart-${next.id}`);
+        if (nextStartEl) nextStartEl.value = endSteps;
+      }
+    }
+  }
+
   const today = new Date().toISOString().split('T')[0];
-  const total = Object.values(todayStepData).reduce((a,b)=>a+b, 0);
+  // Total = sum of all section steps
+  const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (todayStepData[s.id]?.steps || 0), 0);
+
   try {
-    await db.collection('userdata').doc(SESSION.username).collection('steplog').doc(today)
+    // Save raw (unencrypted) step log for today — quick access
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(today)
       .set({ sections: todayStepData, total, date: today, updated: new Date().toISOString() });
-    // Update encrypted steps log
+
+    // Also update encrypted steps log for charts/history
     const existing = await encryptedLoad('steps');
     const idx = existing.findIndex(e => e.date === today);
-    const entry = { saved: new Date().toISOString(), date: today, total: String(total),
-      morning: String(todayStepData.morning||0), lunch: String(todayStepData.lunch||0),
-      pre: String(todayStepData.pre||0), post: String(todayStepData.post||0) };
+    const entry = {
+      saved: new Date().toISOString(), date: today, total: String(total),
+      morning: String(todayStepData.morning?.steps || 0),
+      lunch:   String(todayStepData.lunch?.steps   || 0),
+      pre:     String(todayStepData.pre?.steps      || 0),
+      post:    String(todayStepData.post?.steps     || 0),
+      evening: String(todayStepData.evening?.steps  || 0),
+    };
     idx >= 0 ? existing[idx] = entry : existing.unshift(entry);
     await encryptedSave('steps', existing);
-    renderStepSections(); updateStepProgress(); loadStats();
-    toast(`✓ ${sectionId.toUpperCase()} WALK SAVED — ${steps.toLocaleString()} STEPS`);
+
+    renderStepSections();
+    updateStepProgress();
+    loadStats();
+    const label = DEFAULT_WALK_SECTIONS.find(s => s.id === sectionId)?.label || sectionId;
+    toast(`✓ ${label} SAVED — ${steps.toLocaleString()} STEPS`);
   } catch(e) { toast('ERROR: ' + e.message); }
 }
 
 async function saveCustomWalk() {
-  const name = document.getElementById('customWalkName').value.trim();
+  const name  = document.getElementById('customWalkName').value.trim();
   const steps = parseInt(document.getElementById('customWalkSteps').value) || 0;
   if (!name || steps <= 0) { toast('ENTER WALK NAME AND STEPS'); return; }
   const customId = 'custom_' + Date.now();
-  todayStepData[customId] = steps;
+  todayStepData[customId] = { steps, startSteps: null, endSteps: null, label: name };
   const today = new Date().toISOString().split('T')[0];
-  const total = Object.values(todayStepData).reduce((a,b)=>a+b, 0);
+  const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (todayStepData[s.id]?.steps || 0), 0)
+    + Object.entries(todayStepData).filter(([k]) => k.startsWith('custom_')).reduce((sum,[,v]) => sum + (v.steps||0), 0);
   try {
     await db.collection('userdata').doc(SESSION.username).collection('steplog').doc(today)
       .set({ sections: todayStepData, total, date: today, updated: new Date().toISOString() });
@@ -2119,17 +2277,19 @@ async function saveCustomWalk() {
 }
 
 function updateStepProgress() {
-  const total = Object.values(todayStepData).reduce((a,b)=>a+b, 0);
-  const goal = userGoals.stepGoal || 16000;
-  const pct = Math.min(100, Math.round(total/goal*100));
-  const totalEl=document.getElementById('stepTodayTotal'), goalEl=document.getElementById('stepGoalDisplay');
-  const pctEl=document.getElementById('stepRingPct'), ring=document.getElementById('stepRingFill');
+  const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (todayStepData[s.id]?.steps || 0), 0);
+  const goal = userGoals.stepGoal || 10000;
+  const pct = Math.min(100, Math.round(total / goal * 100));
+  const totalEl = document.getElementById('stepTodayTotal');
+  const goalEl  = document.getElementById('stepGoalDisplay');
+  const pctEl   = document.getElementById('stepRingPct');
+  const ring    = document.getElementById('stepRingFill');
   if (totalEl) totalEl.textContent = total.toLocaleString();
-  if (goalEl) goalEl.textContent = goal.toLocaleString();
-  if (pctEl) { pctEl.textContent=pct+'%'; pctEl.style.color=pct>=100?'#4caf50':'var(--accent2)'; }
-  if (ring) { ring.style.strokeDashoffset=345.4-(pct/100)*345.4; ring.style.stroke=pct>=100?'#4caf50':'var(--accent2)'; }
-  const sub=document.getElementById('stepsSub');
-  if (sub) sub.textContent=`// ${total.toLocaleString()} OF ${goal.toLocaleString()} STEPS TODAY · ${pct}% COMPLETE //`;
+  if (goalEl)  goalEl.textContent  = goal.toLocaleString();
+  if (pctEl)   { pctEl.textContent = pct + '%'; pctEl.style.color = pct >= 100 ? '#4caf50' : 'var(--accent2)'; }
+  if (ring)    { ring.style.strokeDashoffset = 345.4 - (pct/100)*345.4; ring.style.stroke = pct >= 100 ? '#4caf50' : 'var(--accent2)'; }
+  const sub = document.getElementById('stepsSub');
+  if (sub) sub.textContent = `// ${total.toLocaleString()} OF ${goal.toLocaleString()} STEPS TODAY · ${pct}% COMPLETE //`;
 }
 
 let toastTimeout;
