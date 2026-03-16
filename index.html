@@ -613,7 +613,7 @@ body.theme-female .header::after{
     <button class="nav-btn" onclick="nav('decomp')">DECOMPRESS</button>
     <button class="nav-btn" onclick="nav('log')">LOG DATA</button>
     <button class="nav-btn" id="adminNavBtn" style="display:none;" onclick="nav('admin')">⚙ ADMIN</button>
-    <button class="nav-btn" onclick="nav('syscheck')">SYS CHECK</button>
+    <button class="nav-btn" id="syscheckNavBtn" style="display:none;" onclick="nav('syscheck')">SYS CHECK</button>
   </nav>
 
   <div class="container">
@@ -1233,7 +1233,10 @@ function launchApp() {
   applyTheme(SESSION.gender);
   document.getElementById('headerUser').textContent = SESSION.displayName.toUpperCase();
   document.getElementById('appLogo').textContent = SESSION.gender === 'female' ? 'BLOOMFIT' : 'OPERATORFIT';
-  if (SESSION.isAdmin) document.getElementById('adminNavBtn').style.display = '';
+  if (SESSION.isAdmin) {
+    document.getElementById('adminNavBtn').style.display = '';
+    document.getElementById('syscheckNavBtn').style.display = '';
+  }
   const isF = SESSION.gender === 'female';
   document.getElementById('workoutSub').textContent = isF
     ? '// 6-DAY SPLIT · GLUTE & CORE FOCUS · HOME + HOTEL VARIANTS //'
@@ -1334,7 +1337,7 @@ function nav(id) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('syscheckContainer').style.display = 'block';
-    document.querySelectorAll('.nav-btn').forEach(b => { if(b.textContent.includes('SYS')) b.classList.add('active'); });
+    document.getElementById('syscheckNavBtn').classList.add('active');
     runSysCheck();
     window.scrollTo(0,0);
     return;
@@ -1435,18 +1438,36 @@ async function runSysCheck() {
   }
 
   // Render
-  const statusColor = { ok:'var(--success)', err:'var(--danger)', warn:'var(--accent)', info:'var(--border2)' };
-  const statusLabel = { ok:'OK', err:'FAIL', warn:'WARN', info:'INFO' };
+  const statusColor = { ok:'#4caf50', err:'#f44336', warn:'#ff9800', info:'#90a4ae' };
+  const statusLabel = { ok:'✓ OK', err:'✗ FAIL', warn:'⚠ WARN', info:'ℹ INFO' };
+  const okCount = rows.filter(r=>r.status==='ok').length;
+  const errCount = rows.filter(r=>r.status==='err').length;
+  const summaryColor = errCount > 0 ? '#f44336' : '#4caf50';
+  const summaryText = errCount > 0 ? `${errCount} ISSUE${errCount>1?'S':''} FOUND` : `ALL ${okCount} CHECKS PASSED`;
+
   out.innerHTML = `
-    <div class="card">
+    <div class="card" style="margin-bottom:16px;">
       <div class="card-label">DIAGNOSTIC RESULTS</div>
-      <div class="card-title">SYSTEM STATUS</div>
-      <table class="tbl" style="width:100%">
-        <tr><th>CHECK</th><th>STATUS</th><th>DETAIL</th></tr>
-        ${rows.map(r => `<tr>
-          <td class="mono" style="font-size:0.75rem;color:var(--text)">${r.label}</td>
-          <td><span style="font-family:var(--font-mono);font-size:0.65rem;padding:2px 8px;background:${statusColor[r.status]}22;color:${statusColor[r.status]};border:1px solid ${statusColor[r.status]}44;">${statusLabel[r.status]}</span></td>
-          <td class="mono" style="font-size:0.7rem;color:var(--text-dim)">${r.detail}</td>
+      <div class="card-title" style="color:${summaryColor};">${summaryText}</div>
+      <div class="mono dim" style="font-size:0.7rem;">Last run: ${new Date().toLocaleTimeString()}</div>
+    </div>
+    <div class="card">
+      <table class="tbl" style="width:100%;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid var(--border);">
+          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.1em;">CHECK</th>
+          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.1em;width:80px;">STATUS</th>
+          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.1em;">DETAIL</th>
+        </tr>
+        ${rows.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="padding:8px 6px;font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">${r.label}</td>
+          <td style="padding:8px 6px;">
+            <span style="font-family:var(--font-mono);font-size:0.62rem;padding:3px 8px;
+              background:${statusColor[r.status]}22;color:${statusColor[r.status]};
+              border:1px solid ${statusColor[r.status]}66;border-radius:2px;white-space:nowrap;">
+              ${statusLabel[r.status]}
+            </span>
+          </td>
+          <td style="padding:8px 6px;font-family:var(--font-mono);font-size:0.68rem;color:#b0bec5;line-height:1.5;">${r.detail}</td>
         </tr>`).join('')}
       </table>
     </div>`;
