@@ -357,7 +357,7 @@ body.theme-female .ex-badge{border-radius:20px;}
 .ex-badge.fin{background:rgba(204,34,0,0.2);color:var(--danger);}
 .ex-body{display:none;padding:14px 16px;border-top:1px solid var(--border);}
 .ex-body.open{display:block;}
-.yt-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin-bottom:12px;border:1px solid var(--border);}
+.yt-wrap{position:relative;padding-bottom:56.25%;height:0;min-height:200px;overflow:hidden;margin-bottom:12px;border:1px solid var(--border);}
 .yt-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
 .yt-ph{
   position:absolute;inset:0;background:var(--bg2);
@@ -945,26 +945,28 @@ body.theme-female .header::after{
   <div class="page-title">SYS<br><span>CHECK</span></div>
   <div class="page-sub">// LIVE DIAGNOSTIC — FIREBASE · SESSION · DATA STATUS //</div>
 
-  <!-- Status bar -->
-  <div id="sysStatusBar" style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:14px 18px;background:var(--bg2);border:1px solid var(--border);">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span id="dbDot" style="width:12px;height:12px;border-radius:50%;background:#555;display:inline-block;transition:background 0.4s;"></span>
-      <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);" id="dbStatus">CHECKING...</span>
+  <!-- Live status cards -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+    <div style="background:var(--bg2);border:1px solid var(--border);padding:16px;text-align:center;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;">
+        <span id="sc-db-dot" style="width:14px;height:14px;border-radius:50%;background:#555;display:inline-block;flex-shrink:0;"></span>
+        <span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;">DATABASE</span>
+      </div>
+      <div id="sc-db-status" style="font-family:var(--font-display);font-size:1rem;color:var(--text-dim);">—</div>
     </div>
-    <div style="width:1px;height:20px;background:var(--border);"></div>
-    <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);">
-      USERS: <span id="userCountBadge" style="color:var(--accent2);font-weight:bold;">—</span>
+    <div style="background:var(--bg2);border:1px solid var(--border);padding:16px;text-align:center;">
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:6px;">USERS</div>
+      <div id="sc-users" style="font-family:var(--font-display);font-size:1.8rem;color:var(--accent2);">—</div>
     </div>
-    <div style="width:1px;height:20px;background:var(--border);"></div>
-    <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);">
-      SESSION: <span id="sessionBadge" style="color:var(--accent2);">—</span>
-    </div>
-    <div style="margin-left:auto;">
-      <button class="btn btn-s" onclick="runSysCheck()" style="font-size:0.65rem;padding:6px 14px;">⟳ REFRESH</button>
+    <div style="background:var(--bg2);border:1px solid var(--border);padding:16px;text-align:center;">
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:6px;">SESSION</div>
+      <div id="sc-session" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);word-break:break-all;">—</div>
     </div>
   </div>
 
-  <div id="syscheckOutput"><div class="mono dim" style="padding:16px;">Click REFRESH to run diagnostics.</div></div>
+  <button class="btn btn-p" onclick="runSysCheck()" style="margin-bottom:20px;width:100%;">⟳ RUN DIAGNOSTICS</button>
+
+  <div id="syscheckOutput"></div>
 </div>
 </div>
 
@@ -1437,132 +1439,126 @@ async function runSysCheck() {
   const out = document.getElementById('syscheckOutput');
   if (!out) return;
 
-  const dbDot = document.getElementById('dbDot');
-  const dbStatus = document.getElementById('dbStatus');
-  const userCountBadge = document.getElementById('userCountBadge');
-  const sessionBadge = document.getElementById('sessionBadge');
+  const setCard = (id, val, color) => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = val; if (color) el.style.color = color; }
+  };
+  const setDot = (color, glow) => {
+    const dot = document.getElementById('sc-db-dot');
+    if (dot) { dot.style.background = color; dot.style.boxShadow = glow ? `0 0 8px ${color}` : 'none'; }
+  };
 
-  // Immediately show loading state
-  out.innerHTML = `<div style="padding:20px;font-family:var(--font-mono);font-size:0.75rem;color:var(--accent2);
-    letter-spacing:.1em;text-align:center;">
-    <div style="font-size:1.5rem;margin-bottom:8px;">⟳</div>
-    RUNNING DIAGNOSTICS...
+  // Show loading immediately
+  setDot('#ffaa00', true);
+  setCard('sc-db-status', 'CHECKING...', '#ffaa00');
+  setCard('sc-users', '…', '#ffaa00');
+  setCard('sc-session', SESSION ? `@${SESSION.username}` : 'NONE', SESSION ? '#4caf50' : '#f44336');
+
+  out.innerHTML = `<div style="padding:24px;text-align:center;font-family:var(--font-mono);font-size:0.72rem;color:var(--accent2);letter-spacing:.12em;">
+    RUNNING DIAGNOSTICS…
   </div>`;
 
-  if (dbDot) { dbDot.style.background = '#ffaa00'; dbDot.style.boxShadow = '0 0 6px #ffaa00'; }
-  if (dbStatus) { dbStatus.textContent = 'CONNECTING...'; dbStatus.style.color = '#ffaa00'; }
-  if (userCountBadge) userCountBadge.textContent = '…';
-  if (sessionBadge) sessionBadge.textContent = '…';
-
   const rows = [];
-  const addRow = (label, status, detail) => rows.push({ label, status, detail });
+  const ok   = (label, detail) => rows.push({label, status:'ok',   color:'#4caf50', icon:'✓', detail});
+  const fail = (label, detail) => rows.push({label, status:'err',  color:'#f44336', icon:'✗', detail});
+  const warn = (label, detail) => rows.push({label, status:'warn', color:'#ff9800', icon:'⚠', detail});
+  const info = (label, detail) => rows.push({label, status:'info', color:'#90a4ae', icon:'ℹ', detail});
 
-  // Firebase connection
-  let firebaseOk = false;
+  // ── 1. Firebase connection ──
   try {
     await db.collection('users').limit(1).get();
-    firebaseOk = true;
-    if (dbDot) { dbDot.style.background = '#4caf50'; dbDot.style.boxShadow = '0 0 8px #4caf50'; }
-    if (dbStatus) { dbStatus.textContent = 'CONNECTED'; dbStatus.style.color = '#4caf50'; }
-    addRow('Firebase connection', 'ok', 'Firestore reachable — reads working');
+    setDot('#4caf50', true);
+    setCard('sc-db-status', 'CONNECTED', '#4caf50');
+    ok('Firebase connection', 'Firestore reachable — reads working');
   } catch(e) {
-    if (dbDot) { dbDot.style.background = '#f44336'; dbDot.style.boxShadow = '0 0 8px #f44336'; }
-    if (dbStatus) { dbStatus.textContent = 'DISCONNECTED'; dbStatus.style.color = '#f44336'; }
-    addRow('Firebase connection', 'err', `FAILED: ${e.message}`);
+    setDot('#f44336', true);
+    setCard('sc-db-status', 'FAILED', '#f44336');
+    fail('Firebase connection', e.message);
   }
 
-  // Session
+  // ── 2. Session ──
   if (SESSION) {
-    if (sessionBadge) sessionBadge.textContent = `@${SESSION.username}`;
-    addRow('Current session', 'ok', `Logged in as @${SESSION.username} (${SESSION.gender})`);
-    addRow('DEK (encryption key)', 'ok', 'In-memory AES-256 key present');
+    ok('Active session', `@${SESSION.username} · ${SESSION.gender} · ${SESSION.isAdmin ? '★ ADMIN' : 'user'}`);
+    ok('Encryption key', 'AES-256-GCM key in memory — data is protected');
+    if (SESSION.email) info('Email on file', SESSION.email);
   } else {
-    if (sessionBadge) sessionBadge.textContent = 'NONE';
-    addRow('Current session', 'err', 'Not logged in');
+    fail('Active session', 'No user logged in');
   }
 
-  // Remember me token
-  const token = localStorage.getItem(SESSION_KEY);
-  if (token) {
+  // ── 3. Remember me ──
+  const tok = localStorage.getItem('op_session_token');
+  if (tok) {
     try {
-      const t = JSON.parse(token);
-      const daysLeft = Math.ceil((t.expires - Date.now()) / 86400000);
-      addRow('Remember me token', 'ok', `Stored — expires in ${daysLeft} day${daysLeft!==1?'s':''} · user: ${t.username}`);
-    } catch { addRow('Remember me token', 'warn', 'Token exists but is malformed'); }
+      const t = JSON.parse(tok);
+      const days = Math.ceil((t.expires - Date.now()) / 86400000);
+      days > 0 ? ok('Remember me token', `Active — expires in ${days} day${days!==1?'s':''}`) : warn('Remember me token', 'Expired — will be cleared on next login');
+    } catch { warn('Remember me token', 'Stored but malformed'); }
   } else {
-    addRow('Remember me token', 'info', 'No token — "Remember me" was not checked at login');
+    info('Remember me token', 'Not set — "Remember me" was not checked at login');
   }
 
-  // User registry
+  // ── 4. User registry ──
   try {
     const users = await getUsers();
-    const unames = Object.keys(users);
-    if (userCountBadge) userCountBadge.textContent = unames.length;
-    if (unames.length === 0) {
-      addRow('User registry', 'warn', 'No users registered yet');
-    } else {
-      addRow('User registry', 'ok', `${unames.length} user${unames.length!==1?'s':''} registered`);
-      unames.forEach(u => {
-        const info = users[u];
-        addRow(`  @${u}`, info.passHash ? 'ok' : 'err',
-          `${info.displayName} · ${info.gender} · joined ${info.joinDate?info.joinDate.slice(0,10):'?'} · ${info.isAdmin?'★ ADMIN':'user'}`);
-      });
-    }
+    const list = Object.entries(users);
+    setCard('sc-users', list.length, '#4caf50');
+    ok('User registry', `${list.length} user${list.length!==1?'s':''} registered in Firebase`);
+    list.forEach(([uname, u]) => {
+      ok(`  @${uname}`, `${u.displayName} · ${u.gender||'?'} · joined ${u.joinDate?u.joinDate.slice(0,10):'?'} · ${u.isAdmin?'★ ADMIN':'user'}${u.email?' · '+u.email:''}`);
+    });
   } catch(e) {
-    if (userCountBadge) userCountBadge.textContent = 'ERR';
-    addRow('User registry', 'err', `Could not read: ${e.message}`);
+    setCard('sc-users', 'ERR', '#f44336');
+    fail('User registry', `Read failed: ${e.message}`);
   }
 
-  // Encrypted data for current user
+  // ── 5. Encrypted data ──
   if (SESSION) {
+    let totalEntries = 0;
     for (const type of ['workout','steps','body','nutrition']) {
       try {
         const doc = await db.collection('userdata').doc(SESSION.username).collection(type).doc('entries').get();
         if (doc.exists) {
           const entries = await encryptedLoad(type);
-          addRow(`Data: ${type}`, 'ok', `${entries.length} entr${entries.length!==1?'ies':'y'} saved · AES-256 encrypted`);
+          totalEntries += entries.length;
+          ok(`Data · ${type}`, `${entries.length} entr${entries.length!==1?'ies':'y'} · encrypted in Firebase`);
         } else {
-          addRow(`Data: ${type}`, 'info', 'No entries logged yet');
+          info(`Data · ${type}`, 'No entries yet');
         }
       } catch(e) {
-        addRow(`Data: ${type}`, 'err', `Read error: ${e.message}`);
+        fail(`Data · ${type}`, `Error: ${e.message}`);
       }
     }
+    // Workout checklist checks
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const doc = await db.collection('userdata').doc(SESSION.username).collection('wkchecks').doc(today).get();
+      doc.exists ? ok('Today\'s checklist', `Saved — day: ${doc.data().dayId||'?'}`) : info('Today\'s checklist', 'No workout started today');
+    } catch(e) { warn('Today\'s checklist', `Read error: ${e.message}`); }
   }
 
-  // Render table
-  const statusColor = { ok:'#4caf50', err:'#f44336', warn:'#ff9800', info:'#90a4ae' };
-  const statusLabel = { ok:'✓ OK', err:'✗ FAIL', warn:'⚠ WARN', info:'ℹ INFO' };
-  const okCount = rows.filter(r=>r.status==='ok').length;
-  const errCount = rows.filter(r=>r.status==='err').length;
-  const summaryColor = errCount > 0 ? '#f44336' : '#4caf50';
-  const summaryText = errCount > 0 ? `${errCount} ISSUE${errCount>1?'S':''} DETECTED` : `ALL SYSTEMS OPERATIONAL`;
+  // ── Render ──
+  const passed = rows.filter(r=>r.status==='ok').length;
+  const failed = rows.filter(r=>r.status==='err').length;
+  const summaryColor = failed > 0 ? '#f44336' : '#4caf50';
+  const summaryText  = failed > 0 ? `${failed} ISSUE${failed>1?'S':''} DETECTED` : 'ALL SYSTEMS OPERATIONAL';
 
   out.innerHTML = `
-    <div class="card" style="margin-bottom:16px;border-left:4px solid ${summaryColor};">
-      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.15em;margin-bottom:4px;">SUMMARY</div>
-      <div style="font-family:var(--font-display);font-size:1.4rem;color:${summaryColor};letter-spacing:.08em;">${summaryText}</div>
-      <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-top:4px;">${okCount} passed · ${errCount} failed · ${rows.length} total checks · ${new Date().toLocaleTimeString()}</div>
+    <div style="background:var(--bg2);border-left:4px solid ${summaryColor};padding:14px 18px;margin-bottom:16px;">
+      <div style="font-family:var(--font-display);font-size:1.3rem;color:${summaryColor};letter-spacing:.06em;">${summaryText}</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-top:4px;">
+        ${passed} passed · ${failed} failed · ${rows.length} checks · ${new Date().toLocaleTimeString()}
+      </div>
     </div>
-    <div class="card">
-      <table style="width:100%;border-collapse:collapse;">
-        <tr style="border-bottom:1px solid var(--border);">
-          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);letter-spacing:.1em;">CHECK</th>
-          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);letter-spacing:.1em;width:90px;">STATUS</th>
-          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);letter-spacing:.1em;">DETAIL</th>
-        </tr>
-        ${rows.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:8px 6px;font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">${r.label}</td>
-          <td style="padding:8px 6px;">
-            <span style="font-family:var(--font-mono);font-size:0.6rem;padding:3px 9px;
-              background:${statusColor[r.status]}20;color:${statusColor[r.status]};
-              border:1px solid ${statusColor[r.status]}55;white-space:nowrap;">
-              ${statusLabel[r.status]}
-            </span>
-          </td>
-          <td style="padding:8px 6px;font-family:var(--font-mono);font-size:0.68rem;color:#b0bec5;line-height:1.5;">${r.detail}</td>
-        </tr>`).join('')}
-      </table>
+    <div style="background:var(--bg2);border:1px solid var(--border);">
+      ${rows.map(r => `
+        <div style="display:grid;grid-template-columns:16px 1fr;gap:12px;align-items:start;
+          padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span style="color:${r.color};font-size:0.8rem;margin-top:1px;">${r.icon}</span>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:${r.status==='ok'?'var(--text)':r.color};margin-bottom:2px;">${r.label}</div>
+            <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);line-height:1.5;">${r.detail}</div>
+          </div>
+        </div>`).join('')}
     </div>`;
 }
 
@@ -2296,69 +2292,68 @@ function toggleEx(bodyEl, itemId) {
 function loadYT(ph, exerciseName) {
   const query = encodeURIComponent(exerciseName + ' exercise tutorial how to');
   const searchUrl = `https://www.youtube.com/results?search_query=${query}`;
+  const wrap = ph.parentElement; // .yt-wrap
 
-  // Try to find a known good video ID for this exercise
   const knownIds = {
-    'BENCH PRESS': 'vcBig73ojpE', 'OVERHEAD PRESS': '2yjwXTZbrDM',
-    'INCLINE DB PRESS': '8iPEnn-ltC8', 'LATERAL RAISES': '3VcKaXpzqRo',
-    'PUSH-UP BURNOUT': 'IODxDxX7oi4', 'PUSH-UP VARIATIONS': 'IODxDxX7oi4',
-    'GOBLET SQUAT': 'MxsFDhcyFyE', 'ROMANIAN DEADLIFT': 'JCXUYuzwNrM',
-    'BULGARIAN SPLIT SQUAT': '2C-uNgbwi_k', 'HIP THRUST': 'wPM8icPu6H8',
-    'GLUTE BRIDGE': 'wPM8icPu6H8', 'SQUAT BURNOUT': 'aclHkVaku9U',
-    'SUMO SQUAT': 'MxsFDhcyFyE', 'DONKEY KICK': 'SJ1iYTLBgpI',
-    'DB ROW (SINGLE ARM)': 'roCP442LA5g', 'BENT-OVER ROW': 'FWJR5Ve8bnQ',
-    'BICEP CURL': 'ykJmrZ5v0Oo', 'HAMMER CURL': '0xyZbNqL_U0',
-    'REAR DELT RAISE': 'Rep-GkxHMKU', 'ROW BURNOUT': 'FWJR5Ve8bnQ',
-    'PLANK VARIATIONS': 'pSHjTRCQxIw', 'DEAD BUG': '4XLEnwUr1d8',
-    'BICYCLE CRUNCH': 'Iwyvozckjak', 'MOUNTAIN CLIMBERS': 'nmwgirgXLYM',
-    'BURPEE FINISHER': 'dZgVxmf6jkA', 'FLOOR PRESS': 'uUGDRwge4F8',
-    'ARCHER PUSH-UP': '44DbxOftzgw', 'RENEGADE ROW': 'Lge5ZPpGQu4',
-    'TRICEP DIPS': '0326dy_-CzM', 'REVERSE LUNGE': 'xrjMX9RLuHs',
-    'WALL SIT': 'y-wV4Venusw', 'LEG RAISES': 'JB2oyawG9KI',
-    'SINGLE-LEG DEADLIFT': 'JCXUYuzwNrM', 'WALKING LUNGE': 'D7KaRcUTQeE',
-    'TRICEP OVERHEAD EXT.': '_gsUck-7f74', 'HANGING LEG RAISE': 'JB2oyawG9KI',
-    'SIDE PLANK HIP DIP': 'Bk_VYqG83CQ', 'RUSSIAN TWIST': 'JyUqwkVpsi8',
-    'GLUTE KICKBACK': 'SJ1iYTLBgpI', 'LATERAL BAND WALK': 'a5G4RJfVi2U',
+    'BENCH PRESS':'vcBig73ojpE','OVERHEAD PRESS':'2yjwXTZbrDM',
+    'INCLINE DB PRESS':'8iPEnn-ltC8','LATERAL RAISES':'3VcKaXpzqRo',
+    'PUSH-UP BURNOUT':'IODxDxX7oi4','PUSH-UP VARIATIONS':'IODxDxX7oi4',
+    'GOBLET SQUAT':'MxsFDhcyFyE','ROMANIAN DEADLIFT':'JCXUYuzwNrM',
+    'BULGARIAN SPLIT SQUAT':'2C-uNgbwi_k','HIP THRUST':'wPM8icPu6H8',
+    'GLUTE BRIDGE':'wPM8icPu6H8','SQUAT BURNOUT':'aclHkVaku9U',
+    'SUMO SQUAT':'MxsFDhcyFyE','DONKEY KICK':'SJ1iYTLBgpI',
+    'DB ROW (SINGLE ARM)':'roCP442LA5g','BENT-OVER ROW':'FWJR5Ve8bnQ',
+    'BICEP CURL':'ykJmrZ5v0Oo','HAMMER CURL':'0xyZbNqL_U0',
+    'REAR DELT RAISE':'Rep-GkxHMKU','ROW BURNOUT':'FWJR5Ve8bnQ',
+    'PLANK VARIATIONS':'pSHjTRCQxIw','DEAD BUG':'4XLEnwUr1d8',
+    'BICYCLE CRUNCH':'Iwyvozckjak','MOUNTAIN CLIMBERS':'nmwgirgXLYM',
+    'BURPEE FINISHER':'dZgVxmf6jkA','FLOOR PRESS':'uUGDRwge4F8',
+    'ARCHER PUSH-UP':'44DbxOftzgw','RENEGADE ROW':'Lge5ZPpGQu4',
+    'TRICEP DIPS':'0326dy_-CzM','REVERSE LUNGE':'xrjMX9RLuHs',
+    'WALL SIT':'y-wV4Venusw','LEG RAISES':'JB2oyawG9KI',
+    'SINGLE-LEG DEADLIFT':'JCXUYuzwNrM','WALKING LUNGE':'D7KaRcUTQeE',
+    'TRICEP OVERHEAD EXT.':'_gsUck-7f74','HANGING LEG RAISE':'JB2oyawG9KI',
+    'SIDE PLANK HIP DIP':'Bk_VYqG83CQ','RUSSIAN TWIST':'JyUqwkVpsi8',
+    'GLUTE KICKBACK':'SJ1iYTLBgpI','LATERAL BAND WALK':'a5G4RJfVi2U',
   };
 
   const videoId = knownIds[exerciseName.toUpperCase()];
-  const container = ph.parentElement;
 
   if (videoId) {
-    // Show iframe + fallback link below it
-    container.innerHTML = `
-      <div style="position:relative;">
-        <iframe id="yt-${videoId}" src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0"
-          allow="autoplay;encrypted-media" allowfullscreen
-          style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
-          onerror="this.parentElement.parentElement.innerHTML=ytFallback('${exerciseName.replace(/'/g,"\\'")}','${searchUrl}')">
-        </iframe>
-      </div>
-      <div style="text-align:center;padding:6px 0;">
+    // Keep .yt-wrap as-is (it provides the 56.25% height trick)
+    // Replace only the yt-ph div with the iframe
+    wrap.style.paddingBottom = '56.25%';
+    wrap.style.height = '0';
+    wrap.innerHTML = `
+      <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0"
+        allow="autoplay;encrypted-media" allowfullscreen
+        style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;">
+      </iframe>
+      <a href="${searchUrl}" target="_blank" rel="noopener"
+        style="position:absolute;bottom:6px;right:8px;z-index:10;
+        font-family:monospace;font-size:0.55rem;color:rgba(255,255,255,0.75);
+        background:rgba(0,0,0,0.6);padding:2px 7px;text-decoration:none;border-radius:2px;">
+        ↗ more videos
+      </a>`;
+  } else {
+    // No known ID — search button
+    wrap.style.paddingBottom = '0';
+    wrap.style.height = 'auto';
+    wrap.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+        padding:28px 16px;background:var(--bg2);text-align:center;gap:10px;">
+        <div style="font-size:1.5rem;">▶</div>
+        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);letter-spacing:.1em;">${exerciseName}</div>
         <a href="${searchUrl}" target="_blank" rel="noopener"
-          style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);text-decoration:none;letter-spacing:.08em;">
-          ↗ Search YouTube for more videos
+          style="font-family:var(--font-mono);font-size:0.65rem;padding:8px 20px;
+          background:var(--accent);color:var(--bg);text-decoration:none;letter-spacing:.1em;">
+          WATCH ON YOUTUBE ↗
         </a>
       </div>`;
-  } else {
-    // No known ID — go straight to search
-    container.innerHTML = ytFallback(exerciseName, searchUrl);
   }
 }
 
-function ytFallback(name, searchUrl) {
-  return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-    height:160px;background:var(--bg3);border:1px solid var(--border);text-align:center;padding:20px;gap:10px;">
-    <div style="font-size:1.8rem;">▶</div>
-    <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);letter-spacing:.1em;">${name}</div>
-    <a href="${searchUrl}" target="_blank" rel="noopener"
-      style="font-family:var(--font-mono);font-size:0.65rem;padding:8px 20px;
-      background:var(--accent);color:var(--bg);text-decoration:none;letter-spacing:.1em;display:inline-block;">
-      WATCH ON YOUTUBE ↗
-    </a>
-    <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);">Opens YouTube search — always current results</div>
-  </div>`;
-}
+function ytFallback(name, url) { return ''; } // kept for compat
 // ═══════════════════════════════════════════════════════════
 // PHASE CONTENT
 // ═══════════════════════════════════════════════════════════
