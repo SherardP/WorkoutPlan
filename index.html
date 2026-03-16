@@ -502,7 +502,17 @@ body.theme-female .header::after{
 .sci-text strong{color:var(--accent2);}
 .divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
 
-/* STEP ROWS */
+/* GOAL CHIPS */
+.goal-chip {
+  font-family:var(--font-mono);font-size:0.72rem;padding:8px 16px;
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--text-dim);cursor:pointer;letter-spacing:.08em;
+  transition:all 0.15s;user-select:none;
+}
+body.theme-female .goal-chip{border-radius:20px;}
+.goal-chip:hover{border-color:var(--accent);color:var(--text);}
+.goal-chip.active{background:var(--accent-dim);border-color:var(--accent2);color:var(--accent2);}
+/* STEP SECTIONS */
 .step-row{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid rgba(74,74,42,0.25);}
 .step-row:last-child{border-bottom:none;}
 .step-time{font-family:var(--font-mono);font-size:0.75rem;color:var(--accent2);width:75px;flex-shrink:0;}
@@ -612,6 +622,7 @@ body.theme-female .header::after{
     <button class="nav-btn" onclick="nav('program')">PROGRAM</button>
     <button class="nav-btn" onclick="nav('workout')">WORKOUTS</button>
     <button class="nav-btn" onclick="nav('steps')">STEPS</button>
+    <button class="nav-btn" onclick="nav('goals')">GOALS</button>
     <button class="nav-btn" onclick="nav('decomp')">DECOMPRESS</button>
     <button class="nav-btn" onclick="nav('log')">LOG DATA</button>
     <button class="nav-btn" id="adminNavBtn" style="display:none;" onclick="nav('admin')">⚙ ADMIN</button>
@@ -742,24 +753,146 @@ body.theme-female .header::after{
 
   <!-- ── STEPS ── -->
   <div class="section" id="sec-steps">
-    <div class="page-title">STEP<br><span>PLAN</span></div>
-    <div class="page-sub">// 16,000 STEPS — CORTISOL-SMART DISTRIBUTION //</div>
+    <div class="page-title">STEP<br><span>TRACKER</span></div>
+    <div class="page-sub" id="stepsSub">// DAILY STEP GOAL — CORTISOL-SMART DISTRIBUTION //</div>
 
-    <div class="card mb16">
-      <div class="card-label">MISSION BRIEF</div>
-      <div class="card-title">WHY WE SPLIT THE STEPS</div>
-      <div class="mono dim" style="line-height:1.8;">One 16,000-step march elevates cortisol for hours — directly storing visceral fat.<br>Four focused walks keep each session in the fat-burning zone (60–70% max HR).<br><span class="orange">Post-workout walk is mandatory — it drives cortisol back down before sleep.</span></div>
+    <!-- Daily progress ring + total -->
+    <div class="card mb16" style="text-align:center;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;padding:8px 0;">
+        <!-- SVG ring -->
+        <div style="position:relative;width:130px;height:130px;flex-shrink:0;">
+          <svg width="130" height="130" style="transform:rotate(-90deg);">
+            <circle cx="65" cy="65" r="55" fill="none" stroke="var(--bg3)" stroke-width="10"/>
+            <circle id="stepRingFill" cx="65" cy="65" r="55" fill="none" stroke="var(--accent2)" stroke-width="10"
+              stroke-linecap="round" stroke-dasharray="345.4" stroke-dashoffset="345.4"
+              style="transition:stroke-dashoffset 0.6s ease;"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div id="stepRingPct" style="font-family:var(--font-display);font-size:1.6rem;color:var(--accent2);line-height:1;">0%</div>
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);letter-spacing:.1em;">OF GOAL</div>
+          </div>
+        </div>
+        <!-- Stats -->
+        <div style="text-align:left;">
+          <div style="margin-bottom:12px;">
+            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.15em;">TODAY'S STEPS</div>
+            <div id="stepTodayTotal" style="font-family:var(--font-display);font-size:2.4rem;color:var(--text-bright);line-height:1;">0</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.15em;">DAILY GOAL</div>
+            <div id="stepGoalDisplay" style="font-family:var(--font-display);font-size:1.4rem;color:var(--accent2);line-height:1;">—</div>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Walk sections -->
+    <div id="stepSections"></div>
+
+    <!-- Add custom walk -->
+    <div class="card mb16" style="border-style:dashed;border-color:var(--border2);">
+      <div class="card-label">ADD CUSTOM WALK</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="customWalkName" placeholder="Walk name (e.g. Evening stroll)"
+          style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);
+          color:var(--text);font-family:var(--font-mono);font-size:0.8rem;padding:8px 10px;outline:none;">
+        <input type="number" id="customWalkSteps" placeholder="Steps" min="0"
+          style="width:100px;background:var(--bg3);border:1px solid var(--border);
+          color:var(--text);font-family:var(--font-mono);font-size:0.8rem;padding:8px 10px;outline:none;">
+        <button class="btn btn-p" onclick="saveCustomWalk()" style="white-space:nowrap;">+ LOG WALK</button>
+      </div>
+    </div>
+
+    <!-- Science card -->
     <div class="card">
-      <div class="card-label">DAILY STEP DISTRIBUTION</div>
-      <div class="card-title">16,000 STEPS — 4 WALKS + ORGANIC</div>
-      <div class="step-row"><div class="step-time">7–8 AM</div><div class="step-num">3,000<small> steps</small></div><div class="step-bar"><div class="step-bar-f" style="width:19%"></div></div><div class="mono dim">Morning walk — cortisol alignment, fat-burning zone</div></div>
-      <div class="step-row"><div class="step-time">12–1 PM</div><div class="step-num">4,000<small> steps</small></div><div class="step-bar"><div class="step-bar-f" style="width:25%"></div></div><div class="mono dim">Lunch walk — blood sugar control, break sedentary sitting</div></div>
-      <div class="step-row"><div class="step-time">5–5:30 PM</div><div class="step-num">3,000<small> steps</small></div><div class="step-bar"><div class="step-bar-f" style="width:19%"></div></div><div class="mono dim">Pre-workout transition — moves you out of work-stress mode</div></div>
-      <div class="step-row"><div class="step-time">POST-WRK</div><div class="step-num" style="color:var(--accent2);">3,000<small> steps</small></div><div class="step-bar"><div class="step-bar-f" style="width:19%"></div></div><div class="mono" style="color:var(--accent2);">★ MOST IMPORTANT — slow pace, drives cortisol down before sleep</div></div>
-      <div class="step-row"><div class="step-time">ALL DAY</div><div class="step-num">3,000<small> steps</small></div><div class="step-bar"><div class="step-bar-f" style="width:19%"></div></div><div class="mono dim">Organic steps — stairs, parking farther, walking meetings</div></div>
+      <div class="card-label">WHY SPLIT THE STEPS?</div>
+      <div class="card-title">CORTISOL-SMART WALKING</div>
+      <div class="mono dim" style="line-height:1.8;">One long march elevates cortisol for hours — directly storing visceral fat.<br>
+      Multiple shorter walks keep each session in the fat-burning zone (60–70% max HR).<br>
+      <span class="orange">★ Post-workout walk is the most important — drives cortisol down before sleep.</span></div>
     </div>
+  </div>
+
+  <!-- ── GOALS ── -->
+  <div class="section" id="sec-goals">
+    <div class="page-title">MY<br><span>GOALS</span></div>
+    <div class="page-sub">// SET YOUR TARGETS — APP ADAPTS TO YOUR SCHEDULE //</div>
+
+    <!-- Step goal -->
+    <div class="card mb16">
+      <div class="card-label">STEP GOAL</div>
+      <div class="card-title">DAILY STEP TARGET</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <div class="goal-chip" onclick="setStepPreset(8000)" id="gstep-8000">8,000</div>
+        <div class="goal-chip" onclick="setStepPreset(10000)" id="gstep-10000">10,000</div>
+        <div class="goal-chip" onclick="setStepPreset(12000)" id="gstep-12000">12,000</div>
+        <div class="goal-chip" onclick="setStepPreset(16000)" id="gstep-16000">16,000</div>
+        <div class="goal-chip" onclick="setStepPreset(20000)" id="gstep-20000">20,000</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+        <label style="font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.1em;white-space:nowrap;">CUSTOM:</label>
+        <input type="number" id="goalStepCustom" placeholder="Enter step goal" min="1000" max="50000" step="500"
+          style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.85rem;padding:8px 10px;outline:none;">
+        <button class="btn btn-s" onclick="applyCustomStepGoal()" style="white-space:nowrap;">SET</button>
+      </div>
+      <div id="stepGoalBreakdown" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- Workout frequency goal -->
+    <div class="card mb16">
+      <div class="card-label">WORKOUT FREQUENCY</div>
+      <div class="card-title">HOW OFTEN DO YOU WANT TO TRAIN?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <div class="goal-chip" onclick="setFreqGoal(3)" id="gfreq-3">3×/week</div>
+        <div class="goal-chip" onclick="setFreqGoal(4)" id="gfreq-4">4×/week</div>
+        <div class="goal-chip" onclick="setFreqGoal(5)" id="gfreq-5">5×/week</div>
+        <div class="goal-chip" onclick="setFreqGoal(6)" id="gfreq-6">6×/week</div>
+        <div class="goal-chip" onclick="setFreqGoal(7)" id="gfreq-7">Every day</div>
+        <div class="goal-chip" onclick="setFreqGoal(2)" id="gfreq-2">Every other day</div>
+      </div>
+      <div id="freqGoalResult" style="margin-top:4px;"></div>
+    </div>
+
+    <!-- Preferred workout days -->
+    <div class="card mb16" id="dayPickerCard" style="display:none;">
+      <div class="card-label">PREFERRED DAYS</div>
+      <div class="card-title">WHICH DAYS WORK BEST FOR YOU?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="dayPicker">
+        <div class="goal-chip" onclick="toggleDay('mon')" id="gday-mon">MON</div>
+        <div class="goal-chip" onclick="toggleDay('tue')" id="gday-tue">TUE</div>
+        <div class="goal-chip" onclick="toggleDay('wed')" id="gday-wed">WED</div>
+        <div class="goal-chip" onclick="toggleDay('thu')" id="gday-thu">THU</div>
+        <div class="goal-chip" onclick="toggleDay('fri')" id="gday-fri">FRI</div>
+        <div class="goal-chip" onclick="toggleDay('sat')" id="gday-sat">SAT</div>
+        <div class="goal-chip" onclick="toggleDay('sun')" id="gday-sun">SUN</div>
+      </div>
+      <div id="dayPickerResult"></div>
+    </div>
+
+    <!-- Session duration goal -->
+    <div class="card mb16">
+      <div class="card-label">SESSION DURATION</div>
+      <div class="card-title">HOW LONG PER WORKOUT?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <div class="goal-chip" onclick="setDurationGoal(30)" id="gdur-30">30 min</div>
+        <div class="goal-chip" onclick="setDurationGoal(45)" id="gdur-45">45 min</div>
+        <div class="goal-chip" onclick="setDurationGoal(60)" id="gdur-60">60 min</div>
+        <div class="goal-chip" onclick="setDurationGoal(75)" id="gdur-75">75 min</div>
+        <div class="goal-chip" onclick="setDurationGoal(90)" id="gdur-90">90 min</div>
+        <div class="goal-chip" onclick="setDurationGoal(120)" id="gdur-120">2 hours</div>
+      </div>
+      <div id="durationGoalResult"></div>
+    </div>
+
+    <!-- Recommended split -->
+    <div id="recommendedSplit" style="display:none;"></div>
+
+    <!-- Save button -->
+    <button class="btn btn-p" onclick="saveGoals()" style="width:100%;margin-top:8px;">
+      ✓ SAVE MY GOALS
+    </button>
+    <div id="goalsSaveMsg" style="font-family:var(--font-mono);font-size:0.7rem;text-align:center;margin-top:8px;min-height:18px;"></div>
   </div>
 
   <!-- ── DECOMPRESS ── -->
@@ -1420,6 +1553,8 @@ function nav(id) {
   });
   if (id === 'progress') setTimeout(renderCharts, 100);
   if (id === 'admin') loadAdminPanel();
+  if (id === 'steps') setTimeout(loadStepsPage, 50);
+  if (id === 'goals') setTimeout(loadGoalsPage, 50);
   window.scrollTo(0,0);
 }
 
@@ -1727,6 +1862,275 @@ document.addEventListener('click', e => {
   if (modal && modal.style.display === 'flex' && e.target === modal) closeProfile();
 });
 
+// ═══════════════════════════════════════════════════════════
+// GOALS SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+const DEFAULT_WALK_SECTIONS = [
+  {id:'morning', label:'MORNING WALK',     time:'7–8 AM',    pct:0.1875, note:'Cortisol alignment · fat-burning zone',              star:false},
+  {id:'lunch',   label:'LUNCH WALK',       time:'12–1 PM',   pct:0.25,   note:'Blood sugar control · break sedentary sitting',      star:false},
+  {id:'pre',     label:'PRE-WORKOUT WALK', time:'5–5:30 PM', pct:0.1875, note:'Transitions out of work-stress mode',                star:false},
+  {id:'post',    label:'POST-WORKOUT WALK',time:'After gym', pct:0.1875, note:'★ MOST IMPORTANT — drives cortisol down before sleep',star:true},
+  {id:'organic', label:'ORGANIC STEPS',   time:'All day',   pct:0.1875, note:'Stairs, parking farther, walking meetings',          star:false},
+];
+
+let userGoals = { stepGoal:16000, workoutFreq:6, workoutDays:['mon','tue','wed','thu','fri','sat'], sessionDuration:90 };
+let selectedDays = new Set(['mon','tue','wed','thu','fri','sat']);
+let currentFreqGoal = 6;
+let currentDurationGoal = 90;
+let todayStepData = {};
+
+async function loadGoals() {
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username).collection('goals').doc('settings').get();
+    if (doc.exists) {
+      userGoals = { ...userGoals, ...doc.data() };
+      selectedDays = new Set(userGoals.workoutDays || ['mon','tue','wed','thu','fri','sat']);
+      currentFreqGoal = userGoals.workoutFreq || 6;
+      currentDurationGoal = userGoals.sessionDuration || 90;
+    }
+  } catch(e) {}
+}
+
+async function saveGoals() {
+  const msg = document.getElementById('goalsSaveMsg');
+  msg.style.color = 'var(--accent2)';
+  msg.textContent = 'SAVING...';
+  userGoals.workoutDays = [...selectedDays];
+  userGoals.workoutFreq = currentFreqGoal;
+  userGoals.sessionDuration = currentDurationGoal;
+  try {
+    await db.collection('userdata').doc(SESSION.username).collection('goals').doc('settings').set(userGoals);
+    msg.style.color = '#4caf50';
+    msg.textContent = '✓ GOALS SAVED';
+    setTimeout(() => msg.textContent = '', 3000);
+    renderStepGoalBreakdown(userGoals.stepGoal);
+  } catch(e) { msg.style.color='var(--danger)'; msg.textContent='ERROR: '+e.message; }
+}
+
+async function loadGoalsPage() {
+  await loadGoals();
+  [8000,10000,12000,16000,20000].forEach(n => {
+    const el = document.getElementById('gstep-'+n);
+    if (el) el.classList.toggle('active', userGoals.stepGoal === n);
+  });
+  const ci = document.getElementById('goalStepCustom');
+  if (ci) ci.value = userGoals.stepGoal;
+  renderStepGoalBreakdown(userGoals.stepGoal);
+  [2,3,4,5,6,7].forEach(n => { const el=document.getElementById('gfreq-'+n); if(el) el.classList.toggle('active', currentFreqGoal===n); });
+  renderFreqResult(currentFreqGoal);
+  const picker = document.getElementById('dayPickerCard');
+  if (picker) picker.style.display = currentFreqGoal < 7 ? 'block' : 'none';
+  ['mon','tue','wed','thu','fri','sat','sun'].forEach(d => { const el=document.getElementById('gday-'+d); if(el) el.classList.toggle('active', selectedDays.has(d)); });
+  renderDayPickerResult();
+  [30,45,60,75,90,120].forEach(n => { const el=document.getElementById('gdur-'+n); if(el) el.classList.toggle('active', currentDurationGoal===n); });
+  renderDurationResult(currentDurationGoal);
+  renderRecommendedSplit();
+}
+
+function setStepPreset(n) {
+  userGoals.stepGoal = n;
+  [8000,10000,12000,16000,20000].forEach(x => { const el=document.getElementById('gstep-'+x); if(el) el.classList.toggle('active', x===n); });
+  const ci = document.getElementById('goalStepCustom'); if(ci) ci.value = n;
+  renderStepGoalBreakdown(n);
+}
+
+function applyCustomStepGoal() {
+  const val = parseInt(document.getElementById('goalStepCustom').value);
+  if (!val || val < 1000) return;
+  userGoals.stepGoal = val;
+  [8000,10000,12000,16000,20000].forEach(x => { const el=document.getElementById('gstep-'+x); if(el) el.classList.remove('active'); if(el&&x===val) el.classList.add('active'); });
+  renderStepGoalBreakdown(val);
+}
+
+function renderStepGoalBreakdown(total) {
+  const el = document.getElementById('stepGoalBreakdown');
+  if (!el) return;
+  const sections = DEFAULT_WALK_SECTIONS.map(s => ({...s, steps: Math.round(total * s.pct)}));
+  el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);letter-spacing:.15em;margin-bottom:10px;">AUTO-DISTRIBUTION — ${total.toLocaleString()} STEPS</div>
+    ${sections.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);width:75px;flex-shrink:0;">${s.time}</div>
+      <div style="font-family:var(--font-display);font-size:1.1rem;color:${s.star?'var(--accent2)':'var(--text)'};width:72px;flex-shrink:0;">${s.steps.toLocaleString()}</div>
+      <div style="flex:1;height:3px;background:var(--bg3);border-radius:2px;"><div style="height:100%;width:${s.pct*100}%;background:${s.star?'var(--accent2)':'var(--accent)'};border-radius:2px;"></div></div>
+      <div style="font-family:var(--font-mono);font-size:0.58rem;color:${s.star?'var(--accent2)':'var(--text-dim)'};flex:1;min-width:100px;">${s.label}</div>
+    </div>`).join('')}`;
+}
+
+function setFreqGoal(n) {
+  currentFreqGoal = n;
+  [2,3,4,5,6,7].forEach(x => { const el=document.getElementById('gfreq-'+x); if(el) el.classList.toggle('active', x===n); });
+  const picker = document.getElementById('dayPickerCard');
+  if (picker) picker.style.display = n < 7 ? 'block' : 'none';
+  renderFreqResult(n); renderRecommendedSplit();
+}
+
+function renderFreqResult(n) {
+  const el = document.getElementById('freqGoalResult'); if(!el) return;
+  const labels={2:'Every other day',3:'3×/week',4:'4×/week',5:'5×/week',6:'6×/week',7:'Every day'};
+  el.innerHTML=`<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--accent2);margin-top:4px;">Selected: ${labels[n]||n+'×/week'} · ${n*52} sessions/year</div>`;
+}
+
+function toggleDay(d) {
+  if (selectedDays.has(d)) { if(selectedDays.size>1) selectedDays.delete(d); } else { selectedDays.add(d); }
+  const el=document.getElementById('gday-'+d); if(el) el.classList.toggle('active', selectedDays.has(d));
+  renderDayPickerResult(); renderRecommendedSplit();
+}
+
+function renderDayPickerResult() {
+  const el=document.getElementById('dayPickerResult'); if(!el) return;
+  const order=['mon','tue','wed','thu','fri','sat','sun'],names={mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
+  const days=order.filter(d=>selectedDays.has(d)).map(d=>names[d]);
+  el.innerHTML=`<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--accent2);margin-top:4px;">Training days: ${days.join(' · ')}</div>`;
+}
+
+function setDurationGoal(n) {
+  currentDurationGoal = n;
+  [30,45,60,75,90,120].forEach(x => { const el=document.getElementById('gdur-'+x); if(el) el.classList.toggle('active', x===n); });
+  renderDurationResult(n); renderRecommendedSplit();
+}
+
+function renderDurationResult(n) {
+  const el=document.getElementById('durationGoalResult'); if(!el) return;
+  const notes={30:'Quick sessions — supersets, minimal rest',45:'Efficient — 3–4 compound movements',60:'Standard — full workout with proper rest',75:'Full — warm-up + core workout + cooldown',90:'Optimal — strength, HIIT, and cooldown',120:'Extended — full program with mobility work'};
+  el.innerHTML=`<div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);margin-top:6px;">${notes[n]||''}</div>`;
+}
+
+function renderRecommendedSplit() {
+  const el=document.getElementById('recommendedSplit'); if(!el) return;
+  const freq=currentFreqGoal, dur=currentDurationGoal;
+  const splits={
+    2:{name:'FULL BODY 2×',desc:'Both sessions hit every major muscle group. Best for maintenance.',
+      schedule:['Full Body A','Rest','Rest','Full Body B','Rest','Rest','Rest']},
+    3:{name:'PUSH / PULL / LEGS',desc:'Classic 3-day split. Each muscle group gets full recovery.',
+      schedule:['Push','Rest','Pull','Rest','Legs','Rest','Rest']},
+    4:{name:'UPPER / LOWER',desc:'Upper and lower body each trained twice per week.',
+      schedule:['Upper A','Lower A','Rest','Upper B','Lower B','Rest','Rest']},
+    5:{name:'PPL + 2',desc:'Legs twice, arms and shoulders get extra volume.',
+      schedule:['Push','Pull','Legs','Rest','Upper','Legs','Rest']},
+    6:{name:'6-DAY OPERATORFIT',desc:'Full program — optimally sequenced for fat loss and strength.',
+      schedule:['Upper Push','Lower','Upper Pull','Core+HIIT','Full Upper','Legs+Core','REST']},
+    7:{name:'DAILY TRAINING',desc:'Daily active training. Include deload weeks every 4th week.',
+      schedule:['Upper Push','Lower','Pull','Core','Full Upper','Legs','Active Recovery']}
+  };
+  const split=splits[freq]||splits[6];
+  const days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  el.style.display='block';
+  el.innerHTML=`<div class="card mb16" style="border-left:4px solid var(--accent2);">
+    <div class="card-label">RECOMMENDED SPLIT</div>
+    <div class="card-title">${split.name}</div>
+    <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);margin-bottom:14px;line-height:1.6;">${split.desc}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;">
+      ${split.schedule.map((s,i)=>`<div style="text-align:center;padding:6px 2px;background:${s==='Rest'||s==='REST'?'var(--bg3)':'var(--accent-dim)'};border:1px solid ${s==='Rest'||s==='REST'?'var(--border)':'var(--accent)'};">
+        <div style="font-family:var(--font-mono);font-size:0.48rem;color:var(--border2);margin-bottom:2px;">${days[i]}</div>
+        <div style="font-family:var(--font-mono);font-size:0.5rem;color:${s==='Rest'||s==='REST'?'var(--text-dim)':'var(--accent2)'};line-height:1.3;">${s}</div>
+      </div>`).join('')}
+    </div>
+    <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);">${dur} min/session · ${freq}×/week · ~${Math.round(freq*dur/60*10)/10} hrs/week</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// STEPS TRACKER
+// ═══════════════════════════════════════════════════════════
+async function loadStepsPage() {
+  await loadGoals();
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username).collection('steplog').doc(today).get();
+    todayStepData = doc.exists ? (doc.data().sections || {}) : {};
+  } catch(e) { todayStepData = {}; }
+  renderStepSections();
+  updateStepProgress();
+}
+
+function renderStepSections() {
+  const el = document.getElementById('stepSections'); if(!el) return;
+  const goal = userGoals.stepGoal || 16000;
+  el.innerHTML = DEFAULT_WALK_SECTIONS.map(s => {
+    const target = Math.round(goal * s.pct);
+    const done = todayStepData[s.id] || 0;
+    const pct = Math.min(100, Math.round(done/target*100));
+    const complete = done >= target;
+    return `<div class="card mb16" style="border-left:4px solid ${complete?'#4caf50':s.star?'var(--accent2)':'var(--border)'};">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.15em;">${s.time}</div>
+          <div style="font-family:var(--font-display);font-size:1.1rem;color:${s.star?'var(--accent2)':'var(--text-bright)'};">${s.label}</div>
+          <div style="font-family:var(--font-mono);font-size:0.6rem;color:${s.star?'var(--accent2)':'var(--text-dim)'};">${s.note}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--font-display);font-size:1.8rem;color:${complete?'#4caf50':'var(--accent2)'};">${done.toLocaleString()}</div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">of ${target.toLocaleString()} target</div>
+        </div>
+      </div>
+      <div style="height:4px;background:var(--bg3);border-radius:2px;margin-bottom:12px;">
+        <div style="height:100%;width:${pct}%;background:${complete?'#4caf50':'var(--accent2)'};border-radius:2px;transition:width 0.4s;"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="stepinput-${s.id}" value="${done||''}" placeholder="Enter steps from watch"
+          min="0" max="50000" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.85rem;padding:8px 10px;outline:none;">
+        <button class="btn btn-p" onclick="saveStepSection('${s.id}')"
+          style="white-space:nowrap;font-size:0.65rem;padding:8px 14px;">${complete?'✓ UPDATE':'SAVE WALK'}</button>
+      </div>
+      ${complete?`<div style="font-family:var(--font-mono);font-size:0.62rem;color:#4caf50;margin-top:6px;">✓ SECTION COMPLETE</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function saveStepSection(sectionId) {
+  const input = document.getElementById('stepinput-'+sectionId);
+  const steps = parseInt(input?.value) || 0;
+  todayStepData[sectionId] = steps;
+  const today = new Date().toISOString().split('T')[0];
+  const total = Object.values(todayStepData).reduce((a,b)=>a+b, 0);
+  try {
+    await db.collection('userdata').doc(SESSION.username).collection('steplog').doc(today)
+      .set({ sections: todayStepData, total, date: today, updated: new Date().toISOString() });
+    // Update encrypted steps log
+    const existing = await encryptedLoad('steps');
+    const idx = existing.findIndex(e => e.date === today);
+    const entry = { saved: new Date().toISOString(), date: today, total: String(total),
+      morning: String(todayStepData.morning||0), lunch: String(todayStepData.lunch||0),
+      pre: String(todayStepData.pre||0), post: String(todayStepData.post||0) };
+    idx >= 0 ? existing[idx] = entry : existing.unshift(entry);
+    await encryptedSave('steps', existing);
+    renderStepSections(); updateStepProgress(); loadStats();
+    toast(`✓ ${sectionId.toUpperCase()} WALK SAVED — ${steps.toLocaleString()} STEPS`);
+  } catch(e) { toast('ERROR: ' + e.message); }
+}
+
+async function saveCustomWalk() {
+  const name = document.getElementById('customWalkName').value.trim();
+  const steps = parseInt(document.getElementById('customWalkSteps').value) || 0;
+  if (!name || steps <= 0) { toast('ENTER WALK NAME AND STEPS'); return; }
+  const customId = 'custom_' + Date.now();
+  todayStepData[customId] = steps;
+  const today = new Date().toISOString().split('T')[0];
+  const total = Object.values(todayStepData).reduce((a,b)=>a+b, 0);
+  try {
+    await db.collection('userdata').doc(SESSION.username).collection('steplog').doc(today)
+      .set({ sections: todayStepData, total, date: today, updated: new Date().toISOString() });
+    document.getElementById('customWalkName').value = '';
+    document.getElementById('customWalkSteps').value = '';
+    updateStepProgress(); loadStats();
+    toast(`✓ "${name}" SAVED — ${steps.toLocaleString()} STEPS`);
+  } catch(e) { toast('ERROR: ' + e.message); }
+}
+
+function updateStepProgress() {
+  const total = Object.values(todayStepData).reduce((a,b)=>a+b, 0);
+  const goal = userGoals.stepGoal || 16000;
+  const pct = Math.min(100, Math.round(total/goal*100));
+  const totalEl=document.getElementById('stepTodayTotal'), goalEl=document.getElementById('stepGoalDisplay');
+  const pctEl=document.getElementById('stepRingPct'), ring=document.getElementById('stepRingFill');
+  if (totalEl) totalEl.textContent = total.toLocaleString();
+  if (goalEl) goalEl.textContent = goal.toLocaleString();
+  if (pctEl) { pctEl.textContent=pct+'%'; pctEl.style.color=pct>=100?'#4caf50':'var(--accent2)'; }
+  if (ring) { ring.style.strokeDashoffset=345.4-(pct/100)*345.4; ring.style.stroke=pct>=100?'#4caf50':'var(--accent2)'; }
+  const sub=document.getElementById('stepsSub');
+  if (sub) sub.textContent=`// ${total.toLocaleString()} OF ${goal.toLocaleString()} STEPS TODAY · ${pct}% COMPLETE //`;
+}
 
 let toastTimeout;
 function toast(msg) {
