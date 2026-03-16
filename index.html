@@ -934,14 +934,20 @@ body.theme-female .goal-chip{border-radius:20px;}
     <div class="page-sub">// ENCRYPTED TRAINING JOURNAL — AES-256 SECURED //</div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
-      <button class="btn btn-p" onclick="logTab('workout')" id="lt-workout">WORKOUT</button>
+      <button class="btn btn-p" onclick="logTab('summary')" id="lt-summary">📊 SUMMARY</button>
+      <button class="btn btn-s" onclick="logTab('workout')" id="lt-workout">WORKOUT</button>
       <button class="btn btn-s" onclick="logTab('steps')" id="lt-steps">STEPS</button>
-      <button class="btn btn-s" onclick="logTab('body')" id="lt-body">BODY METRICS</button>
+      <button class="btn btn-s" onclick="logTab('body')" id="lt-body">BODY</button>
       <button class="btn btn-s" onclick="logTab('nutrition')" id="lt-nutrition">NUTRITION</button>
       <button class="btn btn-s" onclick="logTab('history')" id="lt-history">HISTORY</button>
       <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);">
-        🔒 AES-256 ENCRYPTED
+        🔒 AES-256
       </div>
+    </div>
+
+    <!-- SUMMARY TAB -->
+    <div id="log-summary">
+      <div id="summaryContent"><div class="mono dim" style="padding:24px;text-align:center;">Loading your data...</div></div>
     </div>
 
     <div id="log-workout">
@@ -967,13 +973,17 @@ body.theme-female .goal-chip{border-radius:20px;}
     <div id="log-steps" style="display:none;">
       <div class="card">
         <div class="card-label">LOG DAILY STEPS</div><div class="card-title">STEP COUNT</div>
+        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--accent2);margin-bottom:12px;">
+          ✓ Auto-populated from today's STEPS tracker — edit and save to confirm
+        </div>
         <div class="log-grid">
           <div class="lf"><label>DATE</label><input type="date" id="s-date"></div>
-          <div class="lf"><label>TOTAL STEPS</label><input type="number" id="s-total" placeholder="16000"></div>
-          <div class="lf"><label>MORNING WALK</label><input type="number" id="s-morn" placeholder="3000"></div>
-          <div class="lf"><label>LUNCH WALK</label><input type="number" id="s-lunch" placeholder="4000"></div>
-          <div class="lf"><label>PRE-WORKOUT</label><input type="number" id="s-pre" placeholder="3000"></div>
-          <div class="lf"><label>POST-WORKOUT ★</label><input type="number" id="s-post" placeholder="3000"></div>
+          <div class="lf"><label>TOTAL STEPS</label><input type="number" id="s-total" placeholder="10000"></div>
+          <div class="lf"><label>MORNING WALK</label><input type="number" id="s-morn" placeholder="2000"></div>
+          <div class="lf"><label>LUNCH WALK</label><input type="number" id="s-lunch" placeholder="2500"></div>
+          <div class="lf"><label>PRE-WORKOUT</label><input type="number" id="s-pre" placeholder="2000"></div>
+          <div class="lf"><label>POST-WORKOUT ★</label><input type="number" id="s-post" placeholder="2000"></div>
+          <div class="lf"><label>EVENING WALK</label><input type="number" id="s-eve" placeholder="1500"></div>
         </div>
         <div style="margin-top:14px;"><button class="btn btn-p" onclick="saveEntry('steps')">SAVE STEPS</button></div>
       </div>
@@ -1034,22 +1044,55 @@ body.theme-female .goal-chip{border-radius:20px;}
     <div class="page-title">ADMIN<br><span>PANEL</span></div>
     <div class="page-sub">// SYSTEM ADMINISTRATION — RESTRICTED ACCESS //</div>
 
+    <!-- User Management -->
     <div class="card mb16">
-      <div class="card-label">REGISTERED USERS</div>
-      <div class="card-title">USER REGISTRY</div>
-      <div id="adminUserList" style="overflow-x:auto;"></div>
+      <div class="card-label">USER MANAGEMENT</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div class="card-title" style="margin:0;">USER REGISTRY</div>
+        <button class="btn btn-p" onclick="adminLoadUsers()" style="font-size:0.65rem;">⟳ LOAD USERS</button>
+      </div>
+      <div id="adminUserList">
+        <div class="mono dim" style="padding:12px;">Click LOAD USERS to pull from Firebase</div>
+      </div>
     </div>
 
+    <!-- Add New User -->
+    <div class="card mb16">
+      <div class="card-label">ADD USER</div>
+      <div class="card-title">CREATE ACCOUNT</div>
+      <div class="log-grid">
+        <div class="lf"><label>USERNAME</label><input type="text" id="admin-new-username" placeholder="username (no spaces)"></div>
+        <div class="lf"><label>DISPLAY NAME</label><input type="text" id="admin-new-name" placeholder="Full name"></div>
+        <div class="lf"><label>TEMP PASSWORD</label><input type="password" id="admin-new-pass" placeholder="Temporary password"></div>
+        <div class="lf"><label>GENDER</label>
+          <select id="admin-new-gender" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px;font-family:var(--font-mono);font-size:0.8rem;width:100%;">
+            <option value="male">MALE</option>
+            <option value="female">FEMALE</option>
+          </select>
+        </div>
+        <div class="lf"><label>ROLE</label>
+          <select id="admin-new-role" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px;font-family:var(--font-mono);font-size:0.8rem;width:100%;">
+            <option value="false">USER</option>
+            <option value="true">ADMIN</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-p" onclick="adminCreateUser()">CREATE USER</button>
+        <div id="adminAddMsg" style="font-family:var(--font-mono);font-size:0.7rem;min-height:18px;"></div>
+      </div>
+    </div>
+
+    <!-- Data Export -->
     <div class="card mb16">
       <div class="card-label">DATA EXPORT WITH DECRYPTION</div>
       <div class="card-title">MASTER KEY EXPORT</div>
       <div class="mono dim mb16" style="line-height:1.8;">
-        Enter your Admin Master Key to decrypt and export all user data to Excel.<br>
-        <span class="orange">Your master key is NEVER stored anywhere in this app.</span> Only you know it.<br>
-        Without it, all user data is permanently unreadable cipher text.
+        Enter your Admin Master Key to decrypt and export all user data.<br>
+        <span class="orange">Your master key is NEVER stored anywhere in this app.</span>
       </div>
       <div class="lf mb16" style="max-width:400px;">
-        <label>ADMIN MASTER KEY (your private passphrase)</label>
+        <label>ADMIN MASTER KEY</label>
         <input type="password" id="adminMasterKey" placeholder="Enter your master key...">
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1059,13 +1102,13 @@ body.theme-female .goal-chip{border-radius:20px;}
       <div class="auth-error" id="adminErr"></div>
     </div>
 
+    <!-- Encryption info -->
     <div class="card">
       <div class="card-label">ENCRYPTION ARCHITECTURE</div>
       <div class="card-title">HOW THE SECURITY WORKS</div>
-      <div class="sci-row"><div class="sci-icon">🔑</div><div class="sci-text"><strong>User Password → PBKDF2 → DEK:</strong> Each user's password derives a unique Data Encryption Key via 100,000 rounds of PBKDF2-SHA256. Brute-force resistant.</div></div>
-      <div class="sci-row"><div class="sci-icon">🔐</div><div class="sci-text"><strong>AES-256-GCM:</strong> Every workout entry, step log, body measurement, and nutrition record is encrypted before touching localStorage. Raw data never stored.</div></div>
-      <div class="sci-row"><div class="sci-icon">🗝️</div><div class="sci-text"><strong>Admin Key Wrap:</strong> Each user's DEK is also wrapped (encrypted) with your admin master key. Only you can unwrap it — your key is never in the code or on GitHub.</div></div>
-      <div class="sci-row"><div class="sci-icon">🔄</div><div class="sci-text"><strong>Re-encryption:</strong> Enter old and new master keys to re-wrap all user DEKs — without touching users' actual data. Zero downtime.</div></div>
+      <div class="sci-row"><div class="sci-icon">🔑</div><div class="sci-text"><strong>User Password → PBKDF2 → DEK:</strong> Each user's password derives a unique Data Encryption Key via 100,000 rounds of PBKDF2-SHA256.</div></div>
+      <div class="sci-row"><div class="sci-icon">🔐</div><div class="sci-text"><strong>AES-256-GCM:</strong> Every entry is encrypted before touching Firebase. Raw data never stored in plain text.</div></div>
+      <div class="sci-row"><div class="sci-icon">🗝️</div><div class="sci-text"><strong>Admin Key Wrap:</strong> Each user's DEK is wrapped with your admin master key. Only you can unwrap it.</div></div>
     </div>
   </div>
 
@@ -1583,19 +1626,24 @@ function nav(id) {
     if (b.textContent.toLowerCase().replace(/[^a-z]/g,'').includes(id.replace(/[^a-z]/g,'').slice(0,5))) b.classList.add('active');
   });
   if (id === 'progress') setTimeout(renderCharts, 100);
-  if (id === 'admin') loadAdminPanel();
-  if (id === 'steps') setTimeout(loadStepsPage, 50);
-  if (id === 'goals') setTimeout(loadGoalsPage, 50);
+  if (id === 'admin')   { /* manual load only */ }
+  if (id === 'log')     setTimeout(() => logTab('summary'), 50);
+  if (id === 'steps')   setTimeout(loadStepsPage, 50);
+  if (id === 'goals')   setTimeout(loadGoalsPage, 50);
   window.scrollTo(0,0);
 }
 
 function logTab(t) {
-  ['workout','steps','body','nutrition','history'].forEach(x => {
-    document.getElementById('log-'+x).style.display = x===t?'block':'none';
+  ['summary','workout','steps','body','nutrition','history'].forEach(x => {
+    const el = document.getElementById('log-'+x);
+    if (el) el.style.display = x===t?'block':'none';
     const b = document.getElementById('lt-'+x);
     if(b) { b.className = x===t?'btn btn-p':'btn btn-s'; }
   });
-  if (t==='history') showHist('workout');
+  if (t==='summary')  renderLogSummary();
+  if (t==='history')  showHist('workout');
+  if (t==='steps')    autoPopulateStepsLog();
+  if (t==='workout')  autoPopulateWorkoutLog();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1731,21 +1779,389 @@ async function runSysCheck() {
 // ═══════════════════════════════════════════════════════════
 // ADMIN PANEL
 // ═══════════════════════════════════════════════════════════
-async function loadAdminPanel() {
-  const users = await getUsers();
-  const rows = Object.entries(users).map(([uname, u]) => `
-    <tr>
-      <td style="color:var(--accent2)">${uname}</td>
-      <td>${u.displayName}</td>
-      <td>${u.gender||'—'}</td>
-      <td>${u.joinDate ? new Date(u.joinDate).toLocaleDateString() : '—'}</td>
-      <td style="color:${u.isAdmin?'var(--accent2)':'var(--text-dim)'}">${u.isAdmin?'ADMIN':'USER'}</td>
-    </tr>`).join('');
-  document.getElementById('adminUserList').innerHTML = `
-    <table class="tbl">
-      <tr><th>USERNAME</th><th>NAME</th><th>GENDER</th><th>JOINED</th><th>ROLE</th></tr>
-      ${rows || '<tr><td colspan="5" class="dim">No users yet</td></tr>'}
-    </table>`;
+// ═══════════════════════════════════════════════════════════
+// ADMIN PANEL — Full User Management
+// ═══════════════════════════════════════════════════════════
+async function loadAdminPanel() { /* deprecated — use adminLoadUsers() */ }
+
+async function adminLoadUsers() {
+  const el = document.getElementById('adminUserList');
+  el.innerHTML = '<div class="mono dim" style="padding:12px;">Loading from Firebase...</div>';
+  try {
+    const users = await getUsers();
+    const list = Object.entries(users);
+    if (!list.length) { el.innerHTML = '<div class="mono dim" style="padding:12px;">No users found.</div>'; return; }
+    el.innerHTML = `
+      <div style="overflow-x:auto;">
+        <table class="tbl" style="width:100%;">
+          <tr>
+            <th>USERNAME</th><th>NAME</th><th>GENDER</th><th>JOINED</th>
+            <th>ROLE</th><th>EMAIL</th><th>ACTIONS</th>
+          </tr>
+          ${list.map(([uname, u]) => `
+            <tr id="adminrow-${uname}">
+              <td style="color:var(--accent2);font-family:var(--font-mono);font-size:0.7rem;">@${uname}</td>
+              <td>${u.displayName||'—'}</td>
+              <td style="font-family:var(--font-mono);font-size:0.65rem;">${u.gender||'—'}</td>
+              <td style="font-family:var(--font-mono);font-size:0.65rem;">${u.joinDate?u.joinDate.slice(0,10):'—'}</td>
+              <td>
+                <span id="role-badge-${uname}" style="font-family:var(--font-mono);font-size:0.6rem;padding:2px 8px;
+                  background:${u.isAdmin?'var(--accent2)22':'var(--bg3)'};
+                  color:${u.isAdmin?'var(--accent2)':'var(--text-dim)'};
+                  border:1px solid ${u.isAdmin?'var(--accent2)44':'var(--border)'};">
+                  ${u.isAdmin?'★ ADMIN':'USER'}
+                </span>
+              </td>
+              <td style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);">${u.email||'—'}</td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  ${uname !== SESSION.username ? `
+                    <button onclick="adminToggleRole('${uname}',${!u.isAdmin})"
+                      style="font-family:var(--font-mono);font-size:0.55rem;padding:3px 8px;cursor:pointer;border:none;
+                      background:var(--bg3);color:var(--accent2);border:1px solid var(--border);">
+                      ${u.isAdmin ? 'DEMOTE' : 'MAKE ADMIN'}
+                    </button>
+                    <button onclick="adminDeleteUser('${uname}')"
+                      style="font-family:var(--font-mono);font-size:0.55rem;padding:3px 8px;cursor:pointer;border:none;
+                      background:var(--bg3);color:var(--danger);border:1px solid var(--border);">
+                      DELETE
+                    </button>
+                  ` : `<span style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);">YOU</span>`}
+                </div>
+              </td>
+            </tr>`).join('')}
+        </table>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-top:10px;">
+        ${list.length} user${list.length!==1?'s':''} registered · Last loaded: ${new Date().toLocaleTimeString()}
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--danger);font-family:var(--font-mono);font-size:0.7rem;padding:12px;">ERROR: ${e.message}</div>`;
+  }
+}
+
+async function adminToggleRole(username, makeAdmin) {
+  const action = makeAdmin ? 'make ADMIN' : 'demote to USER';
+  if (!confirm(`${action.toUpperCase()} @${username}?`)) return;
+  try {
+    await saveUser(username, { isAdmin: makeAdmin });
+    toast(`✓ @${username} ${makeAdmin ? 'promoted to ADMIN' : 'demoted to USER'}`);
+    adminLoadUsers(); // Refresh
+  } catch(e) { toast('ERROR: ' + e.message); }
+}
+
+async function adminDeleteUser(username) {
+  if (!confirm(`DELETE user @${username}? This removes their account. Their encrypted data remains in Firebase until manually cleared.`)) return;
+  if (!confirm(`FINAL CONFIRMATION — permanently delete @${username}?`)) return;
+  try {
+    await db.collection('users').doc(username).delete();
+    toast(`✓ @${username} deleted from registry`);
+    adminLoadUsers();
+  } catch(e) { toast('ERROR: ' + e.message); }
+}
+
+async function adminCreateUser() {
+  const username = document.getElementById('admin-new-username').value.trim().toLowerCase().replace(/\s+/g,'');
+  const name     = document.getElementById('admin-new-name').value.trim();
+  const pass     = document.getElementById('admin-new-pass').value;
+  const gender   = document.getElementById('admin-new-gender').value;
+  const isAdmin  = document.getElementById('admin-new-role').value === 'true';
+  const msg      = document.getElementById('adminAddMsg');
+
+  if (!username || !name || !pass) { msg.style.color='var(--danger)'; msg.textContent='ALL FIELDS REQUIRED'; return; }
+  if (pass.length < 6) { msg.style.color='var(--danger)'; msg.textContent='PASSWORD MIN 6 CHARACTERS'; return; }
+
+  msg.style.color = 'var(--accent2)'; msg.textContent = 'CREATING...';
+  try {
+    const existing = await getUser(username);
+    if (existing) { msg.style.color='var(--danger)'; msg.textContent='USERNAME ALREADY EXISTS'; return; }
+    const passHash = await sha256hex(pass + username + '_verify');
+    const dek = await deriveKey(pass, username + '_dek');
+    const dekRaw = await exportKeyRaw(dek);
+    await saveUser(username, {
+      displayName: name, gender, passHash, dekHint: dekRaw,
+      isAdmin, joinDate: new Date().toISOString()
+    });
+    msg.style.color = '#4caf50'; msg.textContent = `✓ @${username} created`;
+    document.getElementById('admin-new-username').value = '';
+    document.getElementById('admin-new-name').value = '';
+    document.getElementById('admin-new-pass').value = '';
+    adminLoadUsers();
+  } catch(e) { msg.style.color='var(--danger)'; msg.textContent='ERROR: '+e.message; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOG SUMMARY — Motivational Dashboard with Charts
+// ═══════════════════════════════════════════════════════════
+async function renderLogSummary() {
+  const el = document.getElementById('summaryContent');
+  if (!el) return;
+  el.innerHTML = '<div class="mono dim" style="padding:24px;text-align:center;">Loading your data...</div>';
+
+  const [workouts, steps, body, nutrition] = await Promise.all([
+    encryptedLoad('workout'), encryptedLoad('steps'),
+    encryptedLoad('body'),    encryptedLoad('nutrition')
+  ]);
+
+  // ── Key metrics ──
+  const today = new Date(); today.setHours(0,0,0,0);
+  const wDates = [...new Set(workouts.map(w => { const d=new Date(w.date); d.setHours(0,0,0,0); return d.getTime(); }))].sort((a,b)=>b-a);
+  let streak = 0;
+  for (let i=0; i<wDates.length; i++) {
+    const exp = new Date(today); exp.setDate(exp.getDate()-i);
+    if (wDates[i]===exp.getTime()) streak++; else break;
+  }
+  const totalSessions  = workouts.length;
+  const weeksTraining  = workouts.length ? Math.max(1, Math.ceil((Date.now()-new Date(workouts[workouts.length-1].date))/(7*86400000))) : 0;
+  const consistencyPct = weeksTraining ? Math.min(100, Math.round((totalSessions / (weeksTraining * (userGoals.workoutFreq||6))) * 100)) : 0;
+  const avgSteps7d     = steps.length ? Math.round(steps.slice(0,7).reduce((a,s)=>a+(+s.total||0),0)/Math.min(steps.length,7)) : 0;
+  const stepGoalHits   = steps.filter(s => (+s.total||0) >= (userGoals.stepGoal||10000)).length;
+  const stepHitPct     = steps.length ? Math.round(stepGoalHits/steps.length*100) : 0;
+  const latestWeight   = body.find(b=>b.weight);
+  const firstWeight    = body.filter(b=>b.weight).slice(-1)[0];
+  const wtChange       = latestWeight && firstWeight && latestWeight!==firstWeight ? (+latestWeight.weight - +firstWeight.weight).toFixed(1) : null;
+  const latestWaist    = body.find(b=>b.waist);
+  const firstWaist     = body.filter(b=>b.waist).slice(-1)[0];
+  const waistChange    = latestWaist && firstWaist && latestWaist!==firstWaist ? (+latestWaist.waist - +firstWaist.waist).toFixed(2) : null;
+  const avgSleep       = body.length ? (body.filter(b=>b.sleep).slice(0,14).reduce((a,b)=>a+(+b.sleep||0),0)/Math.max(1,body.filter(b=>b.sleep).slice(0,14).length)).toFixed(1) : null;
+  const avgStress      = body.length ? (body.filter(b=>b.stress).slice(0,14).reduce((a,b)=>a+(+b.stress||0),0)/Math.max(1,body.filter(b=>b.stress).slice(0,14).length)).toFixed(1) : null;
+  const bmi            = getSessionBMI();
+
+  // ── Chart data (last 30 days) ──
+  const last30 = Array.from({length:30},(_,i)=>{ const d=new Date(today); d.setDate(d.getDate()-29+i); return d.toISOString().split('T')[0]; });
+  const stepsByDate  = Object.fromEntries(steps.map(s=>[s.date,+s.total||0]));
+  const weightByDate = Object.fromEntries(body.filter(b=>b.weight).map(b=>[b.date,+b.weight]));
+  const waistByDate  = Object.fromEntries(body.filter(b=>b.waist).map(b=>[b.date,+b.waist]));
+  const workoutDates = new Set(workouts.map(w=>w.date));
+
+  el.innerHTML = `
+    <!-- KPI strip -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:20px;">
+      ${kpiCard('🔥 STREAK', streak + (streak===1?' day':' days'), streak>=7?'#4caf50':streak>=3?'#ff9800':'var(--accent2)', streak>=7?'Keep it up!':streak>=1?'Build momentum':'Start today')}
+      ${kpiCard('📊 SESSIONS', totalSessions, 'var(--accent2)', weeksTraining + ' weeks')}
+      ${kpiCard('✓ CONSISTENCY', consistencyPct + '%', consistencyPct>=80?'#4caf50':consistencyPct>=60?'#ff9800':'#f44336', 'vs goal freq')}
+      ${kpiCard('👣 AVG STEPS', avgSteps7d.toLocaleString(), avgSteps7d>=(userGoals.stepGoal||10000)?'#4caf50':'#ff9800', '7-day avg')}
+      ${kpiCard('🎯 STEP GOAL', stepHitPct + '%', stepHitPct>=70?'#4caf50':'#ff9800', 'days goal hit')}
+      ${bmi ? kpiCard('⚖️ BMI', bmi.toFixed(1), bmi<25?'#4caf50':bmi<30?'#ff9800':'#f44336', bmi<25?'Normal':bmi<30?'Overweight':'Obese') : ''}
+      ${wtChange !== null ? kpiCard('⚖️ WEIGHT Δ', (wtChange>0?'+':'')+wtChange+' lbs', wtChange<0?'#4caf50':wtChange>0?'#ff9800':'var(--text)', 'since start') : ''}
+      ${waistChange !== null ? kpiCard('📏 WAIST Δ', (waistChange>0?'+':'')+waistChange+'"', waistChange<0?'#4caf50':waistChange>0?'#ff9800':'var(--text)', 'since start') : ''}
+      ${avgSleep ? kpiCard('😴 AVG SLEEP', avgSleep + 'h', +avgSleep>=7?'#4caf50':+avgSleep>=6?'#ff9800':'#f44336', '14-day avg') : ''}
+      ${avgStress ? kpiCard('🧠 AVG STRESS', avgStress + '/10', +avgStress<=4?'#4caf50':+avgStress<=6?'#ff9800':'#f44336', '14-day avg') : ''}
+    </div>
+
+    <!-- Motivational insight -->
+    ${renderMotivationalInsight(streak, consistencyPct, stepHitPct, avgSteps7d, wtChange, waistChange)}
+
+    <!-- Chart: Steps last 30 days -->
+    <div class="card mb16">
+      <div class="card-label">LAST 30 DAYS</div>
+      <div class="card-title">DAILY STEPS</div>
+      <canvas id="summaryStepsChart" height="120"></canvas>
+    </div>
+
+    <!-- Chart: Weight trend -->
+    ${body.filter(b=>b.weight).length >= 2 ? `
+    <div class="card mb16">
+      <div class="card-label">BODY WEIGHT TREND</div>
+      <div class="card-title">WEIGHT OVER TIME</div>
+      <canvas id="summaryWeightChart" height="120"></canvas>
+    </div>` : ''}
+
+    <!-- Chart: Workout heatmap (last 30 days) -->
+    <div class="card mb16">
+      <div class="card-label">WORKOUT CONSISTENCY</div>
+      <div class="card-title">LAST 30 DAYS — ACTIVITY HEATMAP</div>
+      <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:8px;">
+        ${last30.map(d => `
+          <div title="${d}" style="height:28px;border-radius:3px;
+            background:${workoutDates.has(d)?'var(--accent2)':'var(--bg3)'};
+            border:1px solid ${workoutDates.has(d)?'var(--accent)':'var(--border)'};
+            opacity:${workoutDates.has(d)?'1':'0.4'};">
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">
+        <span>■ <span style="color:var(--accent2);">TRAINED</span></span>
+        <span>■ <span style="opacity:0.4;">REST / NO ENTRY</span></span>
+      </div>
+    </div>
+
+    <!-- Chart: Waist trend -->
+    ${body.filter(b=>b.waist).length >= 2 ? `
+    <div class="card mb16">
+      <div class="card-label">VISCERAL FAT PROXY</div>
+      <div class="card-title">WAIST MEASUREMENT TREND</div>
+      <canvas id="summaryWaistChart" height="100"></canvas>
+    </div>` : ''}
+
+    <!-- Chart: Sleep & Stress -->
+    ${body.filter(b=>b.sleep).length >= 2 ? `
+    <div class="card mb16">
+      <div class="card-label">RECOVERY TRACKING</div>
+      <div class="card-title">SLEEP & STRESS (LAST 14 DAYS)</div>
+      <canvas id="summarySleepChart" height="110"></canvas>
+    </div>` : ''}
+
+    <!-- Recent activity list -->
+    <div class="card mb16">
+      <div class="card-label">RECENT ACTIVITY</div>
+      <div class="card-title">LAST 7 WORKOUTS</div>
+      ${workouts.slice(0,7).map(w=>`
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">${w.day||'Workout'}</div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">${w.date||'—'} · ${w.location||'—'} · ${w.duration||'—'} min</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);">Energy: ${w.energy||'—'}/10</div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:${w.decomp&&w.decomp.includes('YES')?'#4caf50':'var(--text-dim)'};">${w.decomp&&w.decomp.includes('YES')?'✓ Decomp':'No decomp'}</div>
+          </div>
+        </div>`).join('') || '<div class="mono dim" style="padding:12px;">No workouts logged yet</div>'}
+    </div>`;
+
+  // Render charts async
+  setTimeout(() => {
+    renderSummaryCharts(last30, stepsByDate, weightByDate, waistByDate, body, userGoals.stepGoal||10000);
+  }, 100);
+}
+
+function kpiCard(label, value, color, sub) {
+  return `<div style="background:var(--bg2);border:1px solid var(--border);padding:12px 8px;text-align:center;">
+    <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">${label}</div>
+    <div style="font-family:var(--font-display);font-size:1.4rem;color:${color};line-height:1;">${value}</div>
+    <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--text-dim);margin-top:2px;">${sub}</div>
+  </div>`;
+}
+
+function renderMotivationalInsight(streak, consistency, stepHitPct, avgSteps, wtChange, waistChange) {
+  let msg = '', color = 'var(--accent2)';
+  if (streak >= 14) { msg = `🔥 ${streak}-day streak — elite level consistency. Research shows 14+ day streaks predict long-term success.`; color='#4caf50'; }
+  else if (streak >= 7) { msg = `💪 ${streak} days strong. One week of consistency rewires your brain's reward system — keep building.`; color='#4caf50'; }
+  else if (streak >= 3) { msg = `📈 ${streak}-day streak building. Studies show 3+ day streaks are when the habit loop begins to form.`; color='#ff9800'; }
+  else if (streak === 0) { msg = `Today is a new day. Every streak starts with one workout. Your next session starts your next streak.`; color='var(--accent2)'; }
+  if (waistChange < -0.5) { msg += ` Waist is down ${Math.abs(waistChange)}" — visceral fat protocol is working.`; }
+  if (consistency >= 80)  { msg += ` ${consistency}% consistency — this is what real progress looks like.`; }
+  return msg ? `<div style="padding:14px 16px;background:${color}11;border-left:4px solid ${color};margin-bottom:16px;
+    font-family:var(--font-mono);font-size:0.68rem;color:${color};line-height:1.6;">${msg}</div>` : '';
+}
+
+function renderSummaryCharts(last30, stepsByDate, weightByDate, waistByDate, body, stepGoal) {
+  const cd = window._chartDefaults || { c1:'#ff7a1a', c2:'#d4af37' };
+
+  // Steps chart
+  const stepsEl = document.getElementById('summaryStepsChart');
+  if (stepsEl) {
+    if (window._summaryCharts?.steps) window._summaryCharts.steps.destroy();
+    if (!window._summaryCharts) window._summaryCharts = {};
+    window._summaryCharts.steps = new Chart(stepsEl, {
+      type:'bar',
+      data:{ labels: last30.map(d=>d.slice(5)),
+        datasets:[
+          { data: last30.map(d=>stepsByDate[d]||0), backgroundColor: last30.map(d=>(stepsByDate[d]||0)>=stepGoal?'#4caf5088':'var(--accent)88'), borderColor: last30.map(d=>(stepsByDate[d]||0)>=stepGoal?'#4caf50':'var(--accent)'), borderWidth:1 },
+          { type:'line', data: last30.map(()=>stepGoal), borderColor:'rgba(255,255,255,0.25)', borderDash:[4,4], pointRadius:0, fill:false }
+        ]},
+      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ x:{ticks:{font:{size:9},maxTicksLimit:8}}, y:{ticks:{font:{size:9}}} }}
+    });
+  }
+
+  // Weight chart
+  const wtEl = document.getElementById('summaryWeightChart');
+  const wtData = body.filter(b=>b.weight).slice(0,30).reverse();
+  if (wtEl && wtData.length >= 2) {
+    if (window._summaryCharts?.weight) window._summaryCharts.weight.destroy();
+    window._summaryCharts.weight = new Chart(wtEl, {
+      type:'line',
+      data:{ labels: wtData.map(b=>b.date?.slice(5)||''),
+        datasets:[{ data: wtData.map(b=>+b.weight), borderColor:cd.c1, backgroundColor:cd.c1+'22', tension:0.3, pointRadius:3, fill:true }]},
+      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ x:{ticks:{font:{size:9},maxTicksLimit:8}}, y:{ticks:{font:{size:9}}} }}
+    });
+  }
+
+  // Waist chart
+  const waistEl = document.getElementById('summaryWaistChart');
+  const waistData = body.filter(b=>b.waist).slice(0,30).reverse();
+  if (waistEl && waistData.length >= 2) {
+    if (window._summaryCharts?.waist) window._summaryCharts.waist.destroy();
+    window._summaryCharts.waist = new Chart(waistEl, {
+      type:'line',
+      data:{ labels: waistData.map(b=>b.date?.slice(5)||''),
+        datasets:[{ data: waistData.map(b=>+b.waist), borderColor:cd.c2, backgroundColor:cd.c2+'22', tension:0.3, pointRadius:3, fill:true }]},
+      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ x:{ticks:{font:{size:9},maxTicksLimit:8}}, y:{ticks:{font:{size:9}}} }}
+    });
+  }
+
+  // Sleep/Stress chart
+  const sleepEl = document.getElementById('summarySleepChart');
+  const sleepData = body.filter(b=>b.sleep).slice(0,14).reverse();
+  if (sleepEl && sleepData.length >= 2) {
+    if (window._summaryCharts?.sleep) window._summaryCharts.sleep.destroy();
+    window._summaryCharts.sleep = new Chart(sleepEl, {
+      type:'line',
+      data:{ labels: sleepData.map(b=>b.date?.slice(5)||''),
+        datasets:[
+          { label:'Sleep (hrs)', data: sleepData.map(b=>+b.sleep||0), borderColor:'#64b5f6', backgroundColor:'#64b5f622', tension:0.3, pointRadius:3, yAxisID:'y' },
+          { label:'Stress (1-10)', data: sleepData.map(b=>+b.stress||0), borderColor:'#f44336', backgroundColor:'#f4433622', tension:0.3, pointRadius:3, yAxisID:'y2' }
+        ]},
+      options:{ responsive:true, plugins:{ legend:{display:true, labels:{font:{size:9},color:'#aaa'}} },
+        scales:{
+          x:{ticks:{font:{size:9},maxTicksLimit:8}},
+          y:{ticks:{font:{size:9}}, position:'left', title:{display:true,text:'Sleep hrs',font:{size:8}}},
+          y2:{ticks:{font:{size:9}}, position:'right', min:0, max:10, title:{display:true,text:'Stress',font:{size:8}}, grid:{drawOnChartArea:false}}
+        }}
+    });
+  }
+}
+
+// ── Auto-populate log forms from live data ──
+async function autoPopulateStepsLog() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('s-date').value = today;
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(today).get();
+    if (doc.exists) {
+      const d = doc.data();
+      const sec = d.sections || {};
+      const total = d.total || 0;
+      if (document.getElementById('s-total'))  document.getElementById('s-total').value  = total || '';
+      if (document.getElementById('s-morn'))   document.getElementById('s-morn').value   = sec.morning?.steps || '';
+      if (document.getElementById('s-lunch'))  document.getElementById('s-lunch').value  = sec.lunch?.steps   || '';
+      if (document.getElementById('s-pre'))    document.getElementById('s-pre').value    = sec.pre?.steps     || '';
+      if (document.getElementById('s-post'))   document.getElementById('s-post').value   = sec.post?.steps    || '';
+      if (document.getElementById('s-eve'))    document.getElementById('s-eve').value    = sec.evening?.steps || '';
+    }
+  } catch(e) {}
+}
+
+async function autoPopulateWorkoutLog() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('l-date').value = today;
+  // Check if a workout was done today via wkchecks
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('wkchecks').doc(today).get();
+    if (doc.exists) {
+      const dayId = doc.data().dayId;
+      const W = SESSION.gender==='female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
+      const w = W[dayId];
+      if (w) {
+        const select = document.getElementById('l-day');
+        const dayLabel = `${dayId.toUpperCase()} — ${w.title}`;
+        // Try to match option
+        for (let i=0; i<select.options.length; i++) {
+          if (select.options[i].text.toUpperCase().includes(dayId.toUpperCase())) {
+            select.selectedIndex = i; break;
+          }
+        }
+        // Check count for duration estimate
+        const checks = doc.data().checks || {};
+        const doneCount = Object.values(checks).filter(Boolean).length;
+        const totalItems = w.warmup.length + w.exercises.length + w.cooldown.length;
+        if (doneCount > 0 && !document.getElementById('l-notes').value) {
+          document.getElementById('l-notes').value = `Auto-populated from checklist: ${doneCount}/${totalItems} items completed`;
+        }
+      }
+    }
+  } catch(e) {}
 }
 
 async function exportAllUsers() {
