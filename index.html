@@ -1117,6 +1117,35 @@ body.theme-female .goal-chip{border-radius:20px;}
       <label>EMAIL ADDRESS</label>
       <input type="email" id="prof-email" placeholder="your@email.com">
     </div>
+
+    <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.15em;margin:20px 0 8px;">BODY STATS <span style="color:var(--text-dim);font-size:0.6rem;">(used for BMI & calorie calculations)</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field">
+        <label>HEIGHT (ft)</label>
+        <input type="number" id="prof-height-ft" placeholder="6" min="3" max="8" step="1">
+      </div>
+      <div class="field">
+        <label>HEIGHT (in)</label>
+        <input type="number" id="prof-height-in" placeholder="1" min="0" max="11" step="1">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field">
+        <label>WEIGHT (lbs)</label>
+        <input type="number" id="prof-weight" placeholder="220" min="50" max="500" step="0.5">
+      </div>
+      <div class="field">
+        <label>AGE</label>
+        <input type="number" id="prof-age" placeholder="45" min="16" max="100" step="1">
+      </div>
+    </div>
+    <!-- Live BMI preview -->
+    <div id="prof-bmi-preview" style="padding:10px 14px;background:var(--bg3);border:1px solid var(--border);
+      font-family:var(--font-mono);font-size:0.7rem;margin-bottom:16px;display:none;">
+      <span style="color:var(--border2);">BMI:</span>
+      <span id="prof-bmi-val" style="color:var(--accent2);font-size:1rem;margin:0 8px;"></span>
+      <span id="prof-bmi-cat" style="color:var(--text-dim);"></span>
+    </div>
     <div class="field">
       <label>GENDER</label>
       <div style="display:flex;gap:10px;margin-top:4px;">
@@ -1401,7 +1430,9 @@ async function doLogin() {
     if (hash !== user.passHash) return err.textContent = 'INCORRECT PASSWORD';
     err.textContent = 'AUTHENTICATING...';
     const dek = await deriveKey(pass, salt + '_dek');
-    SESSION = { username, displayName: user.displayName, gender: user.gender, dek, isAdmin: user.isAdmin, email: user.email||'' };
+    SESSION = { username, displayName: user.displayName, gender: user.gender, dek, isAdmin: user.isAdmin,
+      email: user.email||'', heightFt: user.heightFt||null, heightIn: user.heightIn||0,
+      weight: user.weight||null, age: user.age||null };
     if (remember) await saveRememberToken(username, user.passHash);
     else clearRememberToken();
     err.textContent = '';
@@ -1752,6 +1783,10 @@ function openProfile() {
   if (!SESSION) return;
   document.getElementById('prof-name').value = SESSION.displayName;
   document.getElementById('prof-email').value = SESSION.email || '';
+  document.getElementById('prof-height-ft').value = SESSION.heightFt || '';
+  document.getElementById('prof-height-in').value = SESSION.heightIn || '';
+  document.getElementById('prof-weight').value = SESSION.weight || '';
+  document.getElementById('prof-age').value = SESSION.age || '';
   profGender = SESSION.gender;
   document.getElementById('prof-gb-male').classList.toggle('selected', profGender === 'male');
   document.getElementById('prof-gb-female').classList.toggle('selected', profGender === 'female');
@@ -1760,6 +1795,49 @@ function openProfile() {
   document.getElementById('prof-new-pass2').value = '';
   document.getElementById('prof-err').textContent = '';
   document.getElementById('profileModal').style.display = 'flex';
+  updateBMIPreview();
+  // Live BMI update as user types
+  ['prof-height-ft','prof-height-in','prof-weight'].forEach(id => {
+    document.getElementById(id).oninput = updateBMIPreview;
+  });
+}
+
+function updateBMIPreview() {
+  const ft  = parseFloat(document.getElementById('prof-height-ft')?.value) || 0;
+  const ins = parseFloat(document.getElementById('prof-height-in')?.value) || 0;
+  const lbs = parseFloat(document.getElementById('prof-weight')?.value) || 0;
+  const preview = document.getElementById('prof-bmi-preview');
+  if (!preview) return;
+  if (!ft || !lbs) { preview.style.display = 'none'; return; }
+  const totalInches = (ft * 12) + ins;
+  const bmi = (lbs / (totalInches * totalInches)) * 703;
+  let cat = '', color = '';
+  if      (bmi < 18.5) { cat = 'UNDERWEIGHT'; color = '#64b5f6'; }
+  else if (bmi < 25)   { cat = 'NORMAL WEIGHT'; color = '#4caf50'; }
+  else if (bmi < 30)   { cat = 'OVERWEIGHT'; color = '#ff9800'; }
+  else if (bmi < 35)   { cat = 'OBESE CLASS I'; color = '#f44336'; }
+  else if (bmi < 40)   { cat = 'OBESE CLASS II'; color = '#e53935'; }
+  else                 { cat = 'OBESE CLASS III'; color = '#b71c1c'; }
+  document.getElementById('prof-bmi-val').textContent = bmi.toFixed(1);
+  document.getElementById('prof-bmi-val').style.color = color;
+  document.getElementById('prof-bmi-cat').textContent = cat;
+  document.getElementById('prof-bmi-cat').style.color = color;
+  preview.style.display = 'block';
+}
+
+// Helper: compute BMI from SESSION data
+function getSessionBMI() {
+  const ft  = SESSION.heightFt || 0;
+  const ins = SESSION.heightIn || 0;
+  const lbs = SESSION.weight   || 0;
+  if (!ft || !lbs) return null;
+  const totalIn = (ft * 12) + ins;
+  return (lbs / (totalIn * totalIn)) * 703;
+}
+
+// Helper: get weight in kg from SESSION
+function getWeightKg() {
+  return SESSION.weight ? SESSION.weight * 0.453592 : null;
 }
 
 function closeProfile() {
@@ -1773,8 +1851,12 @@ function profSelectGender(g) {
 }
 
 async function saveProfile() {
-  const newName = document.getElementById('prof-name').value.trim();
-  const newEmail = document.getElementById('prof-email').value.trim();
+  const newName   = document.getElementById('prof-name').value.trim();
+  const newEmail  = document.getElementById('prof-email').value.trim();
+  const newHtFt   = parseFloat(document.getElementById('prof-height-ft').value) || null;
+  const newHtIn   = parseFloat(document.getElementById('prof-height-in').value) || 0;
+  const newWeight = parseFloat(document.getElementById('prof-weight').value)    || null;
+  const newAge    = parseInt(document.getElementById('prof-age').value)          || null;
   const currPass = document.getElementById('prof-curr-pass').value;
   const newPass = document.getElementById('prof-new-pass').value;
   const newPass2 = document.getElementById('prof-new-pass2').value;
@@ -1831,14 +1913,22 @@ async function saveProfile() {
       displayName: newName,
       gender: profGender,
       passHash: newPassHash,
-      email: newEmail
+      email: newEmail,
+      heightFt: newHtFt,
+      heightIn: newHtIn,
+      weight: newWeight,
+      age: newAge
     });
 
     // Update session in memory
     SESSION.displayName = newName;
-    SESSION.gender = profGender;
-    SESSION.email = newEmail;
-    SESSION.dek = newDek;
+    SESSION.gender      = profGender;
+    SESSION.email       = newEmail;
+    SESSION.heightFt    = newHtFt;
+    SESSION.heightIn    = newHtIn;
+    SESSION.weight      = newWeight;
+    SESSION.age         = newAge;
+    SESSION.dek         = newDek;
 
     // Update remember-me token if password changed
     if (newPass) await saveRememberToken(SESSION.username, newPassHash);
@@ -1863,8 +1953,212 @@ document.addEventListener('click', e => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// GOALS SYSTEM
+// CALORIE BURN CALCULATOR — MET-based
 // ═══════════════════════════════════════════════════════════
+
+// MET values per exercise type (Compendium of Physical Activities)
+const EXERCISE_MET = {
+  // Strength / resistance (increases with load — base + modifier)
+  'BENCH PRESS':5.0, 'OVERHEAD PRESS':5.0, 'INCLINE DB PRESS':4.8, 'FLOOR PRESS':4.8,
+  'ARCHER PUSH-UP':4.5, 'PUSH-UP VARIATIONS':4.5, 'PUSH-UP BURNOUT':5.5,
+  'GOBLET SQUAT':5.5, 'ROMANIAN DEADLIFT':5.5, 'SINGLE-LEG DEADLIFT':5.0,
+  'BULGARIAN SPLIT SQUAT':5.5, 'SUMO SQUAT':5.5, 'REVERSE LUNGE':4.8,
+  'WALKING LUNGE':5.0, 'WALL SIT':4.0, 'HIP THRUST':4.5, 'GLUTE BRIDGE':3.5,
+  'DB ROW (SINGLE ARM)':4.8, 'BENT-OVER ROW':5.0, 'RENEGADE ROW':6.0,
+  'BICEP CURL':3.5, 'HAMMER CURL':3.5, 'TRICEP DIPS':4.0, 'TRICEP OVERHEAD EXT.':3.5,
+  'LATERAL RAISES':3.0, 'REAR DELT RAISE':3.0,
+  'PLANK VARIATIONS':4.0, 'DEAD BUG':3.5, 'BICYCLE CRUNCH':5.0, 'HANGING LEG RAISE':4.5,
+  'LEG RAISES':4.0, 'SIDE PLANK HIP DIP':4.0, 'RUSSIAN TWIST':4.5,
+  // High intensity
+  'MOUNTAIN CLIMBERS':8.0, 'BURPEE FINISHER':10.0,
+  'SQUAT BURNOUT':8.0, 'LUNGE BURNOUT':7.5, 'ROW BURNOUT':6.5, 'GLUTE KICKBACK':4.0,
+  'LATERAL BAND WALK':4.0, 'DONKEY KICK':3.5, 'MOBILITY FLOW':2.5,
+  'SINGLE-LEG DEADLIFT':5.0,
+  // Warm-up / cooldown (lower intensity)
+  'ARM CIRCLES':2.5, 'SHOULDER PASS-THROUGHS':2.5, 'SCAPULAR PUSH-UPS':3.0,
+  'BAND PULL-APARTS':2.8, 'PUSH-UP PLUS':3.5, 'HIP CIRCLES':2.5,
+  'LEG SWINGS (FRONT/BACK)':2.8, 'GLUTE BRIDGE':3.5, 'CLAMSHELL':3.0,
+  'BODYWEIGHT SQUAT':4.0, 'DEAD HANG':2.5, 'PRONE COBRA':2.8,
+  'SCAPULAR RETRACTIONS':2.5, 'BIRD DOG':3.0, 'HOLLOW HOLD':4.0, 'PLANK HOLD':4.0,
+  'DOORWAY CHEST STRETCH':2.0, 'CROSS-BODY SHOULDER STRETCH':2.0, 'PIGEON STRETCH':2.0,
+  'SEATED HAMSTRING STRETCH':2.0, 'HIP FLEXOR LUNGE STRETCH':2.0, 'CHILD\'S POSE':2.0,
+  'COBRA STRETCH':2.0, 'SUPINE TWIST':2.0, 'CAT-COW':2.5, 'BUTTERFLY STRETCH':2.0,
+  'THORACIC EXTENSION':2.0, 'WORLD\'S GREATEST STRETCH':2.8, 'FOAM ROLL':2.5,
+};
+
+// Exercises that use weights (show lbs input)
+const WEIGHTED_EXERCISES = new Set([
+  'BENCH PRESS','OVERHEAD PRESS','INCLINE DB PRESS','FLOOR PRESS','LATERAL RAISES',
+  'TRICEP OVERHEAD EXT.','GOBLET SQUAT','ROMANIAN DEADLIFT','SINGLE-LEG DEADLIFT',
+  'BULGARIAN SPLIT SQUAT','SUMO SQUAT','WALKING LUNGE','REVERSE LUNGE','HIP THRUST',
+  'DB ROW (SINGLE ARM)','BENT-OVER ROW','RENEGADE ROW','BICEP CURL','HAMMER CURL',
+  'TRICEP DIPS','REAR DELT RAISE','DEAD BUG','BICYCLE CRUNCH','RUSSIAN TWIST',
+  'HANGING LEG RAISE','LEG RAISES','SIDE PLANK HIP DIP','GLUTE KICKBACK',
+]);
+
+// Duration estimates per exercise in minutes (based on sets × rest)
+function estimateDuration(item) {
+  if (!item.sets) return 3; // warmup/cooldown item
+  const s = item.sets.toLowerCase();
+  if (s.includes('max→')) return 5; // burnout
+  if (s.includes('5×5')) return 14; // 5 sets × ~45s work + 2min rest
+  if (s.includes('4×')) return 12;
+  if (s.includes('3×')) return 9;
+  if (s.includes('10–15 min')) return 12;
+  if (s.includes('45–90')) return 8;
+  return 8;
+}
+
+// MET modifier based on weight used relative to bodyweight
+function metModifier(lbs, bodyweightLbs) {
+  if (!lbs || !bodyweightLbs) return 1.0;
+  const ratio = lbs / bodyweightLbs;
+  if (ratio > 0.75) return 1.35;
+  if (ratio > 0.5)  return 1.20;
+  if (ratio > 0.25) return 1.10;
+  return 1.0;
+}
+
+// Compute calories for one exercise item
+function calcItemCalories(item, weightLbs) {
+  const weightKg = getWeightKg();
+  if (!weightKg) return null;
+  const met = EXERCISE_MET[item.name?.toUpperCase()] || 4.0;
+  const dur = estimateDuration(item) / 60; // hours
+  const mod = metModifier(weightLbs, SESSION.weight);
+  return Math.round(met * mod * weightKg * dur);
+}
+
+// Compute total workout calories for all items in a day
+function calcWorkoutCalories(w, exerciseWeights) {
+  const weightKg = getWeightKg();
+  if (!weightKg) return null;
+  let total = 0;
+  const allItems = [...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
+  for (const item of allItems) {
+    const met = EXERCISE_MET[item.name?.toUpperCase()] || 4.0;
+    const dur = estimateDuration(item) / 60;
+    const lbs = exerciseWeights?.[item.id] || 0;
+    const mod = metModifier(lbs, SESSION.weight);
+    total += met * mod * weightKg * dur;
+  }
+  return Math.round(total);
+}
+
+// Store exercise weight inputs in memory for the current session
+let exerciseWeights = {}; // { itemId: lbs }
+
+function updateExerciseWeight(itemId, lbs) {
+  exerciseWeights[itemId] = parseFloat(lbs) || 0;
+  updateCalorieBurnDisplay();
+}
+
+function updateCalorieBurnDisplay() {
+  const W = SESSION.gender === 'female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
+  const dayId = document.getElementById('calBurnDayId')?.value;
+  if (!dayId || !W[dayId]) return;
+  const cals = calcWorkoutCalories(W[dayId], exerciseWeights);
+  const el = document.getElementById('calBurnTotal');
+  if (el && cals !== null) el.textContent = cals.toLocaleString();
+}
+
+function renderCalorieBurnCard(dayId, w) {
+  const weightKg  = getWeightKg();
+  const weightLbs = SESSION.weight;
+  const bmi       = getSessionBMI();
+  const cals      = calcWorkoutCalories(w, exerciseWeights);
+
+  // BMI category + color
+  let bmiColor = 'var(--text-dim)', bmiCat = '—', bmiNum = '—';
+  if (bmi) {
+    bmiNum = bmi.toFixed(1);
+    if      (bmi < 18.5) { bmiCat = 'UNDERWEIGHT';   bmiColor = '#64b5f6'; }
+    else if (bmi < 25)   { bmiCat = 'NORMAL';         bmiColor = '#4caf50'; }
+    else if (bmi < 30)   { bmiCat = 'OVERWEIGHT';     bmiColor = '#ff9800'; }
+    else if (bmi < 35)   { bmiCat = 'OBESE I';        bmiColor = '#f44336'; }
+    else if (bmi < 40)   { bmiCat = 'OBESE II';       bmiColor = '#e53935'; }
+    else                 { bmiCat = 'OBESE III';      bmiColor = '#b71c1c'; }
+  }
+
+  // Height display
+  const htDisplay = SESSION.heightFt
+    ? `${SESSION.heightFt}'${SESSION.heightIn||0}"  /  ${((SESSION.heightFt*12+(SESSION.heightIn||0))*2.54).toFixed(0)} cm`
+    : '—';
+  const wtDisplay = weightLbs
+    ? `${weightLbs} lbs  /  ${(weightLbs*0.453592).toFixed(1)} kg`
+    : '—';
+
+  const noStats = !weightKg ? `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;margin-top:8px;
+      background:var(--accent)11;border:1px solid var(--accent)44;">
+      <span style="font-size:1.2rem;">⚠</span>
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent);">
+        Tap your name in the header to add height & weight — enables calorie estimates and BMI
+      </div>
+    </div>` : '';
+
+  return `<div class="card mb16" style="border-left:4px solid var(--accent2);">
+    <input type="hidden" id="calBurnDayId" value="${dayId}">
+
+    <!-- Header row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+      <div>
+        <div class="card-label">CALORIE BURN + BMI</div>
+        <div style="font-family:var(--font-display);font-size:1rem;color:var(--text-bright);">LIVE WORKOUT TRACKER</div>
+        ${weightKg ? `<div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-top:2px;">
+          Enter weights on exercises below — total updates live
+        </div>` : ''}
+      </div>
+    </div>
+
+    <!-- Stats grid -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:${noStats?'0':'0'};">
+      <!-- Calorie burn -->
+      <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+        <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">EST. BURN</div>
+        <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--accent2);line-height:1;" id="calBurnTotal">
+          ${cals !== null ? cals : '—'}
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--text-dim);">kcal</div>
+      </div>
+      <!-- BMI -->
+      <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+        <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">BMI</div>
+        <div style="font-family:var(--font-display);font-size:1.8rem;color:${bmiColor};line-height:1;">${bmiNum}</div>
+        <div style="font-family:var(--font-mono);font-size:0.5rem;color:${bmiColor};">${bmiCat}</div>
+      </div>
+      <!-- Weight -->
+      <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+        <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">WEIGHT</div>
+        <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--text);line-height:1;">
+          ${weightLbs ? weightLbs : '—'}
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--text-dim);">
+          ${weightKg ? `${weightKg.toFixed(1)} kg` : 'lbs'}
+        </div>
+      </div>
+      <!-- Height -->
+      <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+        <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">HEIGHT</div>
+        <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--text);line-height:1;">
+          ${SESSION.heightFt ? `${SESSION.heightFt}'${SESSION.heightIn||0}"` : '—'}
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--text-dim);">
+          ${SESSION.heightFt ? `${((SESSION.heightFt*12+(SESSION.heightIn||0))*2.54).toFixed(0)} cm` : ''}
+        </div>
+      </div>
+    </div>
+
+    ${bmi ? `<div style="margin-top:8px;padding:8px 12px;background:${bmiColor}11;border:1px solid ${bmiColor}33;
+      font-family:var(--font-mono);font-size:0.62rem;color:${bmiColor};line-height:1.6;">
+      ${bmi < 25 ? '✓ BMI in healthy range — focus on body composition (muscle vs fat) rather than weight alone.'
+        : bmi < 30 ? '↑ BMI in overweight range — visceral fat loss protocol is ideal. Step target + strength training combination.'
+        : '⚠ BMI in obese range — prioritize visceral fat reduction. Consistent steps + progressive strength + sleep are your primary levers.'}
+    </div>` : ''}
+
+    ${noStats}
+  </div>`;
+}
 
 const DEFAULT_WALK_SECTIONS = [
   {id:'morning', label:'MORNING WALK',      time:'7–8 AM',    pct:0.20,  note:'Cortisol alignment · fat-burning zone',               star:false},
@@ -2687,6 +2981,9 @@ async function showWorkoutDay(dayId) {
   const w = W[dayId];
   if (!w) return;
 
+  // Reset exercise weights for this day (load saved if available)
+  exerciseWeights = {};
+
   const totalItems = w.warmup.length + w.exercises.length + w.cooldown.length;
   const checkedCount = [...w.warmup, ...w.exercises, ...w.cooldown].filter(i => workoutChecks[i.id]).length;
   const pct = Math.round(checkedCount / totalItems * 100);
@@ -2709,6 +3006,7 @@ async function showWorkoutDay(dayId) {
       ${pct===100?`<div style="font-family:var(--font-mono);font-size:0.7rem;color:#4caf50;margin-top:8px;text-align:center;letter-spacing:.15em;">✓ WORKOUT COMPLETE — OUTSTANDING WORK</div>`:''}
     </div>
 
+    ${renderCalorieBurnCard(dayId, w)}
     ${renderWorkoutSection('WARM-UP', '🔥', 'Stretching & Muscle Activation', w.warmup, dayId)}
     ${renderWorkoutSection('CORE WORKOUT', '💪', 'Main Training Block', w.exercises, dayId)}
     ${renderWorkoutSection('COOL-DOWN', '❄️', 'Stretching & Recovery', w.cooldown, dayId)}
@@ -2741,23 +3039,29 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
       </div>
     </div>
     ${items.map(item => {
-      const checked = !!workoutChecks[item.id];
-      const typeC = item.type ? typeColor[item.type]||'var(--border2)' : 'var(--border2)';
-      const typeL = item.type ? typeLabel[item.type]||'' : item.badge||'';
+      const checked  = !!workoutChecks[item.id];
+      const typeC    = item.type ? typeColor[item.type]||'var(--border2)' : 'var(--border2)';
+      const typeL    = item.type ? typeLabel[item.type]||'' : item.badge||'';
+      const isWeighted = WEIGHTED_EXERCISES.has(item.name?.toUpperCase());
+      const savedLbs = exerciseWeights[item.id] || '';
+      const itemCals = getWeightKg() ? calcItemCalories(item, savedLbs) : null;
+      const weightKg = getWeightKg();
+
       return `<div class="ex-block" id="exblock-${item.id}" style="${checked?'opacity:0.65;border-left:3px solid #4caf50;':''}">
         <div class="ex-header" style="display:flex;align-items:center;gap:12px;padding:12px 16px;">
-          <!-- Checkbox -->
           <div onclick="toggleCheck('${item.id}','${dayId}')" style="width:22px;height:22px;border:2px solid ${checked?'#4caf50':'var(--border2)'};
             border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;
             background:${checked?'#4caf5022':'transparent'};flex-shrink:0;transition:all 0.2s;">
             ${checked?'<span style="color:#4caf50;font-size:0.9rem;">✓</span>':''}
           </div>
-          <!-- Content -->
           <div style="flex:1;cursor:pointer;" onclick="toggleEx(this.closest('.ex-block').querySelector('.ex-body'),'${item.id}')">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <div class="ex-name" style="${checked?'text-decoration:line-through;color:var(--text-dim);':''}">${item.name}</div>
               <span style="font-family:var(--font-mono);font-size:0.55rem;padding:2px 7px;
                 background:${typeC}18;color:${typeC};border:1px solid ${typeC}44;">${typeL}</span>
+              ${itemCals ? `<span id="cal-badge-${item.id}" style="font-family:var(--font-mono);font-size:0.55rem;padding:2px 7px;
+                background:var(--accent)18;color:var(--accent);border:1px solid var(--accent)44;">
+                ~${itemCals} kcal</span>` : ''}
             </div>
             <div class="ex-meta" style="margin-top:2px;">${item.sets||item.detail?.slice(0,60)||''}</div>
           </div>
@@ -2778,6 +3082,36 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
             <tr><td style="color:var(--border2)">PHASE 3</td><td>${item.phase3||'—'}</td></tr>
           </table>` : ''}
           ${item.hotel ? `<div class="hotel-alt">🏨 <strong>HOTEL VARIANT:</strong> ${item.hotel}</div>` : ''}
+
+          ${isWeighted && weightKg ? `
+          <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin:8px 0;">
+            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:8px;">
+              WEIGHT USED — updates calorie estimate
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <input type="number" id="wt-lbs-${item.id}" value="${savedLbs}"
+                  placeholder="lbs" min="0" max="500" step="2.5"
+                  oninput="syncWeightInput('${item.id}','lbs')"
+                  style="width:72px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+                  font-family:var(--font-mono);font-size:0.85rem;padding:6px 8px;outline:none;text-align:center;">
+                <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);">lbs</span>
+              </div>
+              <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);">/</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <input type="number" id="wt-kg-${item.id}" value="${savedLbs ? (savedLbs*0.453592).toFixed(1) : ''}"
+                  placeholder="kg" min="0" max="250" step="1.25"
+                  oninput="syncWeightInput('${item.id}','kg')"
+                  style="width:72px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+                  font-family:var(--font-mono);font-size:0.85rem;padding:6px 8px;outline:none;text-align:center;">
+                <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);">kg</span>
+              </div>
+              <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);">
+                ~<span id="cal-live-${item.id}">${itemCals||'—'}</span> kcal
+              </div>
+            </div>
+          </div>` : ''}
+
           <button onclick="toggleCheck('${item.id}','${dayId}')" style="margin-top:8px;width:100%;padding:8px;
             font-family:var(--font-mono);font-size:0.65rem;letter-spacing:.1em;cursor:pointer;border:none;
             background:${checked?'#4caf5022':'var(--bg3)'};color:${checked?'#4caf50':'var(--text-dim)'};
@@ -2790,8 +3124,48 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
   </div>`;
 }
 
+function syncWeightInput(itemId, fromUnit) {
+  const lbsEl = document.getElementById(`wt-lbs-${itemId}`);
+  const kgEl  = document.getElementById(`wt-kg-${itemId}`);
+  if (!lbsEl || !kgEl) return;
+
+  let lbs;
+  if (fromUnit === 'lbs') {
+    lbs = parseFloat(lbsEl.value) || 0;
+    kgEl.value = lbs ? (lbs * 0.453592).toFixed(1) : '';
+  } else {
+    const kg = parseFloat(kgEl.value) || 0;
+    lbs = kg ? kg * 2.20462 : 0;
+    lbsEl.value = lbs ? lbs.toFixed(1) : '';
+  }
+
+  exerciseWeights[itemId] = lbs;
+
+  // Update per-item calorie badge
+  const item = findExerciseById(itemId);
+  if (item) {
+    const cals = calcItemCalories(item, lbs);
+    const livEl = document.getElementById(`cal-live-${itemId}`);
+    const badgeEl = document.getElementById(`cal-badge-${itemId}`);
+    if (livEl)   livEl.textContent   = cals || '—';
+    if (badgeEl) badgeEl.textContent = cals ? `~${cals} kcal` : '';
+  }
+  // Update total burn card
+  updateCalorieBurnDisplay();
+}
+
+function findExerciseById(itemId) {
+  const W = SESSION.gender === 'female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
+  for (const day of Object.values(W)) {
+    for (const list of [day.warmup, day.exercises, day.cooldown]) {
+      const found = list?.find(i => i.id === itemId);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 async function toggleCheck(itemId, dayId) {
-  workoutChecks[itemId] = !workoutChecks[itemId];
 
   // Instant save to Firebase
   const today = new Date().toISOString().split('T')[0];
