@@ -599,7 +599,9 @@ body.theme-female .header::after{
   <div class="header">
     <div class="header-logo" id="appLogo">OPERATORFIT</div>
     <div class="header-right">
-      <div class="user-pill"><span class="pulse"></span><span id="headerUser">USER</span></div>
+      <div class="user-pill" onclick="openProfile()" style="cursor:pointer;" title="Edit Profile">
+        <span class="pulse"></span><span id="headerUser">USER</span> ✎
+      </div>
       <button class="logout-btn" onclick="doLogout()">SIGN OUT</button>
     </div>
   </div>
@@ -937,14 +939,77 @@ body.theme-female .header::after{
   </div><!-- /container -->
 </div><!-- /appScreen -->
 
-<!-- SYS CHECK SECTION (inside container) -->
+<!-- SYS CHECK SECTION -->
 <div class="container" id="syscheckContainer" style="display:none;">
 <div class="section active" id="sec-syscheck">
   <div class="page-title">SYS<br><span>CHECK</span></div>
-  <div class="page-sub">// LIVE DIAGNOSTIC — FIREBASE CONNECTION · SESSION · DATA STATUS //</div>
-  <button class="btn btn-p mb16" onclick="runSysCheck()" style="margin-bottom:16px;">⟳ REFRESH</button>
-  <div id="syscheckOutput"></div>
+  <div class="page-sub">// LIVE DIAGNOSTIC — FIREBASE · SESSION · DATA STATUS //</div>
+
+  <!-- Status bar -->
+  <div id="sysStatusBar" style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:14px 18px;background:var(--bg2);border:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="dbDot" style="width:12px;height:12px;border-radius:50%;background:#555;display:inline-block;transition:background 0.4s;"></span>
+      <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);" id="dbStatus">CHECKING...</span>
+    </div>
+    <div style="width:1px;height:20px;background:var(--border);"></div>
+    <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);">
+      USERS: <span id="userCountBadge" style="color:var(--accent2);font-weight:bold;">—</span>
+    </div>
+    <div style="width:1px;height:20px;background:var(--border);"></div>
+    <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);">
+      SESSION: <span id="sessionBadge" style="color:var(--accent2);">—</span>
+    </div>
+    <div style="margin-left:auto;">
+      <button class="btn btn-s" onclick="runSysCheck()" style="font-size:0.65rem;padding:6px 14px;">⟳ REFRESH</button>
+    </div>
+  </div>
+
+  <div id="syscheckOutput"><div class="mono dim" style="padding:16px;">Click REFRESH to run diagnostics.</div></div>
 </div>
+</div>
+
+<!-- PROFILE EDITOR MODAL -->
+<div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-left:4px solid var(--accent2);padding:32px;width:min(460px,90vw);max-height:90vh;overflow-y:auto;position:relative;">
+    <div style="font-family:var(--font-display);font-size:1.5rem;letter-spacing:.1em;color:var(--accent2);margin-bottom:4px;">EDIT PROFILE</div>
+    <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.2em;margin-bottom:24px;">// UPDATE YOUR ACCOUNT INFORMATION //</div>
+
+    <div class="field">
+      <label>DISPLAY NAME</label>
+      <input type="text" id="prof-name" placeholder="Your display name">
+    </div>
+    <div class="field">
+      <label>EMAIL ADDRESS</label>
+      <input type="email" id="prof-email" placeholder="your@email.com">
+    </div>
+    <div class="field">
+      <label>GENDER</label>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <div class="gender-btn selected" id="prof-gb-male" onclick="profSelectGender('male')">⚡ MALE</div>
+        <div class="gender-btn" id="prof-gb-female" onclick="profSelectGender('female')">✦ FEMALE</div>
+      </div>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.15em;margin:20px 0 8px;">CHANGE PASSWORD <span style="color:var(--text-dim);font-size:0.6rem;">(leave blank to keep current)</span></div>
+    <div class="field">
+      <label>CURRENT PASSWORD</label>
+      <input type="password" id="prof-curr-pass" placeholder="Required to save any changes">
+    </div>
+    <div class="field">
+      <label>NEW PASSWORD</label>
+      <input type="password" id="prof-new-pass" placeholder="Min 8 characters (optional)">
+    </div>
+    <div class="field">
+      <label>CONFIRM NEW PASSWORD</label>
+      <input type="password" id="prof-new-pass2" placeholder="Repeat new password">
+    </div>
+
+    <div id="prof-err" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--danger);min-height:18px;margin-bottom:12px;letter-spacing:.1em;"></div>
+
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-p" onclick="saveProfile()" style="flex:1;">SAVE CHANGES</button>
+      <button class="btn btn-s" onclick="closeProfile()" style="flex:1;">CANCEL</button>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -1201,7 +1266,7 @@ async function doLogin() {
     if (hash !== user.passHash) return err.textContent = 'INCORRECT PASSWORD';
     err.textContent = 'AUTHENTICATING...';
     const dek = await deriveKey(pass, salt + '_dek');
-    SESSION = { username, displayName: user.displayName, gender: user.gender, dek, isAdmin: user.isAdmin };
+    SESSION = { username, displayName: user.displayName, gender: user.gender, dek, isAdmin: user.isAdmin, email: user.email||'' };
     if (remember) await saveRememberToken(username, user.passHash);
     else clearRememberToken();
     err.textContent = '';
@@ -1369,24 +1434,43 @@ function logTab(t) {
 // ═══════════════════════════════════════════════════════════
 async function runSysCheck() {
   const out = document.getElementById('syscheckOutput');
+  const dbDot = document.getElementById('dbDot');
+  const dbStatus = document.getElementById('dbStatus');
+  const userCountBadge = document.getElementById('userCountBadge');
+  const sessionBadge = document.getElementById('sessionBadge');
+
   out.innerHTML = '<div class="mono dim" style="padding:16px;">Running diagnostics...</div>';
+  dbDot.style.background = '#ffaa00';
+  dbStatus.textContent = 'CONNECTING...';
 
   const rows = [];
   const addRow = (label, status, detail) => rows.push({ label, status, detail });
 
   // Firebase connection
+  let firebaseOk = false;
   try {
     await db.collection('users').limit(1).get();
+    firebaseOk = true;
+    dbDot.style.background = '#4caf50';
+    dbDot.style.boxShadow = '0 0 8px #4caf50';
+    dbStatus.textContent = 'CONNECTED';
+    dbStatus.style.color = '#4caf50';
     addRow('Firebase connection', 'ok', 'Firestore reachable — reads working');
   } catch(e) {
+    dbDot.style.background = '#f44336';
+    dbDot.style.boxShadow = '0 0 8px #f44336';
+    dbStatus.textContent = 'DISCONNECTED';
+    dbStatus.style.color = '#f44336';
     addRow('Firebase connection', 'err', `FAILED: ${e.message}`);
   }
 
   // Session
   if (SESSION) {
+    sessionBadge.textContent = `@${SESSION.username}`;
     addRow('Current session', 'ok', `Logged in as @${SESSION.username} (${SESSION.gender})`);
     addRow('DEK (encryption key)', 'ok', 'In-memory AES-256 key present');
   } else {
+    sessionBadge.textContent = 'NONE';
     addRow('Current session', 'err', 'Not logged in');
   }
 
@@ -1396,28 +1480,30 @@ async function runSysCheck() {
     try {
       const t = JSON.parse(token);
       const daysLeft = Math.ceil((t.expires - Date.now()) / 86400000);
-      addRow('Remember me token', 'ok', `Stored — expires in ${daysLeft} day${daysLeft!==1?'s':''} · username: ${t.username}`);
+      addRow('Remember me token', 'ok', `Stored — expires in ${daysLeft} day${daysLeft!==1?'s':''} · user: ${t.username}`);
     } catch { addRow('Remember me token', 'warn', 'Token exists but is malformed'); }
   } else {
-    addRow('Remember me token', 'info', 'No token — user did not check "Remember me"');
+    addRow('Remember me token', 'info', 'No token — "Remember me" was not checked at login');
   }
 
-  // User registry in Firebase
+  // User registry
   try {
     const users = await getUsers();
     const unames = Object.keys(users);
+    userCountBadge.textContent = unames.length;
     if (unames.length === 0) {
-      addRow('Firebase user registry', 'warn', 'No users registered yet');
+      addRow('User registry', 'warn', 'No users registered yet');
     } else {
-      addRow('Firebase user registry', 'ok', `${unames.length} user${unames.length!==1?'s':''} registered: ${unames.join(', ')}`);
+      addRow('User registry', 'ok', `${unames.length} user${unames.length!==1?'s':''} registered`);
       unames.forEach(u => {
         const info = users[u];
         addRow(`  @${u}`, info.passHash ? 'ok' : 'err',
-          `${info.displayName} · ${info.gender} · joined ${info.joinDate?info.joinDate.slice(0,10):'?'} · ${info.isAdmin?'ADMIN':'user'} · passHash: ${info.passHash?info.passHash.slice(0,12)+'…':'MISSING'}`);
+          `${info.displayName} · ${info.gender} · joined ${info.joinDate?info.joinDate.slice(0,10):'?'} · ${info.isAdmin?'★ ADMIN':'user'}`);
       });
     }
   } catch(e) {
-    addRow('Firebase user registry', 'err', `Could not read users: ${e.message}`);
+    userCountBadge.textContent = 'ERR';
+    addRow('User registry', 'err', `Could not read: ${e.message}`);
   }
 
   // Encrypted data for current user
@@ -1427,7 +1513,7 @@ async function runSysCheck() {
         const doc = await db.collection('userdata').doc(SESSION.username).collection(type).doc('entries').get();
         if (doc.exists) {
           const entries = await encryptedLoad(type);
-          addRow(`Data: ${type}`, 'ok', `${entries.length} entr${entries.length!==1?'ies':'y'} · encrypted blob: ${doc.data().data.slice(0,24)}…`);
+          addRow(`Data: ${type}`, 'ok', `${entries.length} entr${entries.length!==1?'ies':'y'} saved · AES-256 encrypted`);
         } else {
           addRow(`Data: ${type}`, 'info', 'No entries logged yet');
         }
@@ -1437,33 +1523,33 @@ async function runSysCheck() {
     }
   }
 
-  // Render
+  // Render table
   const statusColor = { ok:'#4caf50', err:'#f44336', warn:'#ff9800', info:'#90a4ae' };
   const statusLabel = { ok:'✓ OK', err:'✗ FAIL', warn:'⚠ WARN', info:'ℹ INFO' };
   const okCount = rows.filter(r=>r.status==='ok').length;
   const errCount = rows.filter(r=>r.status==='err').length;
   const summaryColor = errCount > 0 ? '#f44336' : '#4caf50';
-  const summaryText = errCount > 0 ? `${errCount} ISSUE${errCount>1?'S':''} FOUND` : `ALL ${okCount} CHECKS PASSED`;
+  const summaryText = errCount > 0 ? `${errCount} ISSUE${errCount>1?'S':''} DETECTED` : `ALL SYSTEMS OPERATIONAL`;
 
   out.innerHTML = `
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-label">DIAGNOSTIC RESULTS</div>
-      <div class="card-title" style="color:${summaryColor};">${summaryText}</div>
-      <div class="mono dim" style="font-size:0.7rem;">Last run: ${new Date().toLocaleTimeString()}</div>
+    <div class="card" style="margin-bottom:16px;border-left:4px solid ${summaryColor};">
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.15em;margin-bottom:4px;">SUMMARY</div>
+      <div style="font-family:var(--font-display);font-size:1.4rem;color:${summaryColor};letter-spacing:.08em;">${summaryText}</div>
+      <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-top:4px;">${okCount} passed · ${errCount} failed · ${rows.length} total checks · ${new Date().toLocaleTimeString()}</div>
     </div>
     <div class="card">
-      <table class="tbl" style="width:100%;border-collapse:collapse;">
+      <table style="width:100%;border-collapse:collapse;">
         <tr style="border-bottom:1px solid var(--border);">
-          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.1em;">CHECK</th>
-          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.1em;width:80px;">STATUS</th>
-          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);letter-spacing:.1em;">DETAIL</th>
+          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);letter-spacing:.1em;">CHECK</th>
+          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);letter-spacing:.1em;width:90px;">STATUS</th>
+          <th style="text-align:left;padding:8px 6px;font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);letter-spacing:.1em;">DETAIL</th>
         </tr>
         ${rows.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
           <td style="padding:8px 6px;font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">${r.label}</td>
           <td style="padding:8px 6px;">
-            <span style="font-family:var(--font-mono);font-size:0.62rem;padding:3px 8px;
-              background:${statusColor[r.status]}22;color:${statusColor[r.status]};
-              border:1px solid ${statusColor[r.status]}66;border-radius:2px;white-space:nowrap;">
+            <span style="font-family:var(--font-mono);font-size:0.6rem;padding:3px 9px;
+              background:${statusColor[r.status]}20;color:${statusColor[r.status]};
+              border:1px solid ${statusColor[r.status]}55;white-space:nowrap;">
               ${statusLabel[r.status]}
             </span>
           </td>
@@ -1520,8 +1606,116 @@ async function reEncryptAll() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// TOAST
+// PROFILE EDITOR
 // ═══════════════════════════════════════════════════════════
+let profGender = 'male';
+
+function openProfile() {
+  if (!SESSION) return;
+  document.getElementById('prof-name').value = SESSION.displayName;
+  document.getElementById('prof-email').value = SESSION.email || '';
+  profGender = SESSION.gender;
+  document.getElementById('prof-gb-male').classList.toggle('selected', profGender === 'male');
+  document.getElementById('prof-gb-female').classList.toggle('selected', profGender === 'female');
+  document.getElementById('prof-curr-pass').value = '';
+  document.getElementById('prof-new-pass').value = '';
+  document.getElementById('prof-new-pass2').value = '';
+  document.getElementById('prof-err').textContent = '';
+  document.getElementById('profileModal').style.display = 'flex';
+}
+
+function closeProfile() {
+  document.getElementById('profileModal').style.display = 'none';
+}
+
+function profSelectGender(g) {
+  profGender = g;
+  document.getElementById('prof-gb-male').classList.toggle('selected', g === 'male');
+  document.getElementById('prof-gb-female').classList.toggle('selected', g === 'female');
+}
+
+async function saveProfile() {
+  const newName = document.getElementById('prof-name').value.trim();
+  const newEmail = document.getElementById('prof-email').value.trim();
+  const currPass = document.getElementById('prof-curr-pass').value;
+  const newPass = document.getElementById('prof-new-pass').value;
+  const newPass2 = document.getElementById('prof-new-pass2').value;
+  const err = document.getElementById('prof-err');
+
+  if (!newName) return err.textContent = 'DISPLAY NAME REQUIRED';
+  if (!currPass) return err.textContent = 'CURRENT PASSWORD REQUIRED TO SAVE CHANGES';
+
+  err.style.color = 'var(--danger)';
+  err.textContent = 'VERIFYING...';
+
+  // Verify current password
+  const salt = SESSION.username;
+  const hash = await sha256hex(currPass + salt + '_verify');
+  const user = await getUser(SESSION.username);
+  if (hash !== user.passHash) return err.textContent = 'CURRENT PASSWORD IS INCORRECT';
+
+  // Validate new password if provided
+  let newPassHash = user.passHash;
+  let newDek = SESSION.dek;
+  if (newPass) {
+    if (newPass.length < 8) return err.textContent = 'NEW PASSWORD MIN 8 CHARACTERS';
+    if (newPass !== newPass2) return err.textContent = 'NEW PASSWORDS DO NOT MATCH';
+    newPassHash = await sha256hex(newPass + salt + '_verify');
+    newDek = await deriveKey(newPass, salt + '_dek');
+    const newDekRaw = await exportKeyRaw(newDek);
+
+    // Re-encrypt all user data with new DEK
+    err.style.color = 'var(--accent2)';
+    err.textContent = 'RE-ENCRYPTING DATA WITH NEW PASSWORD...';
+    for (const type of ['workout','steps','body','nutrition']) {
+      try {
+        const entries = await encryptedLoad(type);
+        if (entries.length > 0) {
+          const json = JSON.stringify(entries);
+          const enc = await encryptStr(newDek, json);
+          await db.collection('userdata').doc(SESSION.username)
+            .collection(type).doc('entries').set({ data: enc, updated: new Date().toISOString() });
+        }
+      } catch(e) { /* no data for this type */ }
+    }
+    await saveUser(SESSION.username, { dekHint: newDekRaw });
+  }
+
+  err.textContent = 'SAVING...';
+
+  // Save updated profile
+  await saveUser(SESSION.username, {
+    displayName: newName,
+    gender: profGender,
+    passHash: newPassHash,
+    email: newEmail
+  });
+
+  // Update session
+  SESSION.displayName = newName;
+  SESSION.gender = profGender;
+  SESSION.email = newEmail;
+  SESSION.dek = newDek;
+  if (newPass && document.getElementById('li-remember')?.checked) {
+    await saveRememberToken(SESSION.username, newPassHash);
+  }
+
+  // Update UI
+  document.getElementById('headerUser').textContent = newName.toUpperCase();
+  document.getElementById('appLogo').textContent = profGender === 'female' ? 'BLOOMFIT' : 'OPERATORFIT';
+  applyTheme(profGender);
+
+  closeProfile();
+  toast('✓ PROFILE UPDATED');
+}
+
+// Close modal if clicking outside
+document.addEventListener('click', e => {
+  const modal = document.getElementById('profileModal');
+  if (modal && modal.style.display === 'flex' && e.target === modal) closeProfile();
+});
+
+
 let toastTimeout;
 function toast(msg) {
   const t = document.getElementById('toast');
@@ -1591,8 +1785,501 @@ function setDefaultDates() {
 // ═══════════════════════════════════════════════════════════
 // WORKOUT DATA
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// WORKOUT DATA — Full Warm-up · Core · Cooldown Structure
+// ═══════════════════════════════════════════════════════════
 const WORKOUTS_MALE = {
-  mon:{title:'UPPER PUSH',sub:'Chest · Shoulders · Triceps',warmup:'Arm circles ×30, shoulder pass-throughs ×15, push-up plus ×10, scapular push-ups ×10',
+  mon:{title:'UPPER PUSH',sub:'Chest · Shoulders · Triceps',
+    warmup:[
+      {id:'m_mon_wu1',name:'ARM CIRCLES',detail:'30 reps each direction — small to large. Primes shoulder joint.',ytId:'1u9-YNjFm0g',type:'stretch'},
+      {id:'m_mon_wu2',name:'SHOULDER PASS-THROUGHS',detail:'15 reps with broomstick or towel. Opens thoracic + shoulder mobility.',ytId:'hZnE2IlPLEM',type:'stretch'},
+      {id:'m_mon_wu3',name:'PUSH-UP PLUS',detail:'10 reps. At top of push-up, push extra through shoulder blades — activates serratus anterior.',ytId:'B5OhsrUaD30',type:'activate'},
+      {id:'m_mon_wu4',name:'SCAPULAR PUSH-UPS',detail:'10 reps. Arms locked, pinch and spread shoulder blades. Primes back for pressing stability.',ytId:'akgQbxhrhOc',type:'activate'},
+      {id:'m_mon_wu5',name:'BAND PULL-APARTS',detail:'20 reps. Band at chest height, pull apart to T-shape. Activates rear delts and prevents shoulder impingement.',ytId:'0kgSBxbG6zo',type:'activate'}
+    ],
+    exercises:[
+      {id:'m_mon_e1',name:'BENCH PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'60% 1RM',phase2:'75–85% 1RM',phase3:'85–95% 1RM',ytId:'vcBig73ojpE',desc:'Flat bench, grip slightly wider than shoulder-width. Lower to chest 2–3 sec, drive explosively up. Shoulder blades retracted throughout.',hotel:'FLOOR PUSH-UP 5×5 — elevate feet on bed for incline'},
+      {id:'m_mon_e2',name:'OVERHEAD PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'60%',phase2:'75–85%',phase3:'85–95%',ytId:'2yjwXTZbrDM',desc:'Standing, bar/dumbbell at shoulders. Press directly overhead, full extension. Core braced, no lower back arch.',hotel:'PIKE PUSH-UP 5×5 — hips high, pressing straight down'},
+      {id:'m_mon_e3',name:'INCLINE DB PRESS',badge:'SECONDARY',sets:'3×10',rest:'90 sec',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'8iPEnn-ltC8',desc:'Bench 30–45°. Dumbbells at chest level, elbows 45° to body. Press up and slightly inward. Lower slowly.',hotel:'DECLINE PUSH-UP 3×10 — feet on bed edge'},
+      {id:'m_mon_e4',name:'LATERAL RAISES',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Light',phase2:'Progressive',phase3:'Heavy+slow neg',ytId:'3VcKaXpzqRo',desc:'Raise arms to shoulder height, slight forward lean, tiny elbow bend. Avoid swinging.',hotel:'Pike hold isometric 30 sec ×3'},
+      {id:'m_mon_e5',name:'TRICEP OVERHEAD EXT.',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'_gsUck-7f74',desc:'Hold one DB overhead with both hands. Lower behind head, elbows close to ears. Full extension at top.',hotel:'DIAMOND PUSH-UP 3×12'},
+      {id:'m_mon_e6',name:'PUSH-UP BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4 only',phase2:'Full',phase3:'Weighted/elevated',ytId:'IODxDxX7oi4',desc:'Military-style burnout. To absolute failure, rest 20 sec, repeat 3 rounds. Metabolic flush finisher.',hotel:'SAME — works perfectly'}
+    ],
+    cooldown:[
+      {id:'m_mon_cd1',name:'DOORWAY CHEST STRETCH',detail:'60 sec each side. Arm at 90°, lean into doorframe. Full chest + anterior shoulder release.',ytId:'eTlnJYWv9Y4',type:'stretch'},
+      {id:'m_mon_cd2',name:'CROSS-BODY SHOULDER STRETCH',detail:'30 sec each side. Pull arm across body, hold at elbow. Releases rear deltoid.',ytId:'KFlSIhgZXOQ',type:'stretch'},
+      {id:'m_mon_cd3',name:'TRICEP OVERHEAD STRETCH',detail:'30 sec each side. Arm overhead, bend elbow, pull with opposite hand.',ytId:'YwTbYJhLBY4',type:'stretch'},
+      {id:'m_mon_cd4',name:'THORACIC EXTENSION',detail:'60 sec. Sit against bench edge at mid-back. Extend over it, arms behind head. Undoes desk posture.',ytId:'NVFfJlBNJsI',type:'stretch'}
+    ]},
+
+  tue:{title:'LOWER BODY',sub:'Quads · Hamstrings · Glutes',
+    warmup:[
+      {id:'m_tue_wu1',name:'HIP CIRCLES',detail:'20 reps each direction. Slow, controlled. Warms hip joint capsule.',ytId:'bVnBdaYn0hY',type:'stretch'},
+      {id:'m_tue_wu2',name:'LEG SWINGS (front/back)',detail:'15 swings each leg. Hold wall for balance. Hamstring and hip flexor mobility.',ytId:'KFZ5hLJbR9o',type:'stretch'},
+      {id:'m_tue_wu3',name:'GLUTE BRIDGE',detail:'15 reps, 2-sec hold at top. The #1 glute activation before squats. Prevents quad dominance.',ytId:'wPM8icPu6H8',type:'activate'},
+      {id:'m_tue_wu4',name:'CLAMSHELL',detail:'20 reps each side. Lying on side, band above knees optional. Activates glute medius — prevents knee cave on squats.',ytId:'5bNq7KKGV4E',type:'activate'},
+      {id:'m_tue_wu5',name:'BODYWEIGHT SQUAT',detail:'15 reps, slow eccentric (3-sec down). Primes movement pattern, warms quads/glutes under zero load.',ytId:'aclHkVaku9U',type:'activate'}
+    ],
+    exercises:[
+      {id:'m_tue_e1',name:'GOBLET SQUAT',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light DB',phase2:'Heavy DB',phase3:'Max load',ytId:'MxsFDhcyFyE',desc:'Hold DB vertically at chest. Feet shoulder-width, toes out. Hip crease below parallel. Drive through whole foot.',hotel:'TEMPO SQUAT 5×5 — 4-sec descent'},
+      {id:'m_tue_e2',name:'ROMANIAN DEADLIFT',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light',phase2:'Heavy',phase3:'Max load',ytId:'JCXUYuzwNrM',desc:'DBs at thighs. Hinge at hips, push back, lower along legs. Feel deep hamstring stretch, drive hips forward.',hotel:'SINGLE-LEG DEADLIFT 5×5 — bodyweight, balance + hamstring stretch'},
+      {id:'m_tue_e3',name:'BULGARIAN SPLIT SQUAT',badge:'SECONDARY',sets:'3×8/leg',rest:'90 sec',phase1:'BW',phase2:'Add DBs',phase3:'Heavy DBs',ytId:'2C-uNgbwi_k',desc:'Rear foot on bench. Lower back knee to floor, front shin vertical. Unilateral strength + imbalance fix.',hotel:'SAME — use bed for rear foot'},
+      {id:'m_tue_e4',name:'HIP THRUST',badge:'SECONDARY',sets:'3×15',rest:'90 sec',phase1:'BW',phase2:'DB on hips',phase3:'Heavy DB + pause',ytId:'wPM8icPu6H8',desc:'Upper back on bench, DB on hips. Drive hips to ceiling, squeeze glutes hard at top. 1-sec hold.',hotel:'FLOOR GLUTE BRIDGE 3×20'},
+      {id:'m_tue_e5',name:'WALKING LUNGE',badge:'SECONDARY',sets:'3×10/leg',rest:'60 sec',phase1:'BW',phase2:'Light DBs',phase3:'Heavy DBs',ytId:'D7KaRcUTQeE',desc:'Long stride, front shin vertical. Drop back knee to floor. Drives glutes, quads, and core stability.',hotel:'SAME — down the hallway'},
+      {id:'m_tue_e6',name:'SQUAT BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Jump squats',ytId:'aclHkVaku9U',desc:'BW squats to failure. 20-sec rest. Repeat × 3.',hotel:'SAME'}
+    ],
+    cooldown:[
+      {id:'m_tue_cd1',name:'PIGEON STRETCH',detail:'90 sec each side. Front leg at 90°, sink hips toward floor. Deep glute and hip opener.',ytId:'O11Md_bJCfk',type:'stretch'},
+      {id:'m_tue_cd2',name:'STANDING QUAD STRETCH',detail:'30 sec each leg. Pull foot to glutes, knees together. Fully releases quad after heavy squats.',ytId:'1f9sDHSIMFc',type:'stretch'},
+      {id:'m_tue_cd3',name:'SEATED HAMSTRING STRETCH',detail:'60 sec each leg. Extend leg, reach toward foot, hold. Releases hamstring tension from RDLs.',ytId:'Tio35lx0bic',type:'stretch'},
+      {id:'m_tue_cd4',name:'HIP FLEXOR LUNGE STRETCH',detail:'60 sec each side. Rear knee on floor, push hips forward. Reverses hip flexor tightening from heavy work.',ytId:'YQmpR9OO7Zk',type:'stretch'}
+    ]},
+
+  wed:{title:'UPPER PULL',sub:'Back · Biceps · Rear Delts',
+    warmup:[
+      {id:'m_wed_wu1',name:'BAND PULL-APARTS',detail:'20 reps. Band at chest height, arms straight. Squeezes rear delts and rhomboids — the #1 back activation.',ytId:'0kgSBxbG6zo',type:'activate'},
+      {id:'m_wed_wu2',name:'PRONE COBRA',detail:'10 reps, 2-sec hold. Lie face down, lift chest and arms off floor. Activates mid-back and erectors.',ytId:'Mfbv5XEGZJI',type:'activate'},
+      {id:'m_wed_wu3',name:'SCAPULAR RETRACTIONS',detail:'15 reps. Arms out, squeeze shoulder blades hard toward spine. Establishes scapular control before rows.',ytId:'akgQbxhrhOc',type:'activate'},
+      {id:'m_wed_wu4',name:'DEAD HANG',detail:'20–30 sec. Hang from bar with full weight. Decompresses spine, activates grip, primes lat stretch.',ytId:'VJTZ7cGmkEo',type:'stretch'},
+      {id:'m_wed_wu5',name:'HAMMER CURL (light)',detail:'15 reps, very light. Neutral grip. Warms brachialis before supinated curls — prevents bicep tendon strain.',ytId:'0xyZbNqL_U0',type:'activate'}
+    ],
+    exercises:[
+      {id:'m_wed_e1',name:'DB ROW (single arm)',badge:'5×5 STRENGTH',sets:'5×5/side',rest:'2–3 min',phase1:'60%',phase2:'75–85%',phase3:'Max',ytId:'roCP442LA5g',desc:'Hand and knee on bench. Drive elbow back and up, lead with elbow. Squeeze lat at top. Do not rotate.',hotel:'TOWEL-DOOR ROW — loop towel around door handle, row bodyweight'},
+      {id:'m_wed_e2',name:'BENT-OVER ROW',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light',phase2:'Heavy',phase3:'Max',ytId:'FWJR5Ve8bnQ',desc:'Hinge forward, back flat. Row to lower chest, squeeze shoulder blades. Control descent.',hotel:'BED-FRAME ROW — lie under bed edge, grip frame, row chest up'},
+      {id:'m_wed_e3',name:'BICEP CURL',badge:'SECONDARY',sets:'3×10',rest:'60 sec',phase1:'Light',phase2:'Progressive',phase3:'Heavy+neg',ytId:'ykJmrZ5v0Oo',desc:'Supinate at top. Lower slowly over 3 sec. Elbows anchored.',hotel:'TOWEL CURL — step on towel ends, curl against resistance'},
+      {id:'m_wed_e4',name:'HAMMER CURL',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Light',phase2:'Progressive',phase3:'Heavy',ytId:'0xyZbNqL_U0',desc:'Neutral grip. Targets brachialis — adds thickness and height to arms. Control the descent.',hotel:'SAME with water bottles'},
+      {id:'m_wed_e5',name:'REAR DELT RAISE',badge:'SECONDARY',sets:'3×15',rest:'60 sec',phase1:'Very light',phase2:'Progressive',phase3:'Load+tempo',ytId:'Rep-GkxHMKU',desc:'Bent over, raise arms scarecrow-style. Crucial for shoulder health and posture correction.',hotel:'PRONE REAR DELT RAISE — face down on bed edge'},
+      {id:'m_wed_e6',name:'ROW BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Full',ytId:'FWJR5Ve8bnQ',desc:'Light rows to failure. 20-sec rest. ×3.',hotel:'BED-FRAME ROW BURNOUT'}
+    ],
+    cooldown:[
+      {id:'m_wed_cd1',name:'DOORWAY LAT STRETCH',detail:'60 sec each side. Hold doorframe, lean away. Full lat and teres major release.',ytId:'lPOOpNe6JM4',type:'stretch'},
+      {id:'m_wed_cd2',name:'CHILD\'S POSE',detail:'60 sec. Kneel, arms extended forward, forehead to floor. Decompresses entire back after rows.',ytId:'eqVMAPM00GM',type:'stretch'},
+      {id:'m_wed_cd3',name:'BICEP DOORFRAME STRETCH',detail:'30 sec each arm. Arm straight, palm on doorframe behind you, rotate away. Releases bicep and elbow.',ytId:'bJ1JxDL89P0',type:'stretch'},
+      {id:'m_wed_cd4',name:'THORACIC ROTATION',detail:'45 sec each side. Seated, hands behind head, rotate from mid-back. Reverses forward-rounded posture.',ytId:'NVFfJlBNJsI',type:'stretch'}
+    ]},
+
+  thu:{title:'CORE + HIIT',sub:'Abs · Obliques · Conditioning',
+    warmup:[
+      {id:'m_thu_wu1',name:'DEAD BUG',detail:'10 reps each side. Press lower back to floor, extend opposite arm and leg. The gold standard core primer.',ytId:'4XLEnwUr1d8',type:'activate'},
+      {id:'m_thu_wu2',name:'BIRD DOG',detail:'10 reps each side. On all-fours, extend opposite arm and leg, hold 2 sec. Anti-rotation core activation.',ytId:'wiFNA3sqjCA',type:'activate'},
+      {id:'m_thu_wu3',name:'HOLLOW HOLD',detail:'20 sec. Lower back pressed to floor, arms and legs hovering. Full anterior core engagement.',ytId:'LlDNef_Ztsc',type:'activate'},
+      {id:'m_thu_wu4',name:'GLUTE BRIDGE',detail:'15 reps. Activates posterior chain before core compression work. Protects lower back.',ytId:'wPM8icPu6H8',type:'activate'},
+      {id:'m_thu_wu5',name:'PLANK HOLD',detail:'30 sec. Establish the position before adding movement. Bracing pattern for everything that follows.',ytId:'pSHjTRCQxIw',type:'activate'}
+    ],
+    exercises:[
+      {id:'m_thu_e1',name:'PLANK VARIATIONS',badge:'CORE',sets:'3×45–90 sec',rest:'60 sec',phase1:'Standard',phase2:'RKC plank',phase3:'Weighted',ytId:'pSHjTRCQxIw',desc:'Squeeze everything. No hip sag. Breathe slowly. Add 5 sec per week.',hotel:'SAME'},
+      {id:'m_thu_e2',name:'DEAD BUG',badge:'CORE',sets:'3×10/side',rest:'60 sec',phase1:'BW',phase2:'DB reach',phase3:'Heavy DB',ytId:'4XLEnwUr1d8',desc:'Press lower back to floor. Opposite arm+leg toward floor. Anti-extension training.',hotel:'SAME'},
+      {id:'m_thu_e3',name:'BICYCLE CRUNCH',badge:'SECONDARY',sets:'3×20',rest:'45 sec',phase1:'Slow',phase2:'Controlled',phase3:'Weighted',ytId:'Iwyvozckjak',desc:'Full thoracic rotation. Slow beats fast. Focus on oblique squeeze.',hotel:'SAME'},
+      {id:'m_thu_e4',name:'HANGING LEG RAISE',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Bent knee',phase2:'Straight leg',phase3:'Toes to bar',ytId:'JB2oyawG9KI',desc:'Hang from bar, raise knees to chest controlling the descent. Full lower ab engagement.',hotel:'LYING LEG RAISE — floor version'},
+      {id:'m_thu_e5',name:'MOUNTAIN CLIMBERS',badge:'HIIT P2+',sets:'4×30sec on/15 off',rest:'15 sec',phase1:'NOT YET — sub plank',phase2:'Full HIIT',phase3:'Explosive',ytId:'nmwgirgXLYM',desc:'Drive knees alternately, hips level. Heart rate spikes. Phase 2+ only.',hotel:'SAME'},
+      {id:'m_thu_e6',name:'BURPEE FINISHER',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'NOT YET',phase2:'Full',phase3:'+ push-up',ytId:'dZgVxmf6jkA',desc:'Full burpees to failure. 20-sec rest. ×3.',hotel:'SAME'}
+    ],
+    cooldown:[
+      {id:'m_thu_cd1',name:'COBRA STRETCH',detail:'60 sec. Lie face down, press up through hands, hips stay down. Full anterior core release after compression work.',ytId:'JohnsonFit9I',type:'stretch'},
+      {id:'m_thu_cd2',name:'SUPINE TWIST',detail:'45 sec each side. Lying down, bring knee across body. Releases obliques and lower back.',ytId:'rXi-QI2j8Vk',type:'stretch'},
+      {id:'m_thu_cd3',name:'SEATED FORWARD FOLD',detail:'60 sec. Legs extended, reach toward feet. Releases posterior chain tension from core work.',ytId:'FaDzGjrgBpE',type:'stretch'},
+      {id:'m_thu_cd4',name:'CAT-COW',detail:'10 slow reps. Spinal flexion and extension. Resets spine after high-intensity core compression.',ytId:'kqnua4rHVVA',type:'stretch'}
+    ]},
+
+  fri:{title:'FULL UPPER COMPOUND',sub:'Compound Upper Body Strength',
+    warmup:[
+      {id:'m_fri_wu1',name:'ARM CIRCLES',detail:'20 reps each direction. Full shoulder warm-up for combined push+pull session.',ytId:'1u9-YNjFm0g',type:'stretch'},
+      {id:'m_fri_wu2',name:'BAND PULL-APARTS',detail:'20 reps. Activates rear delts and rhomboids before compound pressing.',ytId:'0kgSBxbG6zo',type:'activate'},
+      {id:'m_fri_wu3',name:'PUSH-UP PLUS',detail:'10 reps. Serratus anterior activation — critical for Friday\'s compound work.',ytId:'B5OhsrUaD30',type:'activate'},
+      {id:'m_fri_wu4',name:'SCAPULAR RETRACTIONS',detail:'15 reps. Combined push+pull session requires full scapular control primed.',ytId:'akgQbxhrhOc',type:'activate'},
+      {id:'m_fri_wu5',name:'SHOULDER ROTATIONS (YTW)',detail:'10 reps each. Lie face down, raise arms in Y, T, W shapes. Full rotator cuff activation before heavy compound day.',ytId:'whbDHDHFHLE',type:'activate'}
+    ],
+    exercises:[
+      {id:'m_fri_e1',name:'FLOOR PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'60%',phase2:'75–85%',phase3:'85–95%',ytId:'uUGDRwge4F8',desc:'Lie on floor. Upper arms rest between reps, eliminating stretch reflex. Builds lockout strength.',hotel:'SAME — this IS the hotel exercise'},
+      {id:'m_fri_e2',name:'ARCHER PUSH-UP',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Standard push-up',phase2:'Archer push-up',phase3:'One-arm progression',ytId:'44DbxOftzgw',desc:'Body shifts side to side. Equivalent to 75%+ bench. Progresses toward one-arm push-up.',hotel:'SAME'},
+      {id:'m_fri_e3',name:'RENEGADE ROW',badge:'SECONDARY',sets:'3×8/side',rest:'90 sec',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'Lge5ZPpGQu4',desc:'Push-up position, row one DB while stabilizing. Anti-rotation core + pull strength.',hotel:'Plank to alternating shoulder taps (no DBs)'},
+      {id:'m_fri_e4',name:'TRICEP DIPS',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Wide grip',phase2:'Narrow grip',phase3:'Weighted',ytId:'0326dy_-CzM',desc:'Bench edge, fingers forward. 90° elbow, elbows close to body.',hotel:'CHAIR DIPS or BED EDGE'},
+      {id:'m_fri_e5',name:'BICEP CURL',badge:'SECONDARY',sets:'3×10',rest:'60 sec',phase1:'Light',phase2:'Progressive',phase3:'Heavy',ytId:'ykJmrZ5v0Oo',desc:'Full range — supinate at top. Lower over 3 sec. Finishes the week\'s arm volume.',hotel:'TOWEL CURL'},
+      {id:'m_fri_e6',name:'PUSH-UP BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Hardest variation',ytId:'IODxDxX7oi4',desc:'Full upper burnout to cap Friday.',hotel:'SAME'}
+    ],
+    cooldown:[
+      {id:'m_fri_cd1',name:'DOORWAY CHEST STRETCH',detail:'60 sec each side. Full chest release after combined push session.',ytId:'eTlnJYWv9Y4',type:'stretch'},
+      {id:'m_fri_cd2',name:'DOORWAY LAT STRETCH',detail:'60 sec each side. Full back release after combined pull session.',ytId:'lPOOpNe6JM4',type:'stretch'},
+      {id:'m_fri_cd3',name:'CROSS-BODY SHOULDER STRETCH',detail:'30 sec each side. Rear deltoid and rotator cuff decompression.',ytId:'KFlSIhgZXOQ',type:'stretch'},
+      {id:'m_fri_cd4',name:'WRIST CIRCLES + FOREARM STRETCH',detail:'30 sec each. Reverse prayer position. Releases forearms and wrist after grip-intensive session.',ytId:'Y_xVXsumqo4',type:'stretch'}
+    ]},
+
+  sat:{title:'LEGS + CORE + RECOVERY',sub:'Full Legs · Core · Active Recovery',
+    warmup:[
+      {id:'m_sat_wu1',name:'WORLD\'S GREATEST STRETCH',detail:'5 reps each side. Lunge + thoracic rotation. Opens hip flexors, groin, and thoracic spine simultaneously.',ytId:'lGTq_ABiHuE',type:'stretch'},
+      {id:'m_sat_wu2',name:'GLUTE BRIDGE',detail:'20 reps. Lower intensity Saturday still needs glute activation before leg work.',ytId:'wPM8icPu6H8',type:'activate'},
+      {id:'m_sat_wu3',name:'LEG SWINGS (side)',detail:'15 swings each leg. Lateral swings for hip abductor activation before lunges.',ytId:'KFZ5hLJbR9o',type:'stretch'},
+      {id:'m_sat_wu4',name:'WALKING LUNGE WARM-UP',detail:'10 reps BW. Establishes lunge pattern at low intensity before loading.',ytId:'D7KaRcUTQeE',type:'activate'},
+      {id:'m_sat_wu5',name:'ANKLE CIRCLES',detail:'10 reps each direction each ankle. Often skipped, critical for squat and lunge stability.',ytId:'vENbJDVHXoQ',type:'stretch'}
+    ],
+    exercises:[
+      {id:'m_sat_e1',name:'REVERSE LUNGE',badge:'PRIMARY',sets:'4×8/leg',rest:'90 sec',phase1:'BW',phase2:'DB hold',phase3:'Heavy DBs',ytId:'xrjMX9RLuHs',desc:'Step back, lower back knee. Drive front heel. Higher reps, active recovery focus.',hotel:'SAME'},
+      {id:'m_sat_e2',name:'WALL SIT',badge:'ISOMETRIC',sets:'3×60 sec',rest:'60 sec',phase1:'30–45 sec',phase2:'60–75 sec',phase3:'90 sec + DB',ytId:'y-wV4Venusw',desc:'Thighs parallel, knees 90°. Isometric quad endurance without spinal load.',hotel:'SAME — just need a wall'},
+      {id:'m_sat_e3',name:'SINGLE-LEG DEADLIFT',badge:'PRIMARY',sets:'3×10/leg',rest:'90 sec',phase1:'BW balance',phase2:'Light DB',phase3:'Heavy DB',ytId:'4Kx4Km9XxJk',desc:'Balance on one leg, hinge hip, back flat. Develops unilateral hamstring and glute strength with proprioception.',hotel:'SAME'},
+      {id:'m_sat_e4',name:'LEG RAISES',badge:'CORE',sets:'3×15',rest:'60 sec',phase1:'Bent knee',phase2:'Straight leg',phase3:'Weighted',ytId:'JB2oyawG9KI',desc:'Lower abdominal + hip flexor. Slow, controlled.',hotel:'SAME'},
+      {id:'m_sat_e5',name:'MOBILITY FLOW',badge:'RECOVERY',sets:'10–15 min',rest:'Flow',phase1:'Beginner',phase2:'Deeper range',phase3:'Advanced',ytId:'4pKly2JojMw',desc:'Thoracic rotations, hip 90/90, pigeon, hamstring floss, shoulder CARs.',hotel:'SAME — floor only'},
+      {id:'m_sat_e6',name:'LUNGE BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Jump lunges',ytId:'xrjMX9RLuHs',desc:'Alternating lunges to failure. Saturday\'s lower intensity burnout.',hotel:'SAME'}
+    ],
+    cooldown:[
+      {id:'m_sat_cd1',name:'PIGEON STRETCH',detail:'90 sec each side. Deepest hip opener — Saturday is the perfect day for extended holds.',ytId:'O11Md_bJCfk',type:'stretch'},
+      {id:'m_sat_cd2',name:'SEATED HAMSTRING STRETCH',detail:'90 sec each leg. Extended hold after week\'s accumulated hamstring work.',ytId:'Tio35lx0bic',type:'stretch'},
+      {id:'m_sat_cd3',name:'HIP FLEXOR LUNGE STRETCH',detail:'90 sec each side. Reverses week of sitting and hip flexor shortening.',ytId:'YQmpR9OO7Zk',type:'stretch'},
+      {id:'m_sat_cd4',name:'FULL SPINE FOAM ROLL',detail:'3–5 min. Roll thoracic spine, glutes, IT band. Weekly full-body fascial release.',ytId:'qlF-3ppUCpc',type:'stretch'},
+      {id:'m_sat_cd5',name:'CHILD\'S POSE',detail:'90 sec. Final decompression. Lets week\'s spinal load fully release.',ytId:'eqVMAPM00GM',type:'stretch'}
+    ]}
+};
+
+// Female workout variant — same days, glute/shape focus
+const WORKOUTS_FEMALE = {
+  mon:{title:'UPPER PUSH + CORE',sub:'Chest · Shoulders · Triceps · Core',
+    warmup:[
+      {id:'f_mon_wu1',name:'ARM CIRCLES',detail:'30 reps each direction. Opens shoulder joint before pressing.',ytId:'1u9-YNjFm0g',type:'stretch'},
+      {id:'f_mon_wu2',name:'SHOULDER ROLLS',detail:'20 reps forward and back. Releases tension carried in traps from desk work.',ytId:'bNPZKPBK3pU',type:'stretch'},
+      {id:'f_mon_wu3',name:'PUSH-UP PLUS',detail:'10 reps. Activates serratus anterior — the muscle that gives the sides of the chest definition.',ytId:'B5OhsrUaD30',type:'activate'},
+      {id:'f_mon_wu4',name:'DEAD BUG',detail:'8 reps each side. Core activation before combining chest + core day.',ytId:'4XLEnwUr1d8',type:'activate'},
+      {id:'f_mon_wu5',name:'BAND PULL-APARTS',detail:'20 reps. Rear delt activation protects shoulder health on push day.',ytId:'0kgSBxbG6zo',type:'activate'}
+    ],
+    exercises:[
+      {id:'f_mon_e1',name:'PUSH-UP VARIATIONS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Knee push-up → standard',phase2:'Standard → decline',phase3:'Archer push-up',ytId:'IODxDxX7oi4',desc:'Full chest activation. Phase progression makes you genuinely stronger. Keep core tight, squeeze at top.',hotel:'SAME — perfect floor exercise'},
+      {id:'f_mon_e2',name:'OVERHEAD PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light DB — form',phase2:'Moderate-heavy',phase3:'Heavy progression',ytId:'2yjwXTZbrDM',desc:'Seated or standing. Press directly overhead. Builds shoulder definition that creates hourglass silhouette.',hotel:'WATER BOTTLE PRESS — or pike push-ups'},
+      {id:'f_mon_e3',name:'INCLINE DB PRESS',badge:'SECONDARY',sets:'3×12',rest:'90 sec',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'8iPEnn-ltC8',desc:'Upper chest focus. Creates lift and definition. Control the descent — that\'s where the shaping happens.',hotel:'DECLINE PUSH-UP off bed — same angle'},
+      {id:'f_mon_e4',name:'LATERAL RAISES',badge:'SECONDARY',sets:'3×15',rest:'60 sec',phase1:'Very light',phase2:'Light-moderate',phase3:'Moderate',ytId:'3VcKaXpzqRo',desc:'Shoulder caps that create the shoulder-to-waist ratio. Light weight, perfect form beats heavy and sloppy.',hotel:'Water bottle lateral raises'},
+      {id:'f_mon_e5',name:'TRICEP OVERHEAD EXT.',badge:'SECONDARY',sets:'3×15',rest:'60 sec',phase1:'Very light',phase2:'Light',phase3:'Moderate',ytId:'_gsUck-7f74',desc:'Arm overhead, lower dumbbell behind head. Targets the tricep long head — creates the under-arm definition.',hotel:'DIAMOND PUSH-UP 3×12'},
+      {id:'f_mon_e6',name:'PUSH-UP BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Decline version',ytId:'IODxDxX7oi4',desc:'To failure, rest 20 sec, repeat. Metabolic flush — burning fat while shaping.',hotel:'SAME'}
+    ],
+    cooldown:[
+      {id:'f_mon_cd1',name:'DOORWAY CHEST STRETCH',detail:'60 sec each side. Full chest and anterior shoulder release.',ytId:'eTlnJYWv9Y4',type:'stretch'},
+      {id:'f_mon_cd2',name:'CROSS-BODY SHOULDER STRETCH',detail:'30 sec each side. Releases rear deltoid after push day.',ytId:'KFlSIhgZXOQ',type:'stretch'},
+      {id:'f_mon_cd3',name:'TRICEP OVERHEAD STRETCH',detail:'30 sec each arm. Essential after overhead extension work.',ytId:'YwTbYJhLBY4',type:'stretch'},
+      {id:'f_mon_cd4',name:'COBRA STRETCH',detail:'60 sec. Releases core after combined push+core session.',ytId:'JohnsonFit9I',type:'stretch'}
+    ]},
+
+  tue:{title:'LOWER BODY — GLUTE FOCUS',sub:'Glutes · Quads · Hamstrings · Inner Thighs',
+    warmup:[
+      {id:'f_tue_wu1',name:'HIP CIRCLES',detail:'30 reps each direction. Fully warms hip joint before heavy glute work.',ytId:'bVnBdaYn0hY',type:'stretch'},
+      {id:'f_tue_wu2',name:'GLUTE BRIDGE',detail:'20 reps, 2-sec hold. The most important activation before any glute day — turns on glute max before squats.',ytId:'wPM8icPu6H8',type:'activate'},
+      {id:'f_tue_wu3',name:'CLAMSHELL',detail:'20 reps each side. Activates glute medius — prevents knee valgus (inward cave) during squats.',ytId:'5bNq7KKGV4E',type:'activate'},
+      {id:'f_tue_wu4',name:'FIRE HYDRANT',detail:'15 reps each side. Hip abductor activation — warms glute med and min for sumo stance.',ytId:'Vts3KUjHJlY',type:'activate'},
+      {id:'f_tue_wu5',name:'BODYWEIGHT SUMO SQUAT',detail:'15 reps, slow. Establishes wide-stance pattern and inner thigh activation before loading.',ytId:'MxsFDhcyFyE',type:'activate'}
+    ],
+    exercises:[
+      {id:'f_tue_e1',name:'SUMO SQUAT',badge:'5×5 STRENGTH',sets:'5×5',rest:'2 min',phase1:'BW → light DB',phase2:'Heavy DB',phase3:'Max DB',ytId:'MxsFDhcyFyE',desc:'Wide stance, toes out 45°. Targets inner thighs AND glutes. Lower until thighs parallel. Drive knees out.',hotel:'BW SUMO SQUAT 5×5 — pulse at bottom for intensity'},
+      {id:'f_tue_e2',name:'ROMANIAN DEADLIFT',badge:'5×5 STRENGTH',sets:'5×5',rest:'2 min',phase1:'Light DB',phase2:'Moderate-heavy',phase3:'Heavy',ytId:'JCXUYuzwNrM',desc:'The #1 hamstring and glute builder. Feel hamstring stretch. Drive hips forward hard at top — that\'s the glute squeeze.',hotel:'SINGLE-LEG RDL 5×5 — incredible for balance + glute isolation'},
+      {id:'f_tue_e3',name:'HIP THRUST',badge:'SECONDARY',sets:'4×12',rest:'90 sec',phase1:'BW — form',phase2:'DB on hips',phase3:'Heavy DB — pause at top',ytId:'wPM8icPu6H8',desc:'The #1 glute exercise on the planet. Upper back on bench, DB on hips. Drive hips to ceiling, squeeze hard. 1-second hold.',hotel:'FLOOR GLUTE BRIDGE — same movement, same results'},
+      {id:'f_tue_e4',name:'DONKEY KICK',badge:'SECONDARY',sets:'3×20/leg',rest:'60 sec',phase1:'BW',phase2:'Ankle weight',phase3:'Band resistance',ytId:'SJ1iYTLBgpI',desc:'On all fours, drive heel toward ceiling, glute squeeze at top. Isolates glute max without loading the spine.',hotel:'SAME'},
+      {id:'f_tue_e5',name:'LATERAL BAND WALK',badge:'SECONDARY',sets:'3×15/direction',rest:'60 sec',phase1:'Light band',phase2:'Medium band',phase3:'Heavy band',ytId:'a5G4RJfVi2U',desc:'Band above knees, squat position, step sideways. Glute medius isolation — creates hip-to-waist shape.',hotel:'NO BAND — side lunge instead'},
+      {id:'f_tue_e6',name:'SQUAT BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Sumo jump squats',ytId:'aclHkVaku9U',desc:'Sumo squats to failure. 20-sec rest. ×3.',hotel:'SAME'}
+    ],
+    cooldown:[
+      {id:'f_tue_cd1',name:'PIGEON STRETCH',detail:'90 sec each side. Deep glute release after heavy hip thrust and sumo work.',ytId:'O11Md_bJCfk',type:'stretch'},
+      {id:'f_tue_cd2',name:'BUTTERFLY STRETCH',detail:'60 sec. Soles of feet together, knees dropped. Releases inner thighs after sumo stance.',ytId:'hBzAbIFocZQ',type:'stretch'},
+      {id:'f_tue_cd3',name:'STANDING QUAD STRETCH',detail:'30 sec each leg. Full quad release after squat loading.',ytId:'1f9sDHSIMFc',type:'stretch'},
+      {id:'f_tue_cd4',name:'HIP FLEXOR LUNGE STRETCH',detail:'60 sec each side. Reverses hip flexor shortening from heavy lower body day.',ytId:'YQmpR9OO7Zk',type:'stretch'}
+    ]},
+
+  wed:{title:'UPPER PULL + WAIST',sub:'Back · Biceps · Rear Delts · Obliques',
+    warmup:[
+      {id:'f_wed_wu1',name:'BAND PULL-APARTS',detail:'20 reps. Rear delt activation — builds the back definition that creates waist-to-shoulder shape.',ytId:'0kgSBxbG6zo',type:'activate'},
+      {id:'f_wed_wu2',name:'PRONE COBRA',detail:'10 reps. Mid-back activation. Most women benefit enormously from back development for posture.',ytId:'Mfbv5XEGZJI',type:'activate'},
+      {id:'f_wed_wu3',name:'SCAPULAR RETRACTIONS',detail:'15 reps. Shoulder blade control before rowing — prevents shoulder impingement.',ytId:'akgQbxhrhOc',type:'activate'},
+      {id:'f_wed_wu4',name:'DEAD HANG',detail:'20 sec. Decompresses spine, activates grip, stretches lat.',ytId:'VJTZ7cGmkEo',type:'stretch'},
+      {id:'f_wed_wu5',name:'HAMMER CURL (light)',detail:'15 reps. Warms brachialis before full bicep work.',ytId:'0xyZbNqL_U0',type:'activate'}
+    ],
+    exercises:[
+      {id:'f_wed_e1',name:'DB ROW (single arm)',badge:'5×5 STRENGTH',sets:'5×5/side',rest:'2–3 min',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'roCP442LA5g',desc:'Drive elbow back. Squeeze lat at top. Back development creates the V-taper that defines waist.',hotel:'TOWEL-DOOR ROW'},
+      {id:'f_wed_e2',name:'BENT-OVER ROW',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'FWJR5Ve8bnQ',desc:'Hinge forward. Row to lower chest, squeeze shoulder blades. Mid-back thickness.',hotel:'BED-FRAME ROW'},
+      {id:'f_wed_e3',name:'BICEP CURL',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Light',phase2:'Progressive',phase3:'Heavy',ytId:'ykJmrZ5v0Oo',desc:'Full range, supinate at top. Defined arms through controlled movement, not heavy weight.',hotel:'TOWEL CURL'},
+      {id:'f_wed_e4',name:'REAR DELT RAISE',badge:'SECONDARY',sets:'3×15',rest:'60 sec',phase1:'Very light',phase2:'Progressive',phase3:'Load+tempo',ytId:'Rep-GkxHMKU',desc:'Bent over, arms out. Builds posterior shoulder definition — the final piece of an hourglass upper body.',hotel:'PRONE REAR DELT RAISE on bed'},
+      {id:'f_wed_e5',name:'RUSSIAN TWIST',badge:'WAIST',sets:'3×20',rest:'60 sec',phase1:'BW',phase2:'Light DB',phase3:'Heavy DB',ytId:'JyUqwkVpsi8',desc:'Seated, feet off floor, rotate side to side. Targets obliques — the muscles that define and narrow the waist.',hotel:'SAME'},
+      {id:'f_wed_e6',name:'ROW BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Full',ytId:'FWJR5Ve8bnQ',desc:'Light rows to failure. 20-sec rest. ×3.',hotel:'BED-FRAME ROW BURNOUT'}
+    ],
+    cooldown:[
+      {id:'f_wed_cd1',name:'DOORWAY LAT STRETCH',detail:'60 sec each side. Full lat release after rowing.',ytId:'lPOOpNe6JM4',type:'stretch'},
+      {id:'f_wed_cd2',name:'CHILD\'S POSE',detail:'60 sec. Complete back decompression.',ytId:'eqVMAPM00GM',type:'stretch'},
+      {id:'f_wed_cd3',name:'SUPINE TWIST',detail:'45 sec each side. Releases obliques after waist work.',ytId:'rXi-QI2j8Vk',type:'stretch'},
+      {id:'f_wed_cd4',name:'BICEP DOORFRAME STRETCH',detail:'30 sec each arm. Releases bicep and elbow after curl volume.',ytId:'bJ1JxDL89P0',type:'stretch'}
+    ]},
+
+  thu:{title:'CORE + HIIT',sub:'Abs · Obliques · Waist · Conditioning',
+    warmup:[
+      {id:'f_thu_wu1',name:'DEAD BUG',detail:'10 reps each side. Core primer.',ytId:'4XLEnwUr1d8',type:'activate'},
+      {id:'f_thu_wu2',name:'BIRD DOG',detail:'10 reps each side. Anti-rotation activation.',ytId:'wiFNA3sqjCA',type:'activate'},
+      {id:'f_thu_wu3',name:'HOLLOW HOLD',detail:'20 sec. Full anterior core engagement.',ytId:'LlDNef_Ztsc',type:'activate'},
+      {id:'f_thu_wu4',name:'GLUTE BRIDGE',detail:'15 reps. Protects lower back during core compression.',ytId:'wPM8icPu6H8',type:'activate'},
+      {id:'f_thu_wu5',name:'PLANK HOLD',detail:'30 sec. Establishes position before adding movement.',ytId:'pSHjTRCQxIw',type:'activate'}
+    ],
+    exercises:[
+      {id:'f_thu_e1',name:'PLANK VARIATIONS',badge:'CORE',sets:'3×45–90 sec',rest:'60 sec',phase1:'Standard',phase2:'Side plank',phase3:'Weighted',ytId:'pSHjTRCQxIw',desc:'Full body tension. No hip sag. Builds flat, tight core — not bulk.',hotel:'SAME'},
+      {id:'f_thu_e2',name:'DEAD BUG',badge:'CORE',sets:'3×10/side',rest:'60 sec',phase1:'BW',phase2:'DB reach',phase3:'Heavy DB',ytId:'4XLEnwUr1d8',desc:'Deep core without spinal compression. Best exercise for lower belly.',hotel:'SAME'},
+      {id:'f_thu_e3',name:'BICYCLE CRUNCH',badge:'CORE',sets:'3×20',rest:'45 sec',phase1:'Slow',phase2:'Controlled',phase3:'Weighted',ytId:'Iwyvozckjak',desc:'Full thoracic rotation. Obliques pull in the waist. Slow beats fast.',hotel:'SAME'},
+      {id:'f_thu_e4',name:'SIDE PLANK HIP DIP',badge:'WAIST',sets:'3×15/side',rest:'60 sec',phase1:'Knee down',phase2:'Full side plank',phase3:'Weighted',ytId:'Bk_VYqG83CQ',desc:'In side plank, dip hip to floor and back up. Targets obliques through full range — defines the waist curve.',hotel:'SAME'},
+      {id:'f_thu_e5',name:'MOUNTAIN CLIMBERS',badge:'HIIT P2+',sets:'4×30sec on/15 off',rest:'15 sec',phase1:'NOT YET — sub plank',phase2:'Full HIIT',phase3:'Explosive',ytId:'nmwgirgXLYM',desc:'Cardio blast. Phase 2+ only.',hotel:'SAME'},
+      {id:'f_thu_e6',name:'BURPEE FINISHER',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'NOT YET',phase2:'Full',phase3:'+ push-up',ytId:'dZgVxmf6jkA',desc:'To failure, rest 20 sec. ×3.',hotel:'SAME'}
+    ],
+    cooldown:[
+      {id:'f_thu_cd1',name:'COBRA STRETCH',detail:'60 sec. Full anterior core release.',ytId:'JohnsonFit9I',type:'stretch'},
+      {id:'f_thu_cd2',name:'SUPINE TWIST',detail:'45 sec each side. Releases obliques.',ytId:'rXi-QI2j8Vk',type:'stretch'},
+      {id:'f_thu_cd3',name:'SEATED FORWARD FOLD',detail:'60 sec. Posterior chain release.',ytId:'FaDzGjrgBpE',type:'stretch'},
+      {id:'f_thu_cd4',name:'CAT-COW',detail:'10 slow reps. Resets spine after core compression.',ytId:'kqnua4rHVVA',type:'stretch'}
+    ]},
+
+  fri:{title:'FULL UPPER COMPOUND',sub:'Compound Upper Body Strength',
+    warmup:[
+      {id:'f_fri_wu1',name:'ARM CIRCLES',detail:'20 reps each direction.',ytId:'1u9-YNjFm0g',type:'stretch'},
+      {id:'f_fri_wu2',name:'BAND PULL-APARTS',detail:'20 reps.',ytId:'0kgSBxbG6zo',type:'activate'},
+      {id:'f_fri_wu3',name:'PUSH-UP PLUS',detail:'10 reps.',ytId:'B5OhsrUaD30',type:'activate'},
+      {id:'f_fri_wu4',name:'SCAPULAR RETRACTIONS',detail:'15 reps.',ytId:'akgQbxhrhOc',type:'activate'},
+      {id:'f_fri_wu5',name:'SHOULDER ROTATIONS (YTW)',detail:'10 reps each. Full rotator cuff primer.',ytId:'whbDHDHFHLE',type:'activate'}
+    ],
+    exercises:[
+      {id:'f_fri_e1',name:'FLOOR PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'uUGDRwge4F8',desc:'Builds lockout chest and tricep strength. No shoulder impingement risk.',hotel:'SAME'},
+      {id:'f_fri_e2',name:'ARCHER PUSH-UP',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Standard push-up',phase2:'Archer',phase3:'One-arm progression',ytId:'44DbxOftzgw',desc:'Equivalent to 75%+ bench. Serious functional upper body strength.',hotel:'SAME'},
+      {id:'f_fri_e3',name:'RENEGADE ROW',badge:'SECONDARY',sets:'3×8/side',rest:'90 sec',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'Lge5ZPpGQu4',desc:'Anti-rotation core + pull strength. One of the most complete exercises.',hotel:'Plank to shoulder taps (no DBs)'},
+      {id:'f_fri_e4',name:'TRICEP DIPS',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Wide grip',phase2:'Narrow grip',phase3:'Weighted',ytId:'0326dy_-CzM',desc:'Bench edge. Targets the back of the arm — the area women most want to define.',hotel:'CHAIR DIPS or BED EDGE'},
+      {id:'f_fri_e5',name:'HAMMER CURL',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'0xyZbNqL_U0',desc:'Neutral grip. Builds arm thickness and definition from the side.',hotel:'SAME with water bottles'},
+      {id:'f_fri_e6',name:'PUSH-UP BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Hardest variation',ytId:'IODxDxX7oi4',desc:'Full upper burnout to cap Friday.',hotel:'SAME'}
+    ],
+    cooldown:[
+      {id:'f_fri_cd1',name:'DOORWAY CHEST STRETCH',detail:'60 sec each side.',ytId:'eTlnJYWv9Y4',type:'stretch'},
+      {id:'f_fri_cd2',name:'DOORWAY LAT STRETCH',detail:'60 sec each side.',ytId:'lPOOpNe6JM4',type:'stretch'},
+      {id:'f_fri_cd3',name:'CROSS-BODY SHOULDER STRETCH',detail:'30 sec each side.',ytId:'KFlSIhgZXOQ',type:'stretch'},
+      {id:'f_fri_cd4',name:'WRIST CIRCLES + FOREARM STRETCH',detail:'30 sec each direction.',ytId:'Y_xVXsumqo4',type:'stretch'}
+    ]},
+
+  sat:{title:'GLUTES + CORE + RECOVERY',sub:'Glute Shaping · Waist · Mobility',
+    warmup:[
+      {id:'f_sat_wu1',name:'WORLD\'S GREATEST STRETCH',detail:'5 reps each side. Opens hips, groin, and thoracic spine.',ytId:'lGTq_ABiHuE',type:'stretch'},
+      {id:'f_sat_wu2',name:'GLUTE BRIDGE',detail:'20 reps. Glute activation for glute-focused Saturday.',ytId:'wPM8icPu6H8',type:'activate'},
+      {id:'f_sat_wu3',name:'FIRE HYDRANT',detail:'15 reps each side. Hip abductor activation.',ytId:'Vts3KUjHJlY',type:'activate'},
+      {id:'f_sat_wu4',name:'DONKEY KICK',detail:'10 reps each side. Glute max priming.',ytId:'SJ1iYTLBgpI',type:'activate'},
+      {id:'f_sat_wu5',name:'CLAMSHELL',detail:'15 reps each side. Glute medius activation.',ytId:'5bNq7KKGV4E',type:'activate'}
+    ],
+    exercises:[
+      {id:'f_sat_e1',name:'SINGLE-LEG DEADLIFT',badge:'PRIMARY',sets:'3×10/leg',rest:'90 sec',phase1:'BW balance',phase2:'Light DB',phase3:'Heavy DB',ytId:'4Kx4Km9XxJk',desc:'Unilateral hamstring and glute work with balance challenge.',hotel:'SAME'},
+      {id:'f_sat_e2',name:'GLUTE KICKBACK',badge:'PRIMARY',sets:'4×15/leg',rest:'60 sec',phase1:'BW',phase2:'Band',phase3:'Cable or ankle weight',ytId:'SJ1iYTLBgpI',desc:'On all fours, drive heel back and up. Pure glute max isolation.',hotel:'SAME'},
+      {id:'f_sat_e3',name:'REVERSE LUNGE',badge:'PRIMARY',sets:'3×10/leg',rest:'90 sec',phase1:'BW',phase2:'Light DB',phase3:'Heavy DBs',ytId:'xrjMX9RLuHs',desc:'Lower intensity active recovery lunge. Step back, front shin vertical.',hotel:'SAME'},
+      {id:'f_sat_e4',name:'SIDE PLANK HIP DIP',badge:'WAIST',sets:'3×15/side',rest:'60 sec',phase1:'Knee down',phase2:'Full side plank',phase3:'Weighted',ytId:'Bk_VYqG83CQ',desc:'Oblique work to define waist. The week\'s final waist shaping exercise.',hotel:'SAME'},
+      {id:'f_sat_e5',name:'MOBILITY FLOW',badge:'RECOVERY',sets:'10–15 min',rest:'Flow',phase1:'Beginner',phase2:'Deeper range',phase3:'Advanced',ytId:'4pKly2JojMw',desc:'Hip 90/90, pigeon, butterfly, hamstring floss.',hotel:'SAME — floor only'},
+      {id:'f_sat_e6',name:'LUNGE BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Jump lunges',ytId:'xrjMX9RLuHs',desc:'Alternating lunges to failure. Light and active.',hotel:'SAME'}
+    ],
+    cooldown:[
+      {id:'f_sat_cd1',name:'PIGEON STRETCH',detail:'90 sec each side. Deep glute and hip release.',ytId:'O11Md_bJCfk',type:'stretch'},
+      {id:'f_sat_cd2',name:'BUTTERFLY STRETCH',detail:'90 sec. Inner thigh release.',ytId:'hBzAbIFocZQ',type:'stretch'},
+      {id:'f_sat_cd3',name:'SEATED HAMSTRING STRETCH',detail:'90 sec each leg.',ytId:'Tio35lx0bic',type:'stretch'},
+      {id:'f_sat_cd4',name:'FULL SPINE FOAM ROLL',detail:'3–5 min. Weekly full-body fascial release.',ytId:'qlF-3ppUCpc',type:'stretch'},
+      {id:'f_sat_cd5',name:'CHILD\'S POSE',detail:'90 sec. Final weekly decompression.',ytId:'eqVMAPM00GM',type:'stretch'}
+    ]}
+};
+
+const DAY_IDS = ['mon','tue','wed','thu','fri','sat'];
+const DAY_NAMES = {mon:'MON',tue:'TUE',wed:'WED',thu:'THU',fri:'FRI',sat:'SAT',sun:'SUN'};
+
+// Track checked items in memory (saved to Firebase)
+let workoutChecks = {}; // { exerciseId: true/false }
+
+function buildDayTabs() {
+  const jsDay = new Date().getDay();
+  const map = [6,0,1,2,3,4,5]; // Sun=0 → index 6 (sat)
+  const todayIdx = map[jsDay];
+  const dayIds = [...DAY_IDS,'sun'];
+  document.getElementById('dayTabs').innerHTML = dayIds.map((id,i) => {
+    const isToday = (i === todayIdx) || (id==='sun' && jsDay===0);
+    return `<div class="stat-box" style="flex:1;min-width:60px;cursor:${id==='sun'?'default':'pointer'};${isToday?'border-bottom:3px solid var(--accent2);':''}" id="daytab-${id}"
+      onclick="${id==='sun'?'':` showWorkoutDay('${id}')`}">
+      <div style="font-family:var(--font-display);font-size:0.95rem;color:${isToday?'var(--accent2)':'var(--text)'};">${DAY_NAMES[id]}</div>
+      <div class="stat-label">${id==='sun'?'REST':''}</div>
+    </div>`;
+  }).join('');
+}
+
+async function showWorkoutDay(dayId) {
+  // Load saved checks from Firebase for today
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('wkchecks').doc(today).get();
+    workoutChecks = doc.exists ? (doc.data().checks || {}) : {};
+  } catch(e) { workoutChecks = {}; }
+
+  // Update tab highlights
+  DAY_IDS.forEach(id => {
+    const el = document.getElementById('daytab-'+id);
+    if(el) el.style.borderBottom = id===dayId ? '3px solid var(--accent2)' : 'none';
+  });
+
+  const W = SESSION.gender==='female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
+  const w = W[dayId];
+  if (!w) return;
+
+  const totalItems = w.warmup.length + w.exercises.length + w.cooldown.length;
+  const checkedCount = [...w.warmup, ...w.exercises, ...w.cooldown].filter(i => workoutChecks[i.id]).length;
+  const pct = Math.round(checkedCount / totalItems * 100);
+
+  document.getElementById('workoutContent').innerHTML = `
+    <div class="card" style="margin-bottom:16px;border-left:4px solid var(--accent2);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div class="card-label">${dayId.toUpperCase()} · ${w.title}</div>
+          <div style="font-family:var(--font-display);font-size:1.3rem;color:var(--accent2);">${w.sub}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--font-display);font-size:2rem;color:${pct===100?'#4caf50':'var(--accent2)'};">${pct}%</div>
+          <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);">${checkedCount}/${totalItems} DONE</div>
+        </div>
+      </div>
+      <div style="height:4px;background:var(--bg3);border-radius:2px;margin-top:12px;">
+        <div style="height:100%;width:${pct}%;background:${pct===100?'#4caf50':'var(--accent2)'};border-radius:2px;transition:width 0.4s;"></div>
+      </div>
+      ${pct===100?`<div style="font-family:var(--font-mono);font-size:0.7rem;color:#4caf50;margin-top:8px;text-align:center;letter-spacing:.15em;">✓ WORKOUT COMPLETE — OUTSTANDING WORK</div>`:''}
+    </div>
+
+    ${renderWorkoutSection('WARM-UP', '🔥', 'Stretching & Muscle Activation', w.warmup, dayId)}
+    ${renderWorkoutSection('CORE WORKOUT', '💪', 'Main Training Block', w.exercises, dayId)}
+    ${renderWorkoutSection('COOL-DOWN', '❄️', 'Stretching & Recovery', w.cooldown, dayId)}
+
+    <div class="card" style="margin-top:16px;border-left:4px solid var(--border2);">
+      <div class="card-label">MANDATORY SESSION END</div>
+      <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--accent2);">DECOMPRESSION PROTOCOL</div>
+      <div class="mono dim" style="line-height:1.8;margin-top:8px;">10 min · Physiological sigh → 4-7-8 breathing → Body scan<br>
+      <span class="orange">Then: 3,000-step post-workout wind-down walk ★ Most important</span></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn btn-s" onclick="nav('decomp')" style="font-size:0.68rem;">OPEN BREATHING GUIDE</button>
+        <button class="btn btn-p" onclick="markWorkoutComplete('${dayId}')" style="font-size:0.68rem;">✓ MARK SESSION COMPLETE</button>
+      </div>
+    </div>`;
+}
+
+function renderWorkoutSection(title, icon, subtitle, items, dayId) {
+  const typeColor = {stretch:'#64b5f6', activate:'#ffb74d'};
+  const typeLabel = {stretch:'STRETCH', activate:'ACTIVATE'};
+
+  return `<div style="margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:10px 14px;background:var(--bg2);border-left:3px solid var(--accent);">
+      <span style="font-size:1.3rem;">${icon}</span>
+      <div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);letter-spacing:.08em;">${title}</div>
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.15em;">${subtitle}</div>
+      </div>
+      <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">
+        ${items.filter(i=>workoutChecks[i.id]).length}/${items.length}
+      </div>
+    </div>
+    ${items.map(item => {
+      const checked = !!workoutChecks[item.id];
+      const typeC = item.type ? typeColor[item.type]||'var(--border2)' : 'var(--border2)';
+      const typeL = item.type ? typeLabel[item.type]||'' : item.badge||'';
+      return `<div class="ex-block" id="exblock-${item.id}" style="${checked?'opacity:0.65;border-left:3px solid #4caf50;':''}">
+        <div class="ex-header" style="display:flex;align-items:center;gap:12px;padding:12px 16px;">
+          <!-- Checkbox -->
+          <div onclick="toggleCheck('${item.id}','${dayId}')" style="width:22px;height:22px;border:2px solid ${checked?'#4caf50':'var(--border2)'};
+            border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+            background:${checked?'#4caf5022':'transparent'};flex-shrink:0;transition:all 0.2s;">
+            ${checked?'<span style="color:#4caf50;font-size:0.9rem;">✓</span>':''}
+          </div>
+          <!-- Content -->
+          <div style="flex:1;cursor:pointer;" onclick="toggleEx(this.closest('.ex-block').querySelector('.ex-body'),'${item.id}')">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div class="ex-name" style="${checked?'text-decoration:line-through;color:var(--text-dim);':''}">${item.name}</div>
+              <span style="font-family:var(--font-mono);font-size:0.55rem;padding:2px 7px;
+                background:${typeC}18;color:${typeC};border:1px solid ${typeC}44;">${typeL}</span>
+            </div>
+            <div class="ex-meta" style="margin-top:2px;">${item.sets||item.detail?.slice(0,60)||''}</div>
+          </div>
+          <span style="color:var(--border2);font-size:0.9rem;">▾</span>
+        </div>
+        <div class="ex-body">
+          <div class="yt-wrap">
+            <div class="yt-ph" onclick="loadYT(this,'${item.ytId}')">
+              <div class="yt-play"></div>
+              <div class="yt-lbl">▶ CLICK TO LOAD DEMONSTRATION VIDEO</div>
+            </div>
+          </div>
+          <div class="ex-desc">${item.desc||item.detail||''}</div>
+          ${item.sets ? `<table class="tbl mb8">
+            <tr><th>PHASE</th><th>LOADING / PROGRESSION</th></tr>
+            <tr><td style="color:var(--border2)">PHASE 1</td><td>${item.phase1||'—'}</td></tr>
+            <tr><td style="color:var(--border2)">PHASE 2</td><td>${item.phase2||'—'}</td></tr>
+            <tr><td style="color:var(--border2)">PHASE 3</td><td>${item.phase3||'—'}</td></tr>
+          </table>` : ''}
+          ${item.hotel ? `<div class="hotel-alt">🏨 <strong>HOTEL VARIANT:</strong> ${item.hotel}</div>` : ''}
+          <button onclick="toggleCheck('${item.id}','${dayId}')" style="margin-top:8px;width:100%;padding:8px;
+            font-family:var(--font-mono);font-size:0.65rem;letter-spacing:.1em;cursor:pointer;border:none;
+            background:${checked?'#4caf5022':'var(--bg3)'};color:${checked?'#4caf50':'var(--text-dim)'};
+            border:1px solid ${checked?'#4caf5044':'var(--border)'};">
+            ${checked ? '✓ MARKED COMPLETE — CLICK TO UNDO' : '☐ MARK AS COMPLETE'}
+          </button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+async function toggleCheck(itemId, dayId) {
+  workoutChecks[itemId] = !workoutChecks[itemId];
+
+  // Instant save to Firebase
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('wkchecks').doc(today).set({
+        checks: workoutChecks,
+        dayId,
+        updated: new Date().toISOString()
+      });
+  } catch(e) { console.error('Check save failed:', e); }
+
+  // Re-render the workout view (updates progress bar + checkboxes)
+  showWorkoutDay(dayId);
+}
+
+async function markWorkoutComplete(dayId) {
+  const today = new Date().toISOString().split('T')[0];
+  const W = SESSION.gender==='female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
+  const w = W[dayId];
+
+  // Check all items
+  [...w.warmup, ...w.exercises, ...w.cooldown].forEach(item => {
+    workoutChecks[item.id] = true;
+  });
+
+  // Save to Firebase wkchecks
+  try {
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('wkchecks').doc(today).set({
+        checks: workoutChecks,
+        dayId,
+        updated: new Date().toISOString()
+      });
+  } catch(e) {}
+
+  // Also save a workout log entry
+  const entry = {
+    saved: new Date().toISOString(),
+    date: today,
+    day: dayId.toUpperCase() + ' — ' + w.title,
+    location: 'Home',
+    duration: '90',
+    energy: '8',
+    decomp: 'yes',
+    exercises: [...w.warmup, ...w.exercises, ...w.cooldown].map(i=>i.name).join(', '),
+    notes: 'Session completed via checklist'
+  };
+  const existing = await encryptedLoad('workout');
+  existing.unshift(entry);
+  await encryptedSave('workout', existing);
+
+  loadStats();
+  showWorkoutDay(dayId);
+  toast('✓ SESSION COMPLETE — SAVED TO FIREBASE');
+}
+
+function toggleEx(bodyEl, itemId) {
+  if (bodyEl) bodyEl.classList.toggle('open');
+}
+
+function loadYT(ph, id) {
+  ph.parentElement.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" allow="autoplay;encrypted-media" allowfullscreen></iframe>`;
+}
     exercises:[
       {name:'BENCH PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'60% 1RM',phase2:'75–85% 1RM',phase3:'85–95% 1RM',ytId:'vcBig73ojpE',desc:'Flat bench, grip slightly wider than shoulder-width. Lower to chest 2–3 sec, drive explosively up. Shoulder blades retracted throughout.',hotel:'FLOOR PUSH-UP 5×5 — elevate feet on bed for incline'},
       {name:'OVERHEAD PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'60%',phase2:'75–85%',phase3:'85–95%',ytId:'2yjwXTZbrDM',desc:'Standing, bar/dumbbell at shoulders. Press directly overhead, full extension. Core braced, no lower back arch.',hotel:'PIKE PUSH-UP 5×5 — hips high, pressing straight down'},
@@ -1642,136 +2329,8 @@ const WORKOUTS_MALE = {
     ]}
 };
 
-// Female workouts — same structure, enhanced glute/hip focus
-const WORKOUTS_FEMALE = {
-  mon:{title:'UPPER PUSH + CORE',sub:'Chest · Shoulders · Triceps · Core',warmup:'Arm circles ×30, shoulder rolls ×20, push-up plus ×10, core activation: dead bug ×8',
-    exercises:[
-      {name:'PUSH-UP VARIATIONS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Knee push-up → standard',phase2:'Standard → decline',phase3:'Archer push-up',ytId:'IODxDxX7oi4',desc:'Focus on full chest activation. Phase progression makes you genuinely stronger, not just toned. Keep core tight, squeeze at the top.',hotel:'SAME — perfect floor exercise'},
-      {name:'OVERHEAD PRESS',badge:'5×5 STRENGTH',sets:'5×5',rest:'2–3 min',phase1:'Light DB — form',phase2:'Moderate-heavy',phase3:'Heavy progression',ytId:'2yjwXTZbrDM',desc:'Seated or standing. Press directly overhead. This builds the shoulder definition that creates an hourglass silhouette.',hotel:'WATER BOTTLE PRESS if no DBs — or pike push-ups'},
-      {name:'INCLINE DB PRESS',badge:'SECONDARY',sets:'3×12',rest:'90 sec',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'8iPEnn-ltC8',desc:'Upper chest focus. Creates lift and definition without bulk. Control the descent — that\'s where the shaping happens.',hotel:'DECLINE PUSH-UP off bed — same angle'},
-      {name:'LATERAL RAISES',badge:'SECONDARY',sets:'3×15',rest:'60 sec',phase1:'Very light',phase2:'Light-moderate',phase3:'Moderate',ytId:'3VcKaXpzqRo',desc:'Shoulder caps that create the beautiful shoulder-to-waist ratio. Light weight, perfect form beats heavy and sloppy.',hotel:'Water bottle lateral raises'},
-      {name:'PUSH-UP BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Decline version',ytId:'IODxDxX7oi4',desc:'To failure, rest 20 sec, repeat. This is your metabolic flush — burning fat while shaping.',hotel:'SAME'}
-    ]},
-  tue:{title:'LOWER BODY — GLUTE FOCUS',sub:'Glutes · Quads · Hamstrings · Inner Thighs',warmup:'Hip circles ×30, glute bridges ×20, clamshells ×20, fire hydrants ×15',
-    exercises:[
-      {name:'SUMO SQUAT',badge:'5×5 STRENGTH',sets:'5×5',rest:'2 min',phase1:'BW → light DB',phase2:'Heavy DB',phase3:'Max DB',ytId:'MxsFDhcyFyE',desc:'Wide stance, toes turned out 45°. This targets inner thighs AND glutes. Lower until thighs parallel. Drive knees out, not in.',hotel:'BW SUMO SQUAT 5×5 — pulse at bottom for intensity'},
-      {name:'ROMANIAN DEADLIFT',badge:'5×5 STRENGTH',sets:'5×5',rest:'2 min',phase1:'Light DB',phase2:'Moderate-heavy',phase3:'Heavy',ytId:'JCXUYuzwNrM',desc:'The #1 hamstring and glute builder. Feel the stretch in your hamstrings. Drive hips forward hard at the top — that\'s the glute squeeze.',hotel:'SINGLE-LEG RDL 5×5 — incredible for balance + glute isolation'},
-      {name:'HIP THRUST',badge:'SECONDARY',sets:'4×12',rest:'90 sec',phase1:'BW — form',phase2:'DB on hips',phase3:'Heavy DB — pause at top',ytId:'wPM8icPu6H8',desc:'The #1 glute exercise on the planet. Upper back on bench, DB on hips. Drive hips to ceiling, squeeze hard at the top. 1-second hold.',hotel:'FLOOR GLUTE BRIDGE — same movement, same results'},
-      {name:'BULGARIAN SPLIT SQUAT',badge:'SECONDARY',sets:'3×10/leg',rest:'90 sec',phase1:'BW',phase2:'Light DB',phase3:'Moderate DB',ytId:'2C-uNgbwi_k',desc:'Rear foot on bench, lean torso slightly forward. This angle maximizes glute activation over quad. Transformative exercise.',hotel:'SAME — bed for rear foot elevation'},
-      {name:'GLUTE BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Jump squats',ytId:'aclHkVaku9U',desc:'Sumo squats to failure. Feel every rep in your glutes. 20-sec rest. ×3.',hotel:'SAME'}
-    ]},
-  wed:{title:'BACK + BICEPS + POSTURE',sub:'Back · Biceps · Posture · Confidence',warmup:'Band pull-aparts ×20, cat-cow ×10, thoracic rotations ×10',
-    exercises:[
-      {name:'DB ROW',badge:'5×5 STRENGTH',sets:'5×5/side',rest:'2 min',phase1:'Light — lat feel',phase2:'Moderate-heavy',phase3:'Heavy',ytId:'roCP442LA5g',desc:'Strong back = great posture = confidence. Lead with your elbow, feel your lat. This creates the V-taper that defines a fit body.',hotel:'TOWEL-DOOR ROW — surprisingly effective'},
-      {name:'BENT-OVER ROW',badge:'5×5 STRENGTH',sets:'5×5',rest:'2 min',phase1:'Light',phase2:'Moderate',phase3:'Heavy',ytId:'FWJR5Ve8bnQ',desc:'Two DBs. Hinge, squeeze shoulder blades together at top. Builds the back that makes everything else look amazing.',hotel:'BED-FRAME ROW — lie under bed, grip frame'},
-      {name:'HAMMER CURL',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Light',phase2:'Progressive',phase3:'Moderate-heavy',ytId:'ykJmrZ5v0Oo',desc:'Neutral grip. Builds brachialis under bicep for arm shape. Slow 3-sec negative.',hotel:'TOWEL CURL — step on towel center, grip both ends'},
-      {name:'FACE PULL',badge:'SECONDARY',sets:'3×15',rest:'60 sec',phase1:'Very light',phase2:'Light',phase3:'Moderate',ytId:'Rep-GkxHMKU',desc:'Rear delts + external rotation. Fixes posture, prevents injury. Never skip this.',hotel:'PRONE REAR DELT RAISE — face down on bed edge, raise arms'},
-      {name:'ROW BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Full',ytId:'FWJR5Ve8bnQ',desc:'Light rows to failure. Back strength is your foundation.',hotel:'TOWEL-DOOR ROW BURNOUT'}
-    ]},
-  thu:{title:'CORE + HIIT + WAIST WORK',sub:'Abs · Obliques · Core Stability · Cardio',warmup:'Dead bug ×10, hollow hold 20 sec, side plank holds 15 sec/side',
-    exercises:[
-      {name:'PLANK VARIATIONS',badge:'CORE',sets:'3×45–90 sec',rest:'60 sec',phase1:'Standard',phase2:'Side plank + RKC',phase3:'Advanced variations',ytId:'pSHjTRCQxIw',desc:'Your waist is built by anti-rotation and anti-flexion core work — not crunches. This is where waist definition comes from.',hotel:'SAME'},
-      {name:'DEAD BUG',badge:'CORE',sets:'3×12/side',rest:'60 sec',phase1:'BW',phase2:'DB reach',phase3:'Heavy DB',ytId:'4XLEnwUr1d8',desc:'Presses lower back to floor — activates deep core. This flattens the lower abdomen more than any crunch ever could.',hotel:'SAME'},
-      {name:'BICYCLE CRUNCH',badge:'SECONDARY',sets:'3×25',rest:'45 sec',phase1:'Slow + deliberate',phase2:'Controlled',phase3:'With light DB',ytId:'Iwyvozckjak',desc:'Full thoracic rotation for obliques. Obliques = waist definition. Slow = more effective.',hotel:'SAME'},
-      {name:'MOUNTAIN CLIMBERS',badge:'HIIT P2+',sets:'4×30sec on/15 off',rest:'15 sec',phase1:'Sub: bird dogs',phase2:'Full HIIT',phase3:'Explosive',ytId:'nmwgirgXLYM',desc:'Core cardio combo. Burns fat while building stability. This is your HIIT work.',hotel:'SAME'},
-      {name:'BURPEE FINISHER',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'NOT YET',phase2:'Full',phase3:'Full',ytId:'dZgVxmf6jkA',desc:'Full body fat-burning finisher. Uncomfortable = working.',hotel:'SAME'}
-    ]},
-  fri:{title:'FULL BODY STRENGTH',sub:'Compound Movements · Full Body Power',warmup:'Full body mobilization — 10 minutes head to toe',
-    exercises:[
-      {name:'GOBLET SQUAT',badge:'5×5 STRENGTH',sets:'5×5',rest:'2 min',phase1:'Light DB',phase2:'Heavy DB',phase3:'Max DB',ytId:'MxsFDhcyFyE',desc:'Friday\'s primary squat. Heavier than Tuesday. Focus on depth and glute drive.',hotel:'TEMPO SQUAT — 4-sec descent, explosive up'},
-      {name:'PUSH-UP + ROW',badge:'5×5 STRENGTH',sets:'5×5',rest:'2 min',phase1:'Standard push-up only',phase2:'Push-up + DB row',phase3:'Full renegade row',ytId:'Lge5ZPpGQu4',desc:'Push-up then row each DB from plank. Full upper body compound. Builds functional strength.',hotel:'SAME — with or without DBs'},
-      {name:'FLOOR PRESS',badge:'SECONDARY',sets:'3×10',rest:'90 sec',phase1:'Light DB',phase2:'Moderate DB',phase3:'Heavy DB',ytId:'uUGDRwge4F8',desc:'Lie on floor, DBs at chest. Press to full extension. Builds chest and tricep strength.',hotel:'SAME — this IS the hotel exercise'},
-      {name:'TRICEP DIPS',badge:'SECONDARY',sets:'3×12',rest:'60 sec',phase1:'Bench dips',phase2:'Deeper range',phase3:'Weighted',ytId:'0326dy_-CzM',desc:'Back of the arm definition. Elbows close, lower 90°.',hotel:'BED EDGE DIPS'},
-      {name:'FULL BODY BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Most challenging variation',ytId:'dZgVxmf6jkA',desc:'Finish strong. Burpees or squat-thrust to failure.',hotel:'SAME'}
-    ]},
-  sat:{title:'GLUTES + LEGS + ACTIVE RECOVERY',sub:'Glute Sculpting · Hamstrings · Flexibility',warmup:'20-min hip mobility: pigeon 2 min/side, hip flexor stretch, glute activation sequence',
-    exercises:[
-      {name:'SUMO DEADLIFT',badge:'PRIMARY',sets:'4×8',rest:'90 sec',phase1:'Light DB',phase2:'Moderate DB',phase3:'Heavy DB',ytId:'JCXUYuzwNrM',desc:'Wide sumo stance, DBs between feet. Targets glutes, inner thighs, hamstrings simultaneously. Bend knees more than RDL.',hotel:'BODYWEIGHT SUMO SQUAT — 4-sec hold at bottom'},
-      {name:'DONKEY KICK / FIRE HYDRANT',badge:'GLUTE ISOLATION',sets:'3×20/side',rest:'45 sec',phase1:'BW — feel glute',phase2:'Ankle weight if available',phase3:'Resistance band',ytId:'wPM8icPu6H8',desc:'On all fours. Donkey kicks: drive heel to ceiling, squeeze glute. Fire hydrants: raise knee to side. These isolate and shape the glutes.',hotel:'SAME — perfect floor exercise'},
-      {name:'INNER THIGH SQUEEZE',badge:'SECONDARY',sets:'3×20',rest:'45 sec',phase1:'BW',phase2:'Slow tempo',phase3:'Pillow squeeze hold',ytId:'JB2oyawG9KI',desc:'Lie on back, feet up. Place rolled towel or pillow between knees. Squeeze and hold 2 sec. Inner thigh and glute medius.',hotel:'SAME'},
-      {name:'STRETCH + MOBILITY',badge:'RECOVERY',sets:'20 min',rest:'Flow',phase1:'Beginner',phase2:'Deeper',phase3:'Advanced',ytId:'4pKly2JojMw',desc:'Pigeon pose, seated figure-4, frog stretch, hamstring floss. Saturday is your body maintenance day.',hotel:'SAME'},
-      {name:'GLUTE BRIDGE BURNOUT',badge:'BURNOUT',sets:'Max→20sec→×3',rest:'20 sec',phase1:'Wk 3–4',phase2:'Full',phase3:'Single-leg',ytId:'wPM8icPu6H8',desc:'Glute bridges to failure. Saturday burnout is lower intensity — active recovery theme.',hotel:'SAME — floor only'}
-    ]}
-};
-
 function getWorkouts() {
   return SESSION.gender === 'female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
-}
-
-// ═══════════════════════════════════════════════════════════
-// BUILD WORKOUT UI
-// ═══════════════════════════════════════════════════════════
-const DAY_IDS = ['mon','tue','wed','thu','fri','sat'];
-
-function buildDayTabs() {
-  const labels = SESSION.gender === 'female'
-    ? ['MON<br><small>UPPER+CORE</small>','TUE<br><small>GLUTE FOCUS</small>','WED<br><small>BACK+POSTURE</small>','THU<br><small>CORE+HIIT</small>','FRI<br><small>FULL BODY</small>','SAT<br><small>GLUTE+LEGS</small>','SUN<br><small>REST ✦</small>']
-    : ['MON<br><small>UPPER PUSH</small>','TUE<br><small>LOWER</small>','WED<br><small>UPPER PULL</small>','THU<br><small>CORE+HIIT</small>','FRI<br><small>FULL UPPER</small>','SAT<br><small>LEGS+CORE</small>','SUN<br><small>REST</small>'];
-  document.getElementById('dayTabs').innerHTML = [...DAY_IDS,'sun'].map((id,i) =>
-    `<div class="stat-box" style="flex:1;min-width:80px;cursor:pointer;" id="daytab-${id}" onclick="${id==='sun'?'':` showWorkoutDay('${id}')`}">
-      <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--accent2);">${labels[i]}</div>
-    </div>`).join('');
-}
-
-function showWorkoutDay(dayId) {
-  DAY_IDS.forEach(d => {
-    const tab = document.getElementById('daytab-'+d);
-    if(tab) tab.style.borderBottom = d===dayId?'3px solid var(--accent2)':'none';
-  });
-
-  const w = getWorkouts()[dayId];
-  if (!w) return;
-
-  document.getElementById('workoutContent').innerHTML = `
-    <div class="card mb16">
-      <div class="card-label">WARM-UP — 10 MINUTES</div>
-      <div class="card-title">${w.title}</div>
-      <div class="mono dim" style="line-height:1.8;">${w.warmup}</div>
-    </div>
-    ${w.exercises.map((e,i) => `
-    <div class="ex-block" style="animation-delay:${i*0.04}s">
-      <div class="ex-header" onclick="toggleEx(this)">
-        <div>
-          <div class="ex-name">${e.name}</div>
-          <div class="ex-meta">${e.sets} · REST: ${e.rest}</div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <span class="ex-badge ${e.badge.includes('BURNOUT')?'fin':''}">${e.badge}</span>
-          <span style="color:var(--border2);font-size:1.1rem;">▾</span>
-        </div>
-      </div>
-      <div class="ex-body">
-        <div class="yt-wrap">
-          <div class="yt-ph" onclick="loadYT(this,'${e.ytId}')">
-            <div class="yt-play"></div>
-            <div class="yt-lbl">▶ CLICK TO LOAD DEMONSTRATION VIDEO</div>
-          </div>
-        </div>
-        <div class="ex-desc">${e.desc}</div>
-        <table class="tbl mb8">
-          <tr><th>PHASE</th><th>LOADING / PROGRESSION</th></tr>
-          <tr><td style="color:var(--border2)">PHASE 1</td><td>${e.phase1}</td></tr>
-          <tr><td style="color:var(--border2)">PHASE 2</td><td>${e.phase2}</td></tr>
-          <tr><td style="color:var(--border2)">PHASE 3</td><td>${e.phase3}</td></tr>
-        </table>
-        ${e.hotel ? `<div class="hotel-alt">🏨 <strong>HOTEL VARIANT:</strong> ${e.hotel}</div>` : ''}
-      </div>
-    </div>`).join('')}
-    <div class="card" style="margin-top:16px;border-left-color:var(--border2);">
-      <div class="card-label">SESSION END</div>
-      <div class="card-title">MANDATORY DECOMPRESSION</div>
-      <div class="mono dim" style="line-height:1.8;">10 min · Physiological sigh → 4-7-8 breathing → Body scan<br>
-      <span class="orange">Then: 3,000-step post-workout wind-down walk</span></div>
-      <button class="btn btn-s" style="margin-top:10px;" onclick="nav('decomp')">OPEN BREATHING GUIDE</button>
-    </div>`;
-}
-
-function toggleEx(header) {
-  header.nextElementSibling.classList.toggle('open');
-}
-
-function loadYT(ph, id) {
-  ph.parentElement.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" allow="autoplay;encrypted-media" allowfullscreen></iframe>`;
 }
 
 // ═══════════════════════════════════════════════════════════
