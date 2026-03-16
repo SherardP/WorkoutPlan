@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase/firebase-firestore-compat.js"></script>
 <style>
 /* ═══════════════════════════════════════
    THEME VARIABLES
@@ -952,7 +952,7 @@ body.theme-female .header::after{
 
 <script>
 // ═══════════════════════════════════════════════════════════
-// FIREBASE INIT
+// FIREBASE INIT — with error handling
 // ═══════════════════════════════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyBbFkivfcy6McwvmrGkUQt03oe84Wvr5l0",
@@ -962,8 +962,34 @@ const firebaseConfig = {
   messagingSenderId: "270542613965",
   appId: "1:270542613965:web:c029ec9760a738124a6884"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+
+let db;
+function showFatalError(msg) {
+  document.getElementById('authScreen').innerHTML = `
+    <div style="text-align:center;padding:40px 20px;max-width:460px;">
+      <div style="font-family:'Courier New',monospace;font-size:2rem;color:#ff7a1a;margin-bottom:16px;">OPERATORFIT</div>
+      <div style="background:#1c1c17;border:1px solid #cc2200;border-left:4px solid #cc2200;padding:20px;text-align:left;">
+        <div style="font-family:'Courier New',monospace;font-size:0.7rem;color:#cc2200;letter-spacing:.15em;margin-bottom:8px;">CONNECTION ERROR</div>
+        <div style="font-family:'Courier New',monospace;font-size:0.85rem;color:#e8e0c8;line-height:1.7;">${msg}</div>
+      </div>
+      <div style="margin-top:16px;font-family:'Courier New',monospace;font-size:0.65rem;color:#6b6b3a;line-height:1.8;">
+        Check browser console (F12) for details.<br>
+        Try a hard refresh: <strong style="color:#ff7a1a;">Ctrl+Shift+R</strong> (Windows) or <strong style="color:#ff7a1a;">Cmd+Shift+R</strong> (Mac)
+      </div>
+    </div>`;
+}
+
+try {
+  if (typeof firebase === 'undefined') {
+    throw new Error('Firebase SDK did not load. Check your internet connection or try a hard refresh (Ctrl+Shift+R).');
+  }
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  // Quick connectivity test — will throw if Firestore unreachable
+  db.collection('_ping').limit(1).get().catch(() => {}); // silent — just warms connection
+} catch(e) {
+  showFatalError(e.message);
+}
 
 // ═══════════════════════════════════════════════════════════
 // CRYPTO ENGINE — AES-256-GCM + PBKDF2
@@ -1008,16 +1034,19 @@ async function sha256hex(str) {
 
 // Users collection: /users/{username}
 async function getUsers() {
+  if (!db) throw new Error('Firebase not connected');
   const snap = await db.collection('users').get();
   const users = {};
   snap.forEach(doc => { users[doc.id] = doc.data(); });
   return users;
 }
 async function getUser(username) {
+  if (!db) throw new Error('Firebase not connected');
   const doc = await db.collection('users').doc(username).get();
   return doc.exists ? doc.data() : null;
 }
 async function saveUser(username, data) {
+  if (!db) throw new Error('Firebase not connected');
   await db.collection('users').doc(username).set(data, { merge: true });
 }
 
@@ -1118,6 +1147,7 @@ async function doRegister() {
   const pass2 = document.getElementById('rg-pass2').value;
   const err = document.getElementById('rg-err');
 
+  if (!db) return err.textContent = 'FIREBASE NOT CONNECTED — check console (F12)';
   if (!username || !displayName) return err.textContent = 'USERNAME AND NAME REQUIRED';
   if (username.length < 3) return err.textContent = 'USERNAME MIN 3 CHARACTERS';
   if (pass.length < 8) return err.textContent = 'PASSWORD MIN 8 CHARACTERS';
@@ -1158,26 +1188,27 @@ async function doLogin() {
   const remember = document.getElementById('li-remember').checked;
   const err = document.getElementById('li-err');
 
+  if (!db) return err.textContent = 'FIREBASE NOT CONNECTED — check console (F12)';
   if (!username || !pass) return err.textContent = 'ENTER USERNAME AND PASSWORD';
   err.style.color = 'var(--danger)';
   err.textContent = 'CONNECTING TO FIREBASE...';
 
-  const user = await getUser(username);
-  if (!user) return err.textContent = 'USER NOT FOUND';
-
-  const salt = username;
-  const hash = await sha256hex(pass + salt + '_verify');
-  if (hash !== user.passHash) return err.textContent = 'INCORRECT PASSWORD';
-
-  err.textContent = 'AUTHENTICATING...';
-  const dek = await deriveKey(pass, salt + '_dek');
-  SESSION = { username, displayName: user.displayName, gender: user.gender, dek, isAdmin: user.isAdmin };
-
-  if (remember) await saveRememberToken(username, user.passHash);
-  else clearRememberToken();
-
-  err.textContent = '';
-  launchApp();
+  try {
+    const user = await getUser(username);
+    if (!user) return err.textContent = 'USER NOT FOUND — have you registered yet?';
+    const salt = username;
+    const hash = await sha256hex(pass + salt + '_verify');
+    if (hash !== user.passHash) return err.textContent = 'INCORRECT PASSWORD';
+    err.textContent = 'AUTHENTICATING...';
+    const dek = await deriveKey(pass, salt + '_dek');
+    SESSION = { username, displayName: user.displayName, gender: user.gender, dek, isAdmin: user.isAdmin };
+    if (remember) await saveRememberToken(username, user.passHash);
+    else clearRememberToken();
+    err.textContent = '';
+    launchApp();
+  } catch(e) {
+    err.textContent = `ERROR: ${e.message}`;
+  }
 }
 
 function doLogout() {
