@@ -648,7 +648,7 @@ body.theme-female .goal-chip{border-radius:20px;}
       <div class="card-title" id="todayTitle">LOADING...</div>
       <div class="mono dim" id="todayDesc" style="line-height:1.7;"></div>
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-p" onclick="nav('workout')">VIEW WORKOUT</button>
+        <button class="btn btn-p" onclick="startTodaysWorkout()" style="font-size:0.8rem;">▶ START TODAY'S WORKOUT</button>
         <button class="btn btn-s" onclick="nav('log')">LOG SESSION</button>
       </div>
     </div>
@@ -953,9 +953,16 @@ body.theme-female .goal-chip{border-radius:20px;}
     <div id="log-workout">
       <div class="card">
         <div class="card-label">LOG WORKOUT SESSION</div>
-        <div class="card-title">SESSION ENTRY</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">SESSION ENTRY</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="date" id="l-date" onchange="reloadLogForDate('workout')"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.75rem;padding:6px 10px;outline:none;">
+            <button class="btn btn-s" onclick="setLogDate('l-date','yesterday')" style="font-size:0.6rem;padding:5px 10px;">YESTERDAY</button>
+          </div>
+        </div>
         <div class="log-grid">
-          <div class="lf"><label>DATE</label><input type="date" id="l-date"></div>
           <div class="lf"><label>WORKOUT DAY</label>
             <select id="l-day"><option>MONDAY — UPPER PUSH</option><option>TUESDAY — LOWER BODY</option><option>WEDNESDAY — UPPER PULL</option><option>THURSDAY — CORE + HIIT</option><option>FRIDAY — FULL UPPER</option><option>SATURDAY — LEGS + CORE</option></select>
           </div>
@@ -972,18 +979,26 @@ body.theme-female .goal-chip{border-radius:20px;}
 
     <div id="log-steps" style="display:none;">
       <div class="card">
-        <div class="card-label">LOG DAILY STEPS</div><div class="card-title">STEP COUNT</div>
-        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--accent2);margin-bottom:12px;">
-          ✓ Auto-populated from today's STEPS tracker — edit and save to confirm
+        <div class="card-label">LOG DAILY STEPS</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">STEP COUNT</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="date" id="s-date" onchange="reloadLogForDate('steps')"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.75rem;padding:6px 10px;outline:none;">
+          </div>
         </div>
+        <div id="steps-cal-bar" style="display:none;padding:10px 14px;background:var(--accent2)11;border:1px solid var(--accent2)33;
+          font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);margin-bottom:12px;"></div>
         <div class="log-grid">
-          <div class="lf"><label>DATE</label><input type="date" id="s-date"></div>
-          <div class="lf"><label>TOTAL STEPS</label><input type="number" id="s-total" placeholder="10000"></div>
-          <div class="lf"><label>MORNING WALK</label><input type="number" id="s-morn" placeholder="2000"></div>
-          <div class="lf"><label>LUNCH WALK</label><input type="number" id="s-lunch" placeholder="2500"></div>
-          <div class="lf"><label>PRE-WORKOUT</label><input type="number" id="s-pre" placeholder="2000"></div>
-          <div class="lf"><label>POST-WORKOUT ★</label><input type="number" id="s-post" placeholder="2000"></div>
-          <div class="lf"><label>EVENING WALK</label><input type="number" id="s-eve" placeholder="1500"></div>
+          <div class="lf"><label>TOTAL STEPS</label>
+            <input type="number" id="s-total" placeholder="10000" oninput="updateStepsCalBurn()">
+          </div>
+          <div class="lf"><label>MORNING WALK</label><input type="number" id="s-morn" placeholder="2000" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
+          <div class="lf"><label>LUNCH WALK</label><input type="number" id="s-lunch" placeholder="2500" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
+          <div class="lf"><label>PRE-WORKOUT</label><input type="number" id="s-pre" placeholder="2000" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
+          <div class="lf"><label>POST-WORKOUT ★</label><input type="number" id="s-post" placeholder="2000" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
+          <div class="lf"><label>EVENING WALK</label><input type="number" id="s-eve" placeholder="1500" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
         </div>
         <div style="margin-top:14px;"><button class="btn btn-p" onclick="saveEntry('steps')">SAVE STEPS</button></div>
       </div>
@@ -996,8 +1011,14 @@ body.theme-female .goal-chip{border-radius:20px;}
           <div class="card-title" style="margin:0;">MEASUREMENTS</div>
           <div id="body-prefill-note" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);"></div>
         </div>
-        <div class="log-grid">
-          <div class="lf"><label>DATE</label><input type="date" id="b-date"></div>
+        <!-- Date selector with today/yesterday quick buttons -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <input type="date" id="b-date" onchange="reloadLogForDate('body')"
+            style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.75rem;padding:6px 10px;outline:none;">
+          <button class="btn btn-s" onclick="setLogDate('b-date','today')" style="font-size:0.6rem;padding:5px 10px;">TODAY</button>
+          <button class="btn btn-s" onclick="setLogDate('b-date','yesterday')" style="font-size:0.6rem;padding:5px 10px;">YESTERDAY</button>
+        </div>
           <div class="lf">
             <label>WEIGHT (lbs)</label>
             <input type="number" id="b-weight" step="0.1" placeholder="—">
@@ -1132,7 +1153,12 @@ body.theme-female .goal-chip{border-radius:20px;}
         <!-- Daily totals summary -->
         <div id="nutrition-totals-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;"></div>
 
-        <div class="lf" style="margin-bottom:14px;"><label>DATE</label><input type="date" id="n-date"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <input type="date" id="n-date" onchange="reloadLogForDate('nutrition')"
+            style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.75rem;padding:6px 10px;outline:none;">
+          <button class="btn btn-s" onclick="setLogDate('n-date','yesterday')" style="font-size:0.6rem;padding:5px 10px;">YESTERDAY</button>
+        </div>
         <button class="btn btn-p" onclick="saveNutrition()" style="width:100%;">SAVE TODAY'S NUTRITION</button>
       </div>
 
@@ -2019,7 +2045,7 @@ async function renderLogSummary() {
     try { const w = await encryptedLoad('workout');   todayWorkout   = w.find(x => x.date === todayStr); } catch(e) {}
     try { const s = await encryptedLoad('steps');     todaySteps     = s.find(x => x.date === todayStr); } catch(e) {}
     try { const n = await encryptedLoad('nutrition'); todayNutrition = n.find(x => x.date === todayStr); } catch(e) {}
-    const todayCalsBurned = todayWorkout ? estimateDayCalBurn(todayWorkout) : null;
+    const todayCalsBurned = getDayCalBurn(todayWorkout, todaySteps);
     const todayCalsEaten  = todayNutrition && +todayNutrition.calories > 0 ? +todayNutrition.calories : null;
     const todayDeficit    = (todayCalsBurned && todayCalsEaten) ? todayCalsBurned - todayCalsEaten : null;
     el.innerHTML = `
@@ -2035,7 +2061,7 @@ async function renderLogSummary() {
           <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
             <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">🔥 CALORIES BURNED</div>
             <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--accent2);">${todayCalsBurned ? todayCalsBurned.toLocaleString() : '—'}</div>
-            <div style="font-family:var(--font-mono);font-size:0.48rem;color:var(--text-dim);">${todayWorkout ? 'workout logged' : 'log a workout'}</div>
+            <div style="font-family:var(--font-mono);font-size:0.48rem;color:var(--text-dim);">${todayWorkout && todaySteps ? 'workout + steps' : todayWorkout ? 'workout est.' : todaySteps ? 'steps only' : 'log workout or steps'}</div>
           </div>
           <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
             <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">🍽 CALORIES EATEN</div>
@@ -2127,12 +2153,12 @@ async function _renderLogSummaryInner(el) {
   const avgStress = stressData.length ? (stressData.reduce((a,b) => a+(+b.stress),0) / stressData.length).toFixed(1) : null;
   const bmi = getSessionBMI();
 
-  // ── Calorie balance — safe nulls ──
-  const yestCalsBurned  = yestWorkout ? (estimateDayCalBurn(yestWorkout) || null) : null;
+  // ── Calorie balance — workout + steps combined ──
+  const yestCalsBurned  = getDayCalBurn(yestWorkout, yestSteps);
   const yestCalsEaten   = yestNutrition && +yestNutrition.calories > 0 ? +yestNutrition.calories : null;
   const yestCalDeficit  = (yestCalsBurned && yestCalsEaten) ? yestCalsBurned - yestCalsEaten : null;
 
-  const todayCalsBurned = todayWorkout ? (estimateDayCalBurn(todayWorkout) || null) : null;
+  const todayCalsBurned = getDayCalBurn(todayWorkout, todaySteps);
   const todayCalsEaten  = todayNutrition && +todayNutrition.calories > 0 ? +todayNutrition.calories : null;
   const todayCalDeficit = (todayCalsBurned && todayCalsEaten) ? todayCalsBurned - todayCalsEaten : null;
 
@@ -2161,7 +2187,7 @@ async function _renderLogSummaryInner(el) {
         <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
           <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">🔥 CALORIES BURNED</div>
           <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--accent2);">${todayCalsBurned ? todayCalsBurned.toLocaleString() : '—'}</div>
-          <div style="font-family:var(--font-mono);font-size:0.48rem;color:var(--text-dim);">${todayWorkout ? 'workout logged' : 'log a workout'}</div>
+          <div style="font-family:var(--font-mono);font-size:0.48rem;color:var(--text-dim);">${todayWorkout && todaySteps ? 'workout + steps' : todayWorkout ? 'workout est.' : todaySteps ? 'steps only' : 'log workout or steps'}</div>
         </div>
         <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
           <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">🍽 CALORIES EATEN</div>
@@ -2444,19 +2470,34 @@ async function _renderLogSummaryInner(el) {
   }, 100);
 }
 
-// Estimate calorie burn from a workout log entry using workout day name
+// Estimate calorie burn from workout log entry (MET × weight × time)
 function estimateDayCalBurn(workout) {
   const weightKg = getWeightKg();
   if (!weightKg || !workout) return null;
   const dur = parseInt(workout.duration) || 60;
-  // MET varies by workout type
   const day = (workout.day||'').toLowerCase();
-  let met = 5.5; // default moderate strength
+  let met = 5.5;
   if (day.includes('hiit') || day.includes('core')) met = 7.0;
   else if (day.includes('push') || day.includes('pull') || day.includes('upper')) met = 5.5;
   else if (day.includes('lower') || day.includes('legs')) met = 6.0;
   else if (day.includes('full')) met = 6.0;
-  return Math.round(met * weightKg * (dur/60));
+  return Math.round(met * weightKg * (dur / 60));
+}
+
+// Estimate calorie burn from steps (MET 3.5 walking)
+function estimateStepCalBurn(totalSteps) {
+  const weightKg = getWeightKg();
+  if (!weightKg || !totalSteps) return null;
+  const minutes = +totalSteps / 100; // ~100 steps/min avg walking pace
+  return Math.round(3.5 * weightKg * (minutes / 60));
+}
+
+// Combined calorie burn: workout + steps
+function getDayCalBurn(workout, stepsEntry) {
+  const workoutCals = workout ? estimateDayCalBurn(workout) : 0;
+  const stepCals    = stepsEntry ? (estimateStepCalBurn(+stepsEntry.total||0) || 0) : 0;
+  const total = (workoutCals||0) + (stepCals||0);
+  return total > 0 ? total : null;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2632,45 +2673,103 @@ function renderSummaryCharts(last30, stepsByDate, weightByDate, waistByDate, bod
   }
 }
 
-// ── Body log: auto-populate from last entry ──
+// ── Date helpers for log tabs ──
+function setLogDate(fieldId, which) {
+  const d = new Date();
+  if (which === 'yesterday') d.setDate(d.getDate() - 1);
+  const val = d.toISOString().split('T')[0];
+  const el = document.getElementById(fieldId);
+  if (el) { el.value = val; el.dispatchEvent(new Event('change')); }
+}
+
+async function reloadLogForDate(type) {
+  if (type === 'steps')     await autoPopulateStepsLog();
+  if (type === 'body')      await autoPopulateBodyLog();
+  if (type === 'nutrition') await autoPopulateNutritionLog();
+  if (type === 'workout')   await autoPopulateWorkoutLog();
+}
+
+// ── Steps live calorie calculation ──
+function updateStepsTotal() {
+  const sections = ['s-morn','s-lunch','s-pre','s-post','s-eve'];
+  const sum = sections.reduce((a,id) => a + (+v(id)||0), 0);
+  if (sum > 0) {
+    const totalEl = document.getElementById('s-total');
+    if (totalEl && !totalEl.dataset.manualOverride) totalEl.value = sum;
+  }
+}
+
+function updateStepsCalBurn() {
+  const total = parseInt(v('s-total')) || 0;
+  const weightKg = getWeightKg();
+  const bar = document.getElementById('steps-cal-bar');
+  if (!bar) return;
+  if (!total || !weightKg) { bar.style.display = 'none'; return; }
+  // MET for walking = 3.5, avg step = ~0.762m, avg pace ~100 steps/min
+  const minutes = total / 100; // ~100 steps per minute
+  const cals = Math.round(3.5 * weightKg * (minutes / 60));
+  bar.style.display = 'block';
+  bar.innerHTML = `🔥 Estimated burn from ${total.toLocaleString()} steps: <strong style="color:var(--accent2);">${cals.toLocaleString()} kcal</strong>
+    <span style="color:var(--text-dim);font-size:0.58rem;"> · based on your weight (${SESSION.weight} lbs) at avg walking pace</span>`;
+}
+
+// ── Start today's workout ──
+function startTodaysWorkout() {
+  const jsDay = new Date().getDay(); // 0=Sun
+  const dayMap = {1:'mon',2:'tue',3:'wed',4:'thu',5:'fri',6:'sat',0:'sun'};
+  const dayId = dayMap[jsDay];
+  nav('workout');
+  setTimeout(() => {
+    if (dayId !== 'sun') showWorkoutDay(dayId);
+  }, 150);
+}
 async function autoPopulateBodyLog() {
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('b-date').value = today;
+  const dateEl = document.getElementById('b-date');
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  const targetDate = dateEl?.value || today;
 
   const body = await encryptedLoad('body');
-  if (!body.length) return;
-
-  // Find most recent entry (not today)
-  const prev = body.find(e => e.date !== today) || body[0];
-  const isToday = body[0]?.date === today;
-  const source  = isToday ? body[0] : prev;
-
-  if (!source) return;
-
   const fields = ['weight','waist','chest','hips','neck','glutes','thighs'];
   const noteEl = document.getElementById('body-prefill-note');
 
-  if (isToday) {
-    // Today already logged — fill all fields
-    noteEl.textContent = `✓ Today's entry loaded (${source.date})`;
+  // Clear all measurement fields
+  fields.forEach(f => {
+    const el = document.getElementById('b-'+f);
+    if (el) { el.value = ''; el.style.color = 'var(--text)'; }
+    const prevEl = document.getElementById('b-'+f+'-prev');
+    if (prevEl) prevEl.textContent = '';
+  });
+  ['b-sleep','b-stress'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+  if (!body.length) {
+    if (noteEl) noteEl.textContent = 'No previous entries found';
+    return;
+  }
+
+  const exactEntry = body.find(e => e.date === targetDate);
+
+  if (exactEntry) {
+    // Exact date found — fill all fields directly
+    if (noteEl) noteEl.textContent = `✓ Entry for ${targetDate} loaded`;
     fields.forEach(f => {
       const el = document.getElementById('b-'+f);
-      if (el && source[f]) el.value = source[f];
+      if (el && exactEntry[f]) el.value = exactEntry[f];
     });
-    if (document.getElementById('b-sleep')  && source.sleep)  document.getElementById('b-sleep').value  = source.sleep;
-    if (document.getElementById('b-stress') && source.stress) document.getElementById('b-stress').value = source.stress;
+    if (document.getElementById('b-sleep')  && exactEntry.sleep)  document.getElementById('b-sleep').value  = exactEntry.sleep;
+    if (document.getElementById('b-stress') && exactEntry.stress) document.getElementById('b-stress').value = exactEntry.stress;
   } else {
-    // Previous entry — pre-fill as starting point with visual hint
-    noteEl.textContent = `Pre-filled from ${prev.date} — change any value that's different`;
+    // No entry for this date — pre-fill from most recent previous entry as starting point
+    const prev = body.find(e => e.date < targetDate) || body[0];
+    if (!prev) { if (noteEl) noteEl.textContent = 'No previous entries to pre-fill from'; return; }
+    if (noteEl) noteEl.textContent = `Pre-filled from ${prev.date} — update any values that changed`;
     fields.forEach(f => {
-      const el    = document.getElementById('b-'+f);
+      const el = document.getElementById('b-'+f);
       const prevEl = document.getElementById('b-'+f+'-prev');
       if (el && prev[f]) {
         el.value = prev[f];
-        el.style.color = 'var(--text-dim)'; // dim = pre-filled from previous
-        // Show prev value hint
-        if (prevEl) prevEl.textContent = `Prev: ${prev[f]}`;
-        // When user types, un-dim
+        el.style.color = 'var(--text-dim)';
+        if (prevEl) prevEl.textContent = `Last: ${prev[f]}`;
         el.oninput = () => { el.style.color = 'var(--text)'; if (prevEl) prevEl.textContent = ''; };
       }
     });
@@ -2804,26 +2903,31 @@ async function saveNutrition() {
 
 async function autoPopulateNutritionLog() {
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('n-date').value = today;
+  const dateEl = document.getElementById('n-date');
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  const targetDate = dateEl?.value || today;
+
+  // Reset snacks and meal fields
   snackCount = 0;
   document.getElementById('snack-container').innerHTML = '';
+  const meals = ['bk','ln','dn'];
+  meals.forEach(m => {
+    const foodEl = document.getElementById(`n-${m}-food`);
+    if (foodEl) foodEl.value = '';
+    ['cal','prot','carb','fat'].forEach(f => {
+      const el = document.getElementById(`n-${m}-${f}`);
+      if (el) el.value = '';
+    });
+  });
+  todayWaterOz = 0;
 
-  // Load today's water from steplog
-  try {
-    const doc = await db.collection('userdata').doc(SESSION.username)
-      .collection('steplog').doc(today).get();
-    // Water is tracked separately in todayWaterOz
-  } catch(e) {}
-
-  // Load today's nutrition if previously saved
+  // Load entry for target date
   const nutrition = await encryptedLoad('nutrition');
-  const todayEntry = nutrition.find(e => e.date === today);
-  if (todayEntry) {
-    // Re-populate meals
-    const meals = ['bk','ln','dn'];
-    const keys  = ['breakfast','lunch','dinner'];
+  const entry = nutrition.find(e => e.date === targetDate);
+  if (entry) {
+    const keys = ['breakfast','lunch','dinner'];
     meals.forEach((m,i) => {
-      const meal = todayEntry[keys[i]] || {};
+      const meal = entry[keys[i]] || {};
       const foodEl = document.getElementById(`n-${m}-food`);
       if (foodEl && meal.food) foodEl.value = meal.food;
       ['cal','prot','carb','fat'].forEach(f => {
@@ -2831,9 +2935,8 @@ async function autoPopulateNutritionLog() {
         if (el && meal[f]) el.value = meal[f];
       });
     });
-    // Re-populate snacks
-    if (todayEntry.snacks?.length) {
-      todayEntry.snacks.forEach(snack => {
+    if (entry.snacks?.length) {
+      entry.snacks.forEach(snack => {
         addSnack();
         const foodEl = document.getElementById(`n-sk${snackCount}-food`);
         if (foodEl) foodEl.value = snack.food || '';
@@ -2843,8 +2946,7 @@ async function autoPopulateNutritionLog() {
         });
       });
     }
-    // Water
-    if (todayEntry.water) { todayWaterOz = +todayEntry.water || 0; }
+    if (entry.water) todayWaterOz = +entry.water || 0;
     updateNutritionTotals();
   }
   updateWaterDisplay();
@@ -2852,53 +2954,98 @@ async function autoPopulateNutritionLog() {
 
 async function autoPopulateStepsLog() {
   const today = new Date().toISOString().split('T')[0];
+  const dateEl = document.getElementById('s-date');
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  const targetDate = dateEl?.value || today;
+
+  // Clear all fields first
+  ['s-total','s-morn','s-lunch','s-pre','s-post','s-eve'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+
   try {
+    // Try steplog first (fast, unencrypted)
     const doc = await db.collection('userdata').doc(SESSION.username)
-      .collection('steplog').doc(today).get();
+      .collection('steplog').doc(targetDate).get();
     if (doc.exists) {
       const d = doc.data();
       const sec = d.sections || {};
-      const total = d.total || 0;
-      if (document.getElementById('s-total'))  document.getElementById('s-total').value  = total || '';
+      if (document.getElementById('s-total'))  document.getElementById('s-total').value  = d.total || '';
       if (document.getElementById('s-morn'))   document.getElementById('s-morn').value   = sec.morning?.steps || '';
       if (document.getElementById('s-lunch'))  document.getElementById('s-lunch').value  = sec.lunch?.steps   || '';
       if (document.getElementById('s-pre'))    document.getElementById('s-pre').value    = sec.pre?.steps     || '';
       if (document.getElementById('s-post'))   document.getElementById('s-post').value   = sec.post?.steps    || '';
       if (document.getElementById('s-eve'))    document.getElementById('s-eve').value    = sec.evening?.steps || '';
+    } else {
+      // Fallback: check encrypted steps log
+      const steps = await encryptedLoad('steps');
+      const entry = steps.find(s => s.date === targetDate);
+      if (entry) {
+        if (document.getElementById('s-total'))  document.getElementById('s-total').value  = entry.total   || '';
+        if (document.getElementById('s-morn'))   document.getElementById('s-morn').value   = entry.morning || '';
+        if (document.getElementById('s-lunch'))  document.getElementById('s-lunch').value  = entry.lunch   || '';
+        if (document.getElementById('s-pre'))    document.getElementById('s-pre').value    = entry.pre     || '';
+        if (document.getElementById('s-post'))   document.getElementById('s-post').value   = entry.post    || '';
+        if (document.getElementById('s-eve'))    document.getElementById('s-eve').value    = entry.evening || '';
+      }
     }
-  } catch(e) {}
+  } catch(e) { console.warn('autoPopulateStepsLog:', e.message); }
+  updateStepsCalBurn();
 }
 
 async function autoPopulateWorkoutLog() {
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('l-date').value = today;
-  // Check if a workout was done today via wkchecks
+  const dateEl = document.getElementById('l-date');
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  const targetDate = dateEl?.value || today;
+
+  // Clear fields
+  ['l-dur','l-energy','l-exs','l-notes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
   try {
+    // First check for an existing workout log entry for this date
+    const workouts = await encryptedLoad('workout');
+    const existing = workouts.find(w => w.date === targetDate);
+    if (existing) {
+      if (document.getElementById('l-dur'))    document.getElementById('l-dur').value    = existing.duration || '';
+      if (document.getElementById('l-energy')) document.getElementById('l-energy').value = existing.energy   || '';
+      if (document.getElementById('l-exs'))    document.getElementById('l-exs').value    = existing.exercises|| '';
+      if (document.getElementById('l-notes'))  document.getElementById('l-notes').value  = existing.notes    || '';
+      // Match workout day
+      const sel = document.getElementById('l-day');
+      if (sel && existing.day) {
+        for (let i=0; i<sel.options.length; i++) {
+          if (sel.options[i].text.toUpperCase().includes((existing.day||'').split('—')[0].trim().toUpperCase())) {
+            sel.selectedIndex = i; break;
+          }
+        }
+      }
+      return;
+    }
+
+    // No existing entry — try checklist data
     const doc = await db.collection('userdata').doc(SESSION.username)
-      .collection('wkchecks').doc(today).get();
+      .collection('wkchecks').doc(targetDate).get();
     if (doc.exists) {
       const dayId = doc.data().dayId;
       const W = SESSION.gender==='female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
       const w = W[dayId];
       if (w) {
-        const select = document.getElementById('l-day');
-        const dayLabel = `${dayId.toUpperCase()} — ${w.title}`;
-        // Try to match option
-        for (let i=0; i<select.options.length; i++) {
-          if (select.options[i].text.toUpperCase().includes(dayId.toUpperCase())) {
-            select.selectedIndex = i; break;
+        const sel = document.getElementById('l-day');
+        for (let i=0; i<sel.options.length; i++) {
+          if (sel.options[i].text.toUpperCase().includes(dayId.toUpperCase())) {
+            sel.selectedIndex = i; break;
           }
         }
-        // Check count for duration estimate
         const checks = doc.data().checks || {};
         const doneCount = Object.values(checks).filter(Boolean).length;
         const totalItems = w.warmup.length + w.exercises.length + w.cooldown.length;
-        if (doneCount > 0 && !document.getElementById('l-notes').value) {
-          document.getElementById('l-notes').value = `Auto-populated from checklist: ${doneCount}/${totalItems} items completed`;
+        if (doneCount > 0) {
+          document.getElementById('l-notes').value = `${doneCount}/${totalItems} items completed via checklist`;
         }
       }
     }
-  } catch(e) {}
+  } catch(e) { console.warn('autoPopulateWorkoutLog:', e.message); }
 }
 
 async function exportAllUsers() {
