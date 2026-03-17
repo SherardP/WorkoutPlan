@@ -2012,11 +2012,47 @@ async function renderLogSummary() {
   try {
     await _renderLogSummaryInner(el);
   } catch(err) {
-    el.innerHTML = `<div style="padding:24px;font-family:var(--font-mono);font-size:0.72rem;color:var(--danger);">
-      Summary failed to load: ${err.message}<br><br>
-      <button class="btn btn-s" onclick="renderLogSummary()">⟳ RETRY</button>
-    </div>`;
     console.error('renderLogSummary error:', err);
+    // Show error but also try to render a minimal today summary
+    const todayStr = new Date().toISOString().split('T')[0];
+    let todayWorkout = null, todaySteps = null, todayNutrition = null;
+    try { const w = await encryptedLoad('workout');   todayWorkout   = w.find(x => x.date === todayStr); } catch(e) {}
+    try { const s = await encryptedLoad('steps');     todaySteps     = s.find(x => x.date === todayStr); } catch(e) {}
+    try { const n = await encryptedLoad('nutrition'); todayNutrition = n.find(x => x.date === todayStr); } catch(e) {}
+    const todayCalsBurned = todayWorkout ? estimateDayCalBurn(todayWorkout) : null;
+    const todayCalsEaten  = todayNutrition && +todayNutrition.calories > 0 ? +todayNutrition.calories : null;
+    const todayDeficit    = (todayCalsBurned && todayCalsEaten) ? todayCalsBurned - todayCalsEaten : null;
+    el.innerHTML = `
+      <div style="padding:12px 16px;background:var(--danger)11;border-left:4px solid var(--danger);margin-bottom:16px;
+        font-family:var(--font-mono);font-size:0.65rem;color:var(--danger);">
+        ⚠ Could not load full summary: ${err.message}
+        <button class="btn btn-s" onclick="renderLogSummary()" style="margin-left:12px;font-size:0.6rem;">⟳ RETRY</button>
+      </div>
+      <div class="card mb16" style="border-left:4px solid #4caf50;">
+        <div class="card-label">TODAY — ${todayStr}</div>
+        <div class="card-title" style="margin-bottom:14px;">TODAY'S SNAPSHOT</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">🔥 CALORIES BURNED</div>
+            <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--accent2);">${todayCalsBurned ? todayCalsBurned.toLocaleString() : '—'}</div>
+            <div style="font-family:var(--font-mono);font-size:0.48rem;color:var(--text-dim);">${todayWorkout ? 'workout logged' : 'log a workout'}</div>
+          </div>
+          <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">🍽 CALORIES EATEN</div>
+            <div style="font-family:var(--font-display);font-size:1.5rem;color:#ff9800;">${todayCalsEaten ? todayCalsEaten.toLocaleString() : '—'}</div>
+            <div style="font-family:var(--font-mono);font-size:0.48rem;color:var(--text-dim);">${todayNutrition ? 'nutrition logged' : 'log nutrition'}</div>
+          </div>
+          <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">⚖️ NET BALANCE</div>
+            <div style="font-family:var(--font-display);font-size:1.5rem;color:${todayDeficit===null?'var(--text-dim)':todayDeficit>0?'#4caf50':'#f44336'};">
+              ${todayDeficit !== null ? (todayDeficit > 0 ? '−'+todayDeficit.toLocaleString() : '+'+Math.abs(todayDeficit).toLocaleString()) : '—'}
+            </div>
+            <div style="font-family:var(--font-mono);font-size:0.48rem;color:${todayDeficit===null?'var(--text-dim)':todayDeficit>0?'#4caf50':'#f44336'};">
+              ${todayDeficit !== null ? (todayDeficit > 0 ? '✓ calorie deficit' : '↑ calorie surplus') : 'log both to calculate'}
+            </div>
+          </div>
+        </div>
+      </div>`;
   }
 }
 
@@ -2340,7 +2376,7 @@ function estimateDayCalBurn(workout) {
 // MOTIVATOR ENGINE — Psychology-driven, data-personalized
 // ═══════════════════════════════════════════════════════════
 function buildMotivator(name, streak, consistency, totalSessions, weeks,
-  yestWorkout, yestSteps, yestCalsBurned, yestCalsEaten, calDeficit,
+  yestWorkout, yestSteps, yestCalsBurned, yestCalsEaten, yestCalDeficit,
   wtChange, waistChange, avgSteps, stepHitPct, avgSleep, avgStress) {
 
   const first = (name||'').split(' ')[0];
@@ -2369,9 +2405,9 @@ function buildMotivator(name, streak, consistency, totalSessions, weeks,
     icon = '✓'; color = '#4caf50';
     headline = `YOU SHOWED UP YESTERDAY. THAT'S THE JOB.`;
     body = `${yestWorkout.day||'Your session'} is done. ${yestWorkout.energy ? `Energy level ${yestWorkout.energy}/10 — ` : ''}Every session you finish is a vote for the identity of someone who takes care of their body. Psychology Today: "We don't act based on who we are. We become who we are based on how we act." Yesterday you voted. Today, vote again.`;
-  } else if (calDeficit !== null && calDeficit > 0 && !headline.includes('DEFICIT')) {
+  } else if (yestCalDeficit !== null && yestCalDeficit > 0 && !headline.includes('DEFICIT')) {
     icon = '🎯'; color = '#4caf50';
-    headline = `YESTERDAY: ${calDeficit.toLocaleString()} CALORIE DEFICIT.`;
+    headline = `YESTERDAY: ${yestCalDeficit.toLocaleString()} CALORIE DEFICIT.`;
     body = `You burned ${yestCalsBurned?.toLocaleString()} and ate ${yestCalsEaten?.toLocaleString()}. A deficit means your body burned stored energy. One pound of fat = 3,500 calories. You're chipping away at it every single day. The scale is a lagging indicator — the work you did yesterday is already happening inside.`;
   } else if (waistChange !== null && waistChange < -0.25) {
     icon = '📏'; color = '#4caf50';
