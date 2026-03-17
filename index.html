@@ -1410,6 +1410,22 @@ body.theme-female .goal-chip{border-radius:20px;}
       <div class="auth-error" id="adminErr"></div>
     </div>
 
+    <!-- Food DB Migration Tool -->
+    <div class="card mb16">
+      <div class="card-label">DATA MIGRATION</div>
+      <div class="card-title" style="margin-bottom:8px;">FOOD DATABASE MIGRATION</div>
+      <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);line-height:1.7;margin-bottom:14px;">
+        Migrates custom foods saved under each user's private account into the shared community database so all users can access them.
+        Recipes are personal and will not be migrated.<br>
+        <span style="color:var(--accent2);">Safe to run multiple times — duplicates are automatically skipped.</span>
+      </div>
+      <div id="migration-status" style="font-family:var(--font-mono);font-size:0.65rem;margin-bottom:12px;line-height:1.8;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-s" onclick="previewFoodMigration()" style="font-size:0.65rem;">🔍 PREVIEW</button>
+        <button class="btn btn-p" onclick="runFoodMigration()" style="font-size:0.65rem;">⟳ RUN MIGRATION</button>
+      </div>
+    </div>
+
   </div>
 
   </div><!-- /container -->
@@ -4013,6 +4029,117 @@ async function exportAllUsers() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = `operatorfit_export_${localDateStr()}.json`; a.click();
   err.textContent = 'EXPORT COMPLETE';
+}
+
+// ═══════════════════════════════════════════════════════════
+// FOOD DB MIGRATION — move per-user custom foods → shared
+// ═══════════════════════════════════════════════════════════
+async function previewFoodMigration() {
+  const statusEl = document.getElementById('migration-status');
+  if (!statusEl) return;
+  statusEl.innerHTML = '<span style="color:var(--accent2);">Scanning all users...</span>';
+
+  try {
+    const users = await getUsers();
+    const usernames = Object.keys(users);
+    let lines = [];
+    let total = 0;
+
+    for (const uname of usernames) {
+      const doc = await db.collection('userdata').doc(uname)
+        .collection('fooddb').doc('custom').get();
+      const foods = doc.exists ? (doc.data().foods || []) : [];
+      if (foods.length) {
+        lines.push(`<span style="color:var(--text);">@${uname}</span> — ${foods.length} custom food${foods.length>1?'s':''}: ${foods.map(f=>f.name).join(', ')}`);
+        total += foods.length;
+      }
+    }
+
+    // Check what's already in shared
+    const sharedDoc = await db.collection('fooddb').doc('custom').get();
+    const alreadyShared = sharedDoc.exists ? (sharedDoc.data().foods || []) : [];
+    const alreadyNames = new Set(alreadyShared.map(f => f.name.toLowerCase()));
+
+    // Count new vs duplicate
+    let newCount = 0;
+    for (const uname of usernames) {
+      const doc = await db.collection('userdata').doc(uname).collection('fooddb').doc('custom').get();
+      const foods = doc.exists ? (doc.data().foods || []) : [];
+      for (const f of foods) {
+        if (!alreadyNames.has(f.name.toLowerCase())) newCount++;
+      }
+    }
+
+    if (total === 0) {
+      statusEl.innerHTML = '<span style="color:var(--text-dim);">No custom foods found in any user account. Nothing to migrate.</span>';
+    } else {
+      statusEl.innerHTML = `
+        <div style="margin-bottom:8px;color:var(--accent2);">Found ${total} total custom food${total>1?'s':''} across ${lines.length} user${lines.length>1?'s':''}:</div>
+        <div style="color:var(--text-dim);font-size:0.6rem;line-height:1.9;">${lines.join('<br>')}</div>
+        <div style="margin-top:8px;color:#4caf50;">${newCount} new · ${total-newCount} already in shared DB (will be skipped)</div>`;
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--danger);">Error: ${e.message}</span>`;
+  }
+}
+
+async function runFoodMigration() {
+  const statusEl = document.getElementById('migration-status');
+  if (!statusEl) return;
+  if (!confirm('Migrate all custom foods to the shared database?\n\nThis makes them visible to all users. Duplicates will be skipped.')) return;
+
+  statusEl.innerHTML = '<span style="color:var(--accent2);">Running migration...</span>';
+
+  try {
+    const users = await getUsers();
+    const usernames = Object.keys(users);
+
+    // Load current shared DB
+    const sharedDoc = await db.collection('fooddb').doc('custom').get();
+    let sharedFoods = sharedDoc.exists ? (sharedDoc.data().foods || []) : [];
+    const sharedNames = new Set(sharedFoods.map(f => f.name.toLowerCase()));
+
+    let added = 0, skipped = 0, lines = [];
+
+    for (const uname of usernames) {
+      const doc = await db.collection('userdata').doc(uname)
+        .collection('fooddb').doc('custom').get();
+      const foods = doc.exists ? (doc.data().foods || []) : [];
+
+      for (const food of foods) {
+        if (sharedNames.has(food.name.toLowerCase())) {
+          skipped++;
+        } else {
+          sharedFoods.push({
+            ...food,
+            source:    'community',
+            custom:    true,
+            migratedFrom: uname,
+            migratedAt:   new Date().toISOString(),
+          });
+          sharedNames.add(food.name.toLowerCase());
+          lines.push(`✓ Added: ${food.name} (from @${uname})`);
+          added++;
+        }
+      }
+    }
+
+    // Save updated shared collection
+    if (added > 0) {
+      await db.collection('fooddb').doc('custom').set({ foods: sharedFoods });
+    }
+
+    statusEl.innerHTML = `
+      <div style="color:#4caf50;margin-bottom:6px;">✓ Migration complete — ${added} food${added!==1?'s':''} added, ${skipped} duplicate${skipped!==1?'s':''} skipped</div>
+      ${lines.length ? `<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);line-height:1.8;">${lines.join('<br>')}</div>` : ''}
+      <div style="margin-top:8px;color:var(--text-dim);font-size:0.6rem;">Reload the Food Database tab to see the migrated foods.</div>`;
+
+    // Refresh local food DB
+    await loadFoodDatabase();
+
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--danger);">Migration failed: ${e.message}</span>`;
+  }
 }
 
 async function reEncryptAll() {
