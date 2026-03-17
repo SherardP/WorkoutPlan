@@ -3587,10 +3587,6 @@ function renderFoodTable() {
   const ketoLabel = f => f.keto
     ? `<span style="font-size:0.45rem;padding:1px 4px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;">KETO</span>`
     : '';
-  const sourceBadge = f => {
-    if (f._githubOnly) return `<span style="font-size:0.45rem;padding:1px 4px;background:#ff980022;color:#ff9800;border:1px solid #ff980044;" title="In GitHub only — run Step 1 migration">GH ONLY</span>`;
-    return '';
-  };
 
   const catColor = {
     protein:'#ef9a9a', grain:'#ffe082', vegetable:'#a5d6a7', fruit:'#f48fb1',
