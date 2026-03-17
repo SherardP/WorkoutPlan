@@ -3413,43 +3413,85 @@ function estimateDuration(item) {
   return 8;
 }
 
+// ── REP DURATION TABLE (seconds per rep, research-based) ──
+// Accounts for actual movement time — NOT including rest between sets
+const SEC_PER_REP = {
+  // Slow controlled movements
+  'BENCH PRESS':4.0, 'OVERHEAD PRESS':4.0, 'INCLINE DB PRESS':4.0,
+  'FLOOR PRESS':4.0, 'GOBLET SQUAT':4.0, 'ROMANIAN DEADLIFT':4.5,
+  'SINGLE-LEG DEADLIFT':4.5, 'BULGARIAN SPLIT SQUAT':4.0,
+  'SUMO SQUAT':4.0, 'HIP THRUST':4.0, 'BENT-OVER ROW':4.0,
+  'DB ROW (SINGLE ARM)':4.0, 'RENEGADE ROW':5.0,
+  'BICEP CURL':4.0, 'HAMMER CURL':4.0,
+  'TRICEP OVERHEAD EXT.':4.0, 'TRICEP DIPS':4.0,
+  'LATERAL RAISES':3.5, 'REAR DELT RAISE':3.5,
+  // Bodyweight / moderate
+  'PUSH-UP VARIATIONS':2.5, 'PUSH-UP BURNOUT':2.0, 'PUSH-UP PLUS':2.5,
+  'SCAPULAR PUSH-UPS':2.5, 'ARCHER PUSH-UP':3.0,
+  'BODYWEIGHT SQUAT':2.5, 'SQUAT BURNOUT':2.0, 'WALKING LUNGE':2.0,
+  'REVERSE LUNGE':2.0, 'LUNGE BURNOUT':2.0,
+  'BICYCLE CRUNCH':1.5, 'MOUNTAIN CLIMBERS':0.8, 'BURPEE FINISHER':4.0,
+  'DEAD BUG':4.0, 'BIRD DOG':4.0, 'RUSSIAN TWIST':1.5,
+  'LEG RAISES':2.5, 'HANGING LEG RAISE':3.0, 'SIDE PLANK HIP DIP':2.0,
+  'GLUTE BRIDGE':2.5, 'DONKEY KICK':1.5, 'GLUTE KICKBACK':1.5,
+  // Fast / activation
+  'ARM CIRCLES':0.5,        // 0.5 sec each — so 40 reps = 20 sec
+  'LEG SWINGS (FRONT/BACK)':1.0,
+  'HIP CIRCLES':0.8,
+  'BAND PULL-APARTS':1.5,
+  'SHOULDER PASS-THROUGHS':2.0,
+  'CLAMSHELL':2.0,
+  // Stretches / holds — measured in reps as seconds held
+  'PLANK VARIATIONS':1.0, 'PLANK HOLD':1.0, 'HOLLOW HOLD':1.0,
+  'WALL SIT':1.0, 'DEAD HANG':1.0,
+};
+const DEFAULT_SEC_PER_REP = 3.0;
+
+// Hard per-exercise calorie ceiling (sanity cap)
+// These are generous upper bounds for a single exercise in one session
+const CAL_CEILING = {
+  'BURPEE FINISHER':120, 'MOUNTAIN CLIMBERS':80, 'SQUAT BURNOUT':100,
+  'LUNGE BURNOUT':80, 'PUSH-UP BURNOUT':60,
+  default: 60,  // most exercises: max ~60 kcal in one go
+};
+
 // Calculate calories for a single exercise based on actual reps/sets/weight done
 function calcActualCalories(item, actualData) {
   const weightKg  = getWeightKg();
-  const weightLbs = SESSION.weight || 0;
+  const bodyLbs   = SESSION.weight || 0;
   if (!weightKg) return null;
 
-  const met = EXERCISE_MET[item.name?.toUpperCase()] || 4.0;
-  const sets = (actualData?.sets || []).filter(s => s?.reps);
+  const name = item.name?.toUpperCase() || '';
+  const met  = EXERCISE_MET[name] || 3.5;
+  const sets = (actualData?.sets || []).filter(s => s?.reps && parseInt(s.reps) > 0);
 
   if (!sets.length) {
-    // No set data — use estimated duration
-    const dur = estimateDuration(item) / 60;
+    // No reps entered — use a short conservative estimate (don't overcount)
+    const dur = item.sets ? 6 / 60 : 2 / 60; // 6 min for strength, 2 min for warmup
     return Math.round(met * weightKg * dur);
   }
 
-  // Calculate based on actual sets/reps
   let totalCals = 0;
+  const secPerRep = SEC_PER_REP[name] || DEFAULT_SEC_PER_REP;
+
   sets.forEach(set => {
     const reps = parseInt(set.reps) || 0;
     if (!reps) return;
 
-    // Determine effective load
     let effectiveLbs = parseFloat(set.weight) || parseFloat(exerciseWeights[item.id]) || 0;
-
-    // If no external weight, check bodyweight percentage
     if (!effectiveLbs) {
-      const bwPct = BODYWEIGHT_PCT[item.name?.toUpperCase()];
-      if (bwPct) effectiveLbs = weightLbs * bwPct;
+      const bwPct = BODYWEIGHT_PCT[name];
+      if (bwPct) effectiveLbs = bodyLbs * bwPct;
     }
 
-    // Time per set: ~3-4 sec/rep + rest accounted for in MET
-    const setMinutes = (reps * 3.5) / 60; // 3.5 sec avg per rep
-    const mod = metModifier(effectiveLbs, weightLbs);
+    const setMinutes = (reps * secPerRep) / 60;
+    const mod = metModifier(effectiveLbs, bodyLbs);
     totalCals += met * mod * weightKg * setMinutes;
   });
 
-  return Math.round(totalCals) || Math.round(met * weightKg * (estimateDuration(item) / 60));
+  // Apply sanity cap
+  const ceiling = CAL_CEILING[name] ?? CAL_CEILING.default;
+  return Math.min(Math.round(totalCals), ceiling);
 }
 
 // MET modifier based on weight used relative to bodyweight
@@ -4711,17 +4753,20 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
 
 // Calculate calories for a single set given reps and weight
 function calcSetCalories(item, reps, weightLbs) {
-  const weightKg = getWeightKg();
+  const weightKg  = getWeightKg();
   if (!weightKg || !reps) return 0;
-  const bodyLbs  = SESSION.weight || 0;
-  const met = EXERCISE_MET[item.name?.toUpperCase()] || 4.0;
-  const setMinutes = (reps * 3.5) / 60; // 3.5 sec avg per rep
+  const bodyLbs   = SESSION.weight || 0;
+  const name      = item.name?.toUpperCase() || '';
+  const met       = EXERCISE_MET[name] || 3.5;
+  const secPerRep = SEC_PER_REP[name] || DEFAULT_SEC_PER_REP;
+  const setMinutes = (reps * secPerRep) / 60;
   let effectiveLbs = weightLbs || 0;
   if (!effectiveLbs) {
-    const bwPct = BODYWEIGHT_PCT[item.name?.toUpperCase()];
+    const bwPct = BODYWEIGHT_PCT[name];
     if (bwPct) effectiveLbs = bodyLbs * bwPct;
   }
-  return met * metModifier(effectiveLbs, bodyLbs) * weightKg * setMinutes;
+  const raw = met * metModifier(effectiveLbs, bodyLbs) * weightKg * setMinutes;
+  return Math.min(Math.round(raw), 25); // no single set >25 kcal
 }
 
 // Update the calorie badge on the exercise header + all per-set calorie cells
