@@ -3305,7 +3305,43 @@ const WEIGHTED_EXERCISES = new Set([
   'HANGING LEG RAISE','LEG RAISES','SIDE PLANK HIP DIP','GLUTE KICKBACK',
 ]);
 
-// Duration estimates per exercise in minutes (based on sets × rest)
+// Bodyweight exercises and what % of bodyweight they use as effective load
+// Source: ACSM / biomechanics research
+const BODYWEIGHT_PCT = {
+  'PUSH-UP VARIATIONS': 0.64,   // ~64% bodyweight
+  'PUSH-UP BURNOUT':    0.64,
+  'PUSH-UP PLUS':       0.64,
+  'SCAPULAR PUSH-UPS':  0.60,
+  'ARCHER PUSH-UP':     0.70,   // asymmetric → higher
+  'TRICEP DIPS':        0.75,   // bench dip ~75%
+  'PULL-UP':            1.00,   // full bodyweight
+  'DEAD HANG':          1.00,
+  'HANGING LEG RAISE':  0.20,   // legs only ~20%
+  'PLANK VARIATIONS':   0.70,
+  'PLANK HOLD':         0.70,
+  'HOLLOW HOLD':        0.50,
+  'DEAD BUG':           0.30,
+  'BIRD DOG':           0.25,
+  'BICYCLE CRUNCH':     0.25,
+  'MOUNTAIN CLIMBERS':  0.60,
+  'BURPEE FINISHER':    0.65,
+  'GOBLET SQUAT':       0.0,    // uses external weight only
+  'BODYWEIGHT SQUAT':   0.80,
+  'SQUAT BURNOUT':      0.80,
+  'WALL SIT':           0.70,
+  'GLUTE BRIDGE':       0.50,
+  'HIP THRUST':         0.50,
+  'WALKING LUNGE':      0.80,
+  'REVERSE LUNGE':      0.80,
+  'LUNGE BURNOUT':      0.80,
+  'BULGARIAN SPLIT SQUAT': 0.80,
+  'DONKEY KICK':        0.15,
+  'FIRE HYDRANT':       0.15,
+  'CLAMSHELL':          0.10,
+  'SIDE PLANK HIP DIP': 0.30,
+  'RUSSIAN TWIST':      0.20,
+  'LEG RAISES':         0.20,
+};
 function estimateDuration(item) {
   if (!item.sets) return 3; // warmup/cooldown item
   const s = item.sets.toLowerCase();
@@ -3318,6 +3354,45 @@ function estimateDuration(item) {
   return 8;
 }
 
+// Calculate calories for a single exercise based on actual reps/sets/weight done
+function calcActualCalories(item, actualData) {
+  const weightKg  = getWeightKg();
+  const weightLbs = SESSION.weight || 0;
+  if (!weightKg) return null;
+
+  const met = EXERCISE_MET[item.name?.toUpperCase()] || 4.0;
+  const sets = (actualData?.sets || []).filter(s => s?.reps);
+
+  if (!sets.length) {
+    // No set data — use estimated duration
+    const dur = estimateDuration(item) / 60;
+    return Math.round(met * weightKg * dur);
+  }
+
+  // Calculate based on actual sets/reps
+  let totalCals = 0;
+  sets.forEach(set => {
+    const reps = parseInt(set.reps) || 0;
+    if (!reps) return;
+
+    // Determine effective load
+    let effectiveLbs = parseFloat(set.weight) || parseFloat(exerciseWeights[item.id]) || 0;
+
+    // If no external weight, check bodyweight percentage
+    if (!effectiveLbs) {
+      const bwPct = BODYWEIGHT_PCT[item.name?.toUpperCase()];
+      if (bwPct) effectiveLbs = weightLbs * bwPct;
+    }
+
+    // Time per set: ~3-4 sec/rep + rest accounted for in MET
+    const setMinutes = (reps * 3.5) / 60; // 3.5 sec avg per rep
+    const mod = metModifier(effectiveLbs, weightLbs);
+    totalCals += met * mod * weightKg * setMinutes;
+  });
+
+  return Math.round(totalCals) || Math.round(met * weightKg * (estimateDuration(item) / 60));
+}
+
 // MET modifier based on weight used relative to bodyweight
 function metModifier(lbs, bodyweightLbs) {
   if (!lbs || !bodyweightLbs) return 1.0;
@@ -3328,13 +3403,22 @@ function metModifier(lbs, bodyweightLbs) {
   return 1.0;
 }
 
-// Compute calories for one exercise item
+// Compute calories for one exercise item (used for live display)
 function calcItemCalories(item, weightLbs) {
-  const weightKg = getWeightKg();
+  const weightKg   = getWeightKg();
+  const bodyLbs    = SESSION.weight || 0;
   if (!weightKg) return null;
   const met = EXERCISE_MET[item.name?.toUpperCase()] || 4.0;
-  const dur = estimateDuration(item) / 60; // hours
-  const mod = metModifier(weightLbs, SESSION.weight);
+  const dur = estimateDuration(item) / 60;
+
+  // Use external weight if provided, otherwise bodyweight percentage
+  let effectiveLbs = parseFloat(weightLbs) || 0;
+  if (!effectiveLbs) {
+    const bwPct = BODYWEIGHT_PCT[item.name?.toUpperCase()];
+    if (bwPct) effectiveLbs = bodyLbs * bwPct;
+  }
+
+  const mod = metModifier(effectiveLbs, bodyLbs);
   return Math.round(met * mod * weightKg * dur);
 }
 
@@ -4659,29 +4743,78 @@ async function markWorkoutComplete(dayId) {
       });
   } catch(e) {}
 
-  // Build exercise summary from actuals
-  const exerciseSummary = [...w.warmup, ...w.exercises, ...w.cooldown].map(item => {
-    const actual = exerciseActuals[item.id];
-    if (actual?.sets?.length) {
-      const setStr = actual.sets.filter(s=>s?.reps)
-        .map((s,i) => `Set ${i+1}: ${s.reps} reps${s.weight?' @ '+s.weight+'lbs':''}`)
-        .join(' | ');
-      return `${item.name}${setStr ? ' — '+setStr : ''}`;
-    }
-    return item.name;
-  }).join('\n');
+  // Build rich exercise summary — warmup, core, cooldown all included
+  const weightLbs = SESSION.weight || 0;
+  const allItems = [...w.warmup, ...w.exercises, ...w.cooldown];
+  let totalCalsBurned = 0;
 
-  // Upsert workout log entry (replace today's if exists)
+  const exerciseLines = allItems.map(item => {
+    const actual  = exerciseActuals[item.id] || {};
+    const sets    = (actual.sets || []).filter(s => s?.reps);
+    const calsBurned = calcActualCalories(item, actual) || 0;
+    totalCalsBurned += calsBurned;
+
+    // Determine if bodyweight was used as the load
+    const bwPct = BODYWEIGHT_PCT[item.name?.toUpperCase()];
+    const usedExtWeight = sets.some(s => s?.weight);
+    const bwNote = (!usedExtWeight && bwPct && bwPct > 0)
+      ? ` [BW ${Math.round(bwPct*100)}% = ~${Math.round(weightLbs*bwPct)} lbs]`
+      : '';
+
+    // Build set detail string
+    let setDetail = '';
+    if (sets.length) {
+      setDetail = ' — ' + sets.map((s, i) => {
+        let line = `Set ${i+1}: ${s.reps} reps`;
+        if (s.weight) line += ` @ ${s.weight} lbs`;
+        return line;
+      }).join(' | ');
+    } else if (actual.detail) {
+      setDetail = ' — ' + actual.detail;
+    }
+
+    const calNote = calsBurned > 0 ? ` (~${calsBurned} kcal)` : '';
+    return `${item.name}${bwNote}${setDetail}${calNote}`;
+  });
+
+  // Section headers
+  const warmupLines   = allItems.slice(0, w.warmup.length).map((_,i) => exerciseLines[i]);
+  const coreLines     = allItems.slice(w.warmup.length, w.warmup.length + w.exercises.length).map((_,i) => exerciseLines[w.warmup.length + i]);
+  const cooldownLines = allItems.slice(w.warmup.length + w.exercises.length).map((_,i) => exerciseLines[w.warmup.length + w.exercises.length + i]);
+
+  const exerciseSummary = [
+    '── WARM-UP ──',
+    ...warmupLines,
+    '── CORE WORKOUT ──',
+    ...coreLines,
+    '── COOL-DOWN ──',
+    ...cooldownLines,
+    '',
+    `TOTAL CALORIES BURNED: ~${totalCalsBurned} kcal`,
+    weightLbs ? `Body weight used: ${weightLbs} lbs` : '',
+  ].filter(Boolean).join('\n');
+
+  // Estimate total duration from set counts
+  const totalSets = allItems.reduce((sum, item) => {
+    const s = (item.sets||'').toLowerCase();
+    if (s.startsWith('5×') || s.startsWith('5x')) return sum + 5;
+    if (s.startsWith('4×') || s.startsWith('4x')) return sum + 4;
+    return sum + 3;
+  }, 0);
+  const estMinutes = Math.round(totalSets * 2.5 + w.warmup.length * 3 + w.cooldown.length * 2);
+
+  // Upsert workout log entry
   const entry = {
     saved: new Date().toISOString(),
     date: today,
     day: dayId.toUpperCase() + ' — ' + w.title,
     location: 'Home',
-    duration: String(exerciseWeights && Object.keys(exerciseWeights).length > 0 ? 90 : 60),
+    duration: String(estMinutes),
     energy: '8',
     decomp: 'YES — FULL',
+    caloriesBurned: String(totalCalsBurned),
     exercises: exerciseSummary,
-    notes: 'Completed via workout checklist'
+    notes: `Session completed via checklist. Est. ${totalCalsBurned} kcal burned.`
   };
 
   const existing = await encryptedLoad('workout');
