@@ -4255,6 +4255,7 @@ const DAY_NAMES = {mon:'MON',tue:'TUE',wed:'WED',thu:'THU',fri:'FRI',sat:'SAT',s
 
 // Track checked items in memory (saved to Firebase)
 let workoutChecks = {}; // { exerciseId: true/false }
+let exerciseActuals = {}; // { exerciseId: { sets: [{reps, weight}], notes } }
 
 function buildDayTabs() {
   const jsDay = new Date().getDay();
@@ -4272,13 +4273,14 @@ function buildDayTabs() {
 }
 
 async function showWorkoutDay(dayId) {
-  // Load saved checks from Firebase for today
+  // Load saved checks and actuals from Firebase for today
   const today = localDateStr();
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
       .collection('wkchecks').doc(today).get();
-    workoutChecks = doc.exists ? (doc.data().checks || {}) : {};
-  } catch(e) { workoutChecks = {}; }
+    workoutChecks  = doc.exists ? (doc.data().checks  || {}) : {};
+    exerciseActuals = doc.exists ? (doc.data().actuals || {}) : {};
+  } catch(e) { workoutChecks = {}; exerciseActuals = {}; }
 
   // Update tab highlights
   DAY_IDS.forEach(id => {
@@ -4392,6 +4394,75 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
           </table>` : ''}
           ${item.hotel ? `<div class="hotel-alt">🏨 <strong>HOTEL VARIANT:</strong> ${item.hotel}</div>` : ''}
 
+          <!-- ── SET TRACKER ── -->
+          ${item.sets ? (() => {
+            const savedActual = exerciseActuals[item.id] || {};
+            const savedSets   = savedActual.sets || [];
+
+            // Parse number of sets from the sets string
+            let numSets = 3;
+            const s = item.sets.toLowerCase();
+            if (s.startsWith('5×5') || s.startsWith('5x5')) numSets = 5;
+            else if (s.startsWith('4×') || s.startsWith('4x')) numSets = 4;
+            else if (s.startsWith('3×') || s.startsWith('3x')) numSets = 3;
+            else if (s.includes('max→')) numSets = 3;
+            else if (s.includes('/leg') || s.includes('/side')) numSets = parseInt(s) || 3;
+
+            // Parse target reps from sets string e.g. "3×12" → 12, "5×5" → 5
+            const repMatch = item.sets.match(/[×x](\d+)/);
+            const targetReps = repMatch ? repMatch[1] : '—';
+
+            return `<div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin:8px 0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;">SET TRACKER — ${item.sets}</div>
+                <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">Target: ${targetReps} reps/set</div>
+              </div>
+              <table style="width:100%;border-collapse:collapse;">
+                <tr style="border-bottom:1px solid var(--border);">
+                  <th style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);text-align:left;padding:4px 6px;width:40px;">SET</th>
+                  <th style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);text-align:left;padding:4px 6px;">REPS DONE</th>
+                  ${isWeighted ? `<th style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);text-align:left;padding:4px 6px;">WEIGHT (lbs)</th>` : ''}
+                  <th style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);text-align:center;padding:4px 6px;width:36px;">✓</th>
+                </tr>
+                ${Array.from({length:numSets},(_,si) => {
+                  const sv = savedSets[si] || {};
+                  const isDone = !!sv.done;
+                  return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <td style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);padding:5px 6px;">${si+1}</td>
+                    <td style="padding:4px 6px;">
+                      <input type="number" id="set-reps-${item.id}-${si}" value="${sv.reps||''}"
+                        placeholder="${targetReps}" min="0" max="999"
+                        oninput="saveSetData('${item.id}','${dayId}',${si})"
+                        style="width:70px;background:var(--bg2);border:1px solid ${isDone?'#4caf5044':'var(--border)'};
+                        color:var(--text);font-family:var(--font-mono);font-size:0.82rem;
+                        padding:5px 7px;outline:none;text-align:center;">
+                    </td>
+                    ${isWeighted ? `<td style="padding:4px 6px;">
+                      <input type="number" id="set-wt-${item.id}-${si}" value="${sv.weight||savedLbs||''}"
+                        placeholder="lbs" min="0" max="500" step="2.5"
+                        oninput="saveSetData('${item.id}','${dayId}',${si});syncWeightInput('${item.id}','lbs')"
+                        style="width:70px;background:var(--bg2);border:1px solid ${isDone?'#4caf5044':'var(--border)'};
+                        color:var(--text);font-family:var(--font-mono);font-size:0.82rem;
+                        padding:5px 7px;outline:none;text-align:center;">
+                    </td>` : ''}
+                    <td style="padding:4px 6px;text-align:center;">
+                      <div onclick="toggleSetDone('${item.id}','${dayId}',${si})"
+                        style="width:22px;height:22px;border:2px solid ${isDone?'#4caf50':'var(--border2)'};
+                        border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+                        background:${isDone?'#4caf5022':'transparent'};transition:all 0.15s;margin:0 auto;">
+                        ${isDone?'<span style="color:#4caf50;font-size:0.85rem;">✓</span>':''}
+                      </div>
+                    </td>
+                  </tr>`;
+                }).join('')}
+              </table>
+              ${savedSets.length > 0 ? `<div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-top:8px;">
+                ${savedSets.filter(s=>s.done).length}/${numSets} sets done
+                ${savedSets.filter(s=>s.reps).map((s,i)=>`Set ${i+1}: ${s.reps}${s.weight?' @ '+s.weight+'lbs':''}`).join(' · ')}
+              </div>` : ''}
+            </div>`;
+          })() : ''}
+
           ${isWeighted && weightKg ? `
           <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin:8px 0;">
             <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:8px;">
@@ -4475,6 +4546,8 @@ function findExerciseById(itemId) {
 }
 
 async function toggleCheck(itemId, dayId) {
+  // Toggle the check state
+  workoutChecks[itemId] = !workoutChecks[itemId];
 
   // Instant save to Firebase
   const today = localDateStr();
@@ -4482,12 +4555,86 @@ async function toggleCheck(itemId, dayId) {
     await db.collection('userdata').doc(SESSION.username)
       .collection('wkchecks').doc(today).set({
         checks: workoutChecks,
+        actuals: exerciseActuals,
         dayId,
         updated: new Date().toISOString()
       });
   } catch(e) { console.error('Check save failed:', e); }
 
   // Re-render the workout view (updates progress bar + checkboxes)
+  showWorkoutDay(dayId);
+}
+
+async function saveSetData(itemId, dayId, setIndex) {
+  const repsEl   = document.getElementById(`set-reps-${itemId}-${setIndex}`);
+  const weightEl = document.getElementById(`set-wt-${itemId}-${setIndex}`);
+  const reps   = repsEl?.value   || '';
+  const weight = weightEl?.value || '';
+
+  if (!exerciseActuals[itemId]) exerciseActuals[itemId] = { sets: [] };
+  if (!exerciseActuals[itemId].sets[setIndex]) exerciseActuals[itemId].sets[setIndex] = {};
+  exerciseActuals[itemId].sets[setIndex].reps   = reps;
+  exerciseActuals[itemId].sets[setIndex].weight = weight;
+
+  // Update weight in exerciseWeights for calorie calc
+  if (weight) {
+    exerciseWeights[itemId] = parseFloat(weight) || 0;
+    // Sync main weight inputs if visible
+    const lbsEl = document.getElementById(`wt-lbs-${itemId}`);
+    if (lbsEl && !lbsEl.value) lbsEl.value = weight;
+    updateCalorieBurnDisplay();
+  }
+
+  // Debounced save to Firebase (avoid hammering on every keystroke)
+  clearTimeout(window._setDataSaveTimer);
+  window._setDataSaveTimer = setTimeout(async () => {
+    const today = localDateStr();
+    try {
+      await db.collection('userdata').doc(SESSION.username)
+        .collection('wkchecks').doc(today).set({
+          checks: workoutChecks,
+          actuals: exerciseActuals,
+          dayId,
+          updated: new Date().toISOString()
+        }, { merge: true });
+    } catch(e) { console.error('Set save failed:', e); }
+  }, 800);
+}
+
+async function toggleSetDone(itemId, dayId, setIndex) {
+  if (!exerciseActuals[itemId]) exerciseActuals[itemId] = { sets: [] };
+  if (!exerciseActuals[itemId].sets[setIndex]) exerciseActuals[itemId].sets[setIndex] = {};
+
+  // Capture current reps/weight before re-render
+  const repsEl   = document.getElementById(`set-reps-${itemId}-${setIndex}`);
+  const weightEl = document.getElementById(`set-wt-${itemId}-${setIndex}`);
+  if (repsEl?.value)   exerciseActuals[itemId].sets[setIndex].reps   = repsEl.value;
+  if (weightEl?.value) exerciseActuals[itemId].sets[setIndex].weight = weightEl.value;
+
+  exerciseActuals[itemId].sets[setIndex].done = !exerciseActuals[itemId].sets[setIndex].done;
+
+  // Check if all sets done → auto-check the exercise
+  const setsDone = exerciseActuals[itemId].sets.filter(s => s?.done).length;
+  const item = findExerciseById(itemId);
+  if (item) {
+    const s = item.sets?.toLowerCase() || '';
+    let numSets = 3;
+    if (s.startsWith('5×5') || s.startsWith('5x5')) numSets = 5;
+    else if (s.startsWith('4×') || s.startsWith('4x')) numSets = 4;
+    if (setsDone >= numSets) workoutChecks[itemId] = true;
+  }
+
+  const today = localDateStr();
+  try {
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('wkchecks').doc(today).set({
+        checks: workoutChecks,
+        actuals: exerciseActuals,
+        dayId,
+        updated: new Date().toISOString()
+      });
+  } catch(e) { console.error('Set done save failed:', e); }
+
   showWorkoutDay(dayId);
 }
 
@@ -4506,30 +4653,45 @@ async function markWorkoutComplete(dayId) {
     await db.collection('userdata').doc(SESSION.username)
       .collection('wkchecks').doc(today).set({
         checks: workoutChecks,
+        actuals: exerciseActuals,
         dayId,
         updated: new Date().toISOString()
       });
   } catch(e) {}
 
-  // Also save a workout log entry
+  // Build exercise summary from actuals
+  const exerciseSummary = [...w.warmup, ...w.exercises, ...w.cooldown].map(item => {
+    const actual = exerciseActuals[item.id];
+    if (actual?.sets?.length) {
+      const setStr = actual.sets.filter(s=>s?.reps)
+        .map((s,i) => `Set ${i+1}: ${s.reps} reps${s.weight?' @ '+s.weight+'lbs':''}`)
+        .join(' | ');
+      return `${item.name}${setStr ? ' — '+setStr : ''}`;
+    }
+    return item.name;
+  }).join('\n');
+
+  // Upsert workout log entry (replace today's if exists)
   const entry = {
     saved: new Date().toISOString(),
     date: today,
     day: dayId.toUpperCase() + ' — ' + w.title,
     location: 'Home',
-    duration: '90',
+    duration: String(exerciseWeights && Object.keys(exerciseWeights).length > 0 ? 90 : 60),
     energy: '8',
-    decomp: 'yes',
-    exercises: [...w.warmup, ...w.exercises, ...w.cooldown].map(i=>i.name).join(', '),
-    notes: 'Session completed via checklist'
+    decomp: 'YES — FULL',
+    exercises: exerciseSummary,
+    notes: 'Completed via workout checklist'
   };
+
   const existing = await encryptedLoad('workout');
-  existing.unshift(entry);
+  const idx = existing.findIndex(e => e.date === today);
+  idx >= 0 ? existing[idx] = entry : existing.unshift(entry);
   await encryptedSave('workout', existing);
 
   loadStats();
   showWorkoutDay(dayId);
-  toast('✓ SESSION COMPLETE — SAVED TO FIREBASE');
+  toast('✓ SESSION COMPLETE — SAVED');
 }
 
 function toggleEx(bodyEl, itemId) {
