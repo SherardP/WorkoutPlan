@@ -931,7 +931,7 @@ body.theme-female .goal-chip{border-radius:20px;}
   <!-- ── LOG DATA ── -->
   <div class="section" id="sec-log">
     <div class="page-title">DATA<br><span>LOG</span></div>
-    <div class="page-sub">// ENCRYPTED TRAINING JOURNAL — AES-256 SECURED //</div>
+    <div class="page-sub">// TRAINING JOURNAL — SECURELY STORED //</div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
       <button class="btn btn-p" onclick="logTab('summary')" id="lt-summary">📊 SUMMARY</button>
@@ -941,7 +941,7 @@ body.theme-female .goal-chip{border-radius:20px;}
       <button class="btn btn-s" onclick="logTab('nutrition')" id="lt-nutrition">NUTRITION</button>
       <button class="btn btn-s" onclick="logTab('history')" id="lt-history">HISTORY</button>
       <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);">
-        🔒 AES-256
+        🔒 SECURE
       </div>
     </div>
 
@@ -991,37 +991,151 @@ body.theme-female .goal-chip{border-radius:20px;}
 
     <div id="log-body" style="display:none;">
       <div class="card">
-        <div class="card-label">LOG BODY METRICS</div><div class="card-title">MEASUREMENTS</div>
+        <div class="card-label">LOG BODY METRICS</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+          <div class="card-title" style="margin:0;">MEASUREMENTS</div>
+          <div id="body-prefill-note" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);"></div>
+        </div>
         <div class="log-grid">
           <div class="lf"><label>DATE</label><input type="date" id="b-date"></div>
-          <div class="lf"><label>WEIGHT (lbs)</label><input type="number" id="b-weight" step="0.1" placeholder="0.0"></div>
-          <div class="lf"><label>WAIST (in)</label><input type="number" id="b-waist" step="0.25" placeholder="0.0"></div>
-          <div class="lf"><label>CHEST (in)</label><input type="number" id="b-chest" step="0.25" placeholder="0.0"></div>
-          <div class="lf"><label>HIPS (in)</label><input type="number" id="b-hips" step="0.25" placeholder="0.0"></div>
-          <div class="lf"><label>NECK (in)</label><input type="number" id="b-neck" step="0.25" placeholder="0.0"></div>
+          <div class="lf">
+            <label>WEIGHT (lbs)</label>
+            <input type="number" id="b-weight" step="0.1" placeholder="—">
+            <div id="b-weight-prev" style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);margin-top:3px;"></div>
+          </div>
+          <div class="lf">
+            <label>WAIST (in)</label>
+            <input type="number" id="b-waist" step="0.25" placeholder="—">
+            <div id="b-waist-prev" style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);margin-top:3px;"></div>
+          </div>
+          <div class="lf">
+            <label>CHEST (in)</label>
+            <input type="number" id="b-chest" step="0.25" placeholder="—">
+            <div id="b-chest-prev" style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);margin-top:3px;"></div>
+          </div>
+          <div class="lf">
+            <label>HIPS (in)</label>
+            <input type="number" id="b-hips" step="0.25" placeholder="—">
+            <div id="b-hips-prev" style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);margin-top:3px;"></div>
+          </div>
+          <div class="lf">
+            <label>NECK (in)</label>
+            <input type="number" id="b-neck" step="0.25" placeholder="—">
+            <div id="b-neck-prev" style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);margin-top:3px;"></div>
+          </div>
+          <div class="lf">
+            <label>GLUTES (in)</label>
+            <input type="number" id="b-glutes" step="0.25" placeholder="—">
+            <div id="b-glutes-prev" style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);margin-top:3px;"></div>
+          </div>
+          <div class="lf">
+            <label>THIGHS (in)</label>
+            <input type="number" id="b-thighs" step="0.25" placeholder="—">
+            <div id="b-thighs-prev" style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);margin-top:3px;"></div>
+          </div>
           <div class="lf"><label>SLEEP (hrs)</label><input type="number" id="b-sleep" step="0.5" min="0" max="14" placeholder="7.0"></div>
           <div class="lf"><label>STRESS (1–10)</label><input type="number" id="b-stress" min="1" max="10" placeholder="5"></div>
-          <div class="lf"><label>GLUTES (in)</label><input type="number" id="b-glutes" step="0.25" placeholder="0.0"></div>
-          <div class="lf"><label>THIGHS (in)</label><input type="number" id="b-thighs" step="0.25" placeholder="0.0"></div>
         </div>
-        <div style="margin-top:14px;"><button class="btn btn-p" onclick="saveEntry('body')">SAVE METRICS</button></div>
+        <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-p" onclick="saveEntry('body')">SAVE METRICS</button>
+          <button class="btn btn-s" onclick="autoPopulateBodyLog()" style="font-size:0.65rem;">⟳ LOAD LAST ENTRY</button>
+        </div>
       </div>
     </div>
 
     <div id="log-nutrition" style="display:none;">
-      <div class="card">
-        <div class="card-label">LOG NUTRITION</div><div class="card-title">DAILY NUTRITION</div>
-        <div class="log-grid">
-          <div class="lf"><label>DATE</label><input type="date" id="n-date"></div>
-          <div class="lf"><label>CALORIES</label><input type="number" id="n-cal" placeholder="2000"></div>
-          <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-prot" placeholder="150"></div>
-          <div class="lf"><label>CARBS (g)</label><input type="number" id="n-carb" placeholder="200"></div>
-          <div class="lf"><label>FAT (g)</label><input type="number" id="n-fat" placeholder="70"></div>
-          <div class="lf"><label>WATER (oz)</label><input type="number" id="n-water" placeholder="96"></div>
-          <div class="lf full"><label>MEAL NOTES</label><textarea id="n-notes" rows="2" placeholder="What you ate today..."></textarea></div>
+
+      <!-- Water tracker -->
+      <div class="card mb16">
+        <div class="card-label">HYDRATION</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">WATER INTAKE</div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--font-display);font-size:2rem;color:var(--accent2);" id="water-total-display">0</div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">oz / <span id="water-goal-display">96</span> oz goal</div>
+          </div>
         </div>
-        <div style="margin-top:14px;"><button class="btn btn-p" onclick="saveEntry('nutrition')">SAVE NUTRITION</button></div>
+        <!-- Water progress bar -->
+        <div style="height:6px;background:var(--bg3);border-radius:3px;margin-bottom:14px;">
+          <div id="water-progress-bar" style="height:100%;width:0%;background:#64b5f6;border-radius:3px;transition:width 0.4s;"></div>
+        </div>
+        <!-- Quick-add buttons -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <button onclick="addWater(8)"   class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+8 oz</button>
+          <button onclick="addWater(12)"  class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+12 oz</button>
+          <button onclick="addWater(16)"  class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+16 oz</button>
+          <button onclick="addWater(20)"  class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+20 oz</button>
+          <button onclick="addWater(32)"  class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+32 oz</button>
+          <button onclick="resetWater()" class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;color:var(--text-dim);">RESET</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" id="water-custom-oz" placeholder="Custom oz" min="1" max="200"
+            style="width:120px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.8rem;padding:7px 10px;outline:none;">
+          <button onclick="addWaterCustom()" class="btn btn-p" style="font-size:0.65rem;">+ ADD</button>
+          <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);">
+            Daily goal: <span id="water-goal-label">96 oz (3 liters)</span>
+          </div>
+        </div>
       </div>
+
+      <!-- Meals -->
+      <div class="card mb16">
+        <div class="card-label">MEALS — TODAY</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">BREAKFAST · LUNCH · DINNER</div>
+          <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);" id="nutrition-total-display"></div>
+        </div>
+
+        <!-- Breakfast -->
+        <div style="margin-bottom:16px;padding:14px;background:var(--bg3);border-left:3px solid #ff9800;">
+          <div style="font-family:var(--font-mono);font-size:0.62rem;color:#ff9800;letter-spacing:.15em;margin-bottom:10px;">☀ BREAKFAST</div>
+          <div class="log-grid">
+            <div class="lf full"><label>WHAT YOU ATE</label><textarea id="n-bk-food" rows="2" placeholder="e.g. Eggs, oatmeal, fruit..."></textarea></div>
+            <div class="lf"><label>CALORIES</label><input type="number" id="n-bk-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
+            <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-bk-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
+            <div class="lf"><label>CARBS (g)</label><input type="number" id="n-bk-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
+            <div class="lf"><label>FAT (g)</label><input type="number" id="n-bk-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
+          </div>
+        </div>
+
+        <!-- Lunch -->
+        <div style="margin-bottom:16px;padding:14px;background:var(--bg3);border-left:3px solid var(--accent2);">
+          <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--accent2);letter-spacing:.15em;margin-bottom:10px;">☀ LUNCH</div>
+          <div class="log-grid">
+            <div class="lf full"><label>WHAT YOU ATE</label><textarea id="n-ln-food" rows="2" placeholder="e.g. Chicken, rice, salad..."></textarea></div>
+            <div class="lf"><label>CALORIES</label><input type="number" id="n-ln-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
+            <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-ln-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
+            <div class="lf"><label>CARBS (g)</label><input type="number" id="n-ln-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
+            <div class="lf"><label>FAT (g)</label><input type="number" id="n-ln-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
+          </div>
+        </div>
+
+        <!-- Dinner -->
+        <div style="margin-bottom:16px;padding:14px;background:var(--bg3);border-left:3px solid #7986cb;">
+          <div style="font-family:var(--font-mono);font-size:0.62rem;color:#7986cb;letter-spacing:.15em;margin-bottom:10px;">🌙 DINNER</div>
+          <div class="log-grid">
+            <div class="lf full"><label>WHAT YOU ATE</label><textarea id="n-dn-food" rows="2" placeholder="e.g. Steak, vegetables, sweet potato..."></textarea></div>
+            <div class="lf"><label>CALORIES</label><input type="number" id="n-dn-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
+            <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-dn-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
+            <div class="lf"><label>CARBS (g)</label><input type="number" id="n-dn-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
+            <div class="lf"><label>FAT (g)</label><input type="number" id="n-dn-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
+          </div>
+        </div>
+
+        <!-- Snacks -->
+        <div id="snack-container"></div>
+        <button onclick="addSnack()" class="btn btn-s" style="width:100%;margin-bottom:16px;font-size:0.65rem;">
+          + ADD SNACK
+        </button>
+
+        <!-- Daily totals summary -->
+        <div id="nutrition-totals-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;"></div>
+
+        <div class="lf" style="margin-bottom:14px;"><label>DATE</label><input type="date" id="n-date"></div>
+        <button class="btn btn-p" onclick="saveNutrition()" style="width:100%;">SAVE TODAY'S NUTRITION</button>
+      </div>
+
     </div>
 
     <div id="log-history" style="display:none;">
@@ -1102,14 +1216,6 @@ body.theme-female .goal-chip{border-radius:20px;}
       <div class="auth-error" id="adminErr"></div>
     </div>
 
-    <!-- Encryption info -->
-    <div class="card">
-      <div class="card-label">ENCRYPTION ARCHITECTURE</div>
-      <div class="card-title">HOW THE SECURITY WORKS</div>
-      <div class="sci-row"><div class="sci-icon">🔑</div><div class="sci-text"><strong>User Password → PBKDF2 → DEK:</strong> Each user's password derives a unique Data Encryption Key via 100,000 rounds of PBKDF2-SHA256.</div></div>
-      <div class="sci-row"><div class="sci-icon">🔐</div><div class="sci-text"><strong>AES-256-GCM:</strong> Every entry is encrypted before touching Firebase. Raw data never stored in plain text.</div></div>
-      <div class="sci-row"><div class="sci-icon">🗝️</div><div class="sci-text"><strong>Admin Key Wrap:</strong> Each user's DEK is wrapped with your admin master key. Only you can unwrap it.</div></div>
-    </div>
   </div>
 
   </div><!-- /container -->
@@ -1537,22 +1643,25 @@ async function saveEntry(type) {
       duration: v('l-dur'), energy: v('l-energy'), decomp: v('l-decomp'),
       exercises: v('l-exs'), notes: v('l-notes') };
   } else if (type === 'steps') {
-    entry = { ...entry, date: v('s-date')||today, total: v('s-total'),
-      morning: v('s-morn'), lunch: v('s-lunch'), pre: v('s-pre'), post: v('s-post') };
+    const total = [v('s-morn'),v('s-lunch'),v('s-pre'),v('s-post'),v('s-eve')]
+      .reduce((a,b)=>a+(+b||0),0);
+    entry = { ...entry, date: v('s-date')||today,
+      total: v('s-total') || String(total),
+      morning: v('s-morn'), lunch: v('s-lunch'), pre: v('s-pre'),
+      post: v('s-post'), evening: v('s-eve') };
   } else if (type === 'body') {
     entry = { ...entry, date: v('b-date')||today, weight: v('b-weight'), waist: v('b-waist'),
       chest: v('b-chest'), hips: v('b-hips'), neck: v('b-neck'),
       sleep: v('b-sleep'), stress: v('b-stress'), glutes: v('b-glutes'), thighs: v('b-thighs') };
-  } else if (type === 'nutrition') {
-    entry = { ...entry, date: v('n-date')||today, calories: v('n-cal'), protein: v('n-prot'),
-      carbs: v('n-carb'), fat: v('n-fat'), water: v('n-water'), notes: v('n-notes') };
   }
   toast('SAVING...');
   const existing = await encryptedLoad(type);
-  existing.unshift(entry);
+  // Replace today's entry if it exists, otherwise prepend
+  const todayIdx = existing.findIndex(e => e.date === (entry.date||today));
+  todayIdx >= 0 ? existing[todayIdx] = entry : existing.unshift(entry);
   await encryptedSave(type, existing);
   loadStats();
-  toast('✓ SAVED & ENCRYPTED TO FIREBASE');
+  toast('✓ SAVED');
 }
 
 function v(id) { const el = document.getElementById(id); return el ? el.value : ''; }
@@ -1640,10 +1749,12 @@ function logTab(t) {
     const b = document.getElementById('lt-'+x);
     if(b) { b.className = x===t?'btn btn-p':'btn btn-s'; }
   });
-  if (t==='summary')  renderLogSummary();
-  if (t==='history')  showHist('workout');
-  if (t==='steps')    autoPopulateStepsLog();
-  if (t==='workout')  autoPopulateWorkoutLog();
+  if (t==='summary')   renderLogSummary();
+  if (t==='history')   showHist('workout');
+  if (t==='steps')     autoPopulateStepsLog();
+  if (t==='workout')   autoPopulateWorkoutLog();
+  if (t==='body')      autoPopulateBodyLog();
+  if (t==='nutrition') autoPopulateNutritionLog();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1693,7 +1804,7 @@ async function runSysCheck() {
   // ── 2. Session ──
   if (SESSION) {
     ok('Active session', `@${SESSION.username} · ${SESSION.gender} · ${SESSION.isAdmin ? '★ ADMIN' : 'user'}`);
-    ok('Encryption key', 'AES-256-GCM key in memory — data is protected');
+    ok('Encryption key', 'Session key in memory — data is protected');
     if (SESSION.email) info('Email on file', SESSION.email);
   } else {
     fail('Active session', 'No user logged in');
@@ -1734,7 +1845,7 @@ async function runSysCheck() {
         if (doc.exists) {
           const entries = await encryptedLoad(type);
           totalEntries += entries.length;
-          ok(`Data · ${type}`, `${entries.length} entr${entries.length!==1?'ies':'y'} · encrypted in Firebase`);
+          ok(`Data · ${type}`, `${entries.length} entr${entries.length!==1?'ies':'y'} saved in Firebase`);
         } else {
           info(`Data · ${type}`, 'No entries yet');
         }
@@ -1851,7 +1962,7 @@ async function adminToggleRole(username, makeAdmin) {
 }
 
 async function adminDeleteUser(username) {
-  if (!confirm(`DELETE user @${username}? This removes their account. Their encrypted data remains in Firebase until manually cleared.`)) return;
+  if (!confirm(`DELETE user @${username}? This removes their account and all stored data.`)) return;
   if (!confirm(`FINAL CONFIRMATION — permanently delete @${username}?`)) return;
   try {
     await db.collection('users').doc(username).delete();
@@ -2111,10 +2222,226 @@ function renderSummaryCharts(last30, stepsByDate, weightByDate, waistByDate, bod
   }
 }
 
-// ── Auto-populate log forms from live data ──
+// ── Body log: auto-populate from last entry ──
+async function autoPopulateBodyLog() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('b-date').value = today;
+
+  const body = await encryptedLoad('body');
+  if (!body.length) return;
+
+  // Find most recent entry (not today)
+  const prev = body.find(e => e.date !== today) || body[0];
+  const isToday = body[0]?.date === today;
+  const source  = isToday ? body[0] : prev;
+
+  if (!source) return;
+
+  const fields = ['weight','waist','chest','hips','neck','glutes','thighs'];
+  const noteEl = document.getElementById('body-prefill-note');
+
+  if (isToday) {
+    // Today already logged — fill all fields
+    noteEl.textContent = `✓ Today's entry loaded (${source.date})`;
+    fields.forEach(f => {
+      const el = document.getElementById('b-'+f);
+      if (el && source[f]) el.value = source[f];
+    });
+    if (document.getElementById('b-sleep')  && source.sleep)  document.getElementById('b-sleep').value  = source.sleep;
+    if (document.getElementById('b-stress') && source.stress) document.getElementById('b-stress').value = source.stress;
+  } else {
+    // Previous entry — pre-fill as starting point with visual hint
+    noteEl.textContent = `Pre-filled from ${prev.date} — change any value that's different`;
+    fields.forEach(f => {
+      const el    = document.getElementById('b-'+f);
+      const prevEl = document.getElementById('b-'+f+'-prev');
+      if (el && prev[f]) {
+        el.value = prev[f];
+        el.style.color = 'var(--text-dim)'; // dim = pre-filled from previous
+        // Show prev value hint
+        if (prevEl) prevEl.textContent = `Prev: ${prev[f]}`;
+        // When user types, un-dim
+        el.oninput = () => { el.style.color = 'var(--text)'; if (prevEl) prevEl.textContent = ''; };
+      }
+    });
+  }
+}
+
+// ── Nutrition: water tracker state ──
+let todayWaterOz = 0;
+const WATER_GOAL_OZ = 96;
+let snackCount = 0;
+
+function updateWaterDisplay() {
+  const pct = Math.min(100, Math.round(todayWaterOz / WATER_GOAL_OZ * 100));
+  const el  = document.getElementById('water-total-display');
+  const bar = document.getElementById('water-progress-bar');
+  const goal = document.getElementById('water-goal-display');
+  if (el)   { el.textContent = todayWaterOz; el.style.color = todayWaterOz>=WATER_GOAL_OZ?'#4caf50':'#64b5f6'; }
+  if (bar)  { bar.style.width = pct+'%'; bar.style.background = todayWaterOz>=WATER_GOAL_OZ?'#4caf50':'#64b5f6'; }
+  if (goal) goal.textContent = WATER_GOAL_OZ;
+  const lbl = document.getElementById('water-goal-label');
+  if (lbl)  lbl.textContent = `${WATER_GOAL_OZ} oz (${(WATER_GOAL_OZ*29.5735/1000).toFixed(1)} L)`;
+}
+
+function addWater(oz) {
+  todayWaterOz = Math.max(0, todayWaterOz + oz);
+  updateWaterDisplay();
+  toast(`+${oz} oz — ${todayWaterOz} oz total`);
+}
+
+function addWaterCustom() {
+  const val = parseInt(document.getElementById('water-custom-oz')?.value) || 0;
+  if (val > 0) { addWater(val); document.getElementById('water-custom-oz').value = ''; }
+}
+
+function resetWater() {
+  if (!confirm('Reset water intake to 0?')) return;
+  todayWaterOz = 0; updateWaterDisplay();
+}
+
+function addSnack() {
+  snackCount++;
+  const id = `snack-${snackCount}`;
+  const container = document.getElementById('snack-container');
+  const div = document.createElement('div');
+  div.id = id;
+  div.style.cssText = 'margin-bottom:16px;padding:14px;background:var(--bg3);border-left:3px solid #a5d6a7;';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-family:var(--font-mono);font-size:0.62rem;color:#a5d6a7;letter-spacing:.15em;">🍎 SNACK ${snackCount}</div>
+      <button onclick="document.getElementById('${id}').remove();updateNutritionTotals()"
+        style="font-family:var(--font-mono);font-size:0.55rem;padding:2px 8px;cursor:pointer;
+        background:var(--bg2);color:var(--text-dim);border:1px solid var(--border);">REMOVE</button>
+    </div>
+    <div class="log-grid">
+      <div class="lf full"><label>WHAT YOU ATE</label><textarea id="n-sk${snackCount}-food" rows="1" placeholder="e.g. Protein bar, nuts, fruit..."></textarea></div>
+      <div class="lf"><label>CALORIES</label><input type="number" id="n-sk${snackCount}-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
+      <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-sk${snackCount}-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
+      <div class="lf"><label>CARBS (g)</label><input type="number" id="n-sk${snackCount}-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
+      <div class="lf"><label>FAT (g)</label><input type="number" id="n-sk${snackCount}-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
+    </div>`;
+  container.appendChild(div);
+}
+
+function sumNutritionField(field) {
+  const meals = ['bk','ln','dn'];
+  let total = meals.reduce((s,m) => s + (+v(`n-${m}-${field}`)||0), 0);
+  // Add snacks
+  for (let i=1; i<=snackCount; i++) {
+    const el = document.getElementById(`n-sk${i}-${field}`);
+    if (el && el.closest('#snack-container')) total += (+el.value||0);
+  }
+  return total;
+}
+
+function updateNutritionTotals() {
+  const cal   = sumNutritionField('cal');
+  const prot  = sumNutritionField('prot');
+  const carb  = sumNutritionField('carb');
+  const fat   = sumNutritionField('fat');
+  const totalEl = document.getElementById('nutrition-total-display');
+  const barEl   = document.getElementById('nutrition-totals-bar');
+  if (totalEl) totalEl.textContent = cal ? `${cal.toLocaleString()} kcal today` : '';
+  if (barEl && cal) {
+    barEl.innerHTML = [
+      {label:'CALORIES', val:cal,  unit:'kcal', color:'var(--accent2)'},
+      {label:'PROTEIN',  val:prot, unit:'g',    color:'#4caf50'},
+      {label:'CARBS',    val:carb, unit:'g',    color:'#ff9800'},
+      {label:'FAT',      val:fat,  unit:'g',    color:'#7986cb'},
+    ].map(s=>`<div style="background:var(--bg3);padding:10px 8px;text-align:center;border:1px solid var(--border);">
+      <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;">${s.label}</div>
+      <div style="font-family:var(--font-display);font-size:1.3rem;color:${s.color};">${s.val}</div>
+      <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--text-dim);">${s.unit}</div>
+    </div>`).join('');
+  } else if (barEl) { barEl.innerHTML = ''; }
+}
+
+async function saveNutrition() {
+  const today = new Date().toISOString().split('T')[0];
+  const date = v('n-date') || today;
+  const cal  = sumNutritionField('cal');
+  const prot = sumNutritionField('prot');
+  const carb = sumNutritionField('carb');
+  const fat  = sumNutritionField('fat');
+
+  // Collect snack data
+  const snacks = [];
+  for (let i=1; i<=snackCount; i++) {
+    const el = document.getElementById(`n-sk${i}-food`);
+    if (el && el.closest('#snack-container')) {
+      snacks.push({ food: v(`n-sk${i}-food`), cal: v(`n-sk${i}-cal`), prot: v(`n-sk${i}-prot`), carb: v(`n-sk${i}-carb`), fat: v(`n-sk${i}-fat`) });
+    }
+  }
+
+  const entry = {
+    saved: new Date().toISOString(), date,
+    calories: String(cal), protein: String(prot), carbs: String(carb), fat: String(fat),
+    water: String(todayWaterOz),
+    breakfast: { food: v('n-bk-food'), cal: v('n-bk-cal'), prot: v('n-bk-prot'), carb: v('n-bk-carb'), fat: v('n-bk-fat') },
+    lunch:     { food: v('n-ln-food'), cal: v('n-ln-cal'), prot: v('n-ln-prot'), carb: v('n-ln-carb'), fat: v('n-ln-fat') },
+    dinner:    { food: v('n-dn-food'), cal: v('n-dn-cal'), prot: v('n-dn-prot'), carb: v('n-dn-carb'), fat: v('n-dn-fat') },
+    snacks
+  };
+
+  toast('SAVING...');
+  const existing = await encryptedLoad('nutrition');
+  const idx = existing.findIndex(e => e.date === date);
+  idx >= 0 ? existing[idx] = entry : existing.unshift(entry);
+  await encryptedSave('nutrition', existing);
+  toast('✓ NUTRITION SAVED');
+}
+
+async function autoPopulateNutritionLog() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('n-date').value = today;
+  snackCount = 0;
+  document.getElementById('snack-container').innerHTML = '';
+
+  // Load today's water from steplog
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(today).get();
+    // Water is tracked separately in todayWaterOz
+  } catch(e) {}
+
+  // Load today's nutrition if previously saved
+  const nutrition = await encryptedLoad('nutrition');
+  const todayEntry = nutrition.find(e => e.date === today);
+  if (todayEntry) {
+    // Re-populate meals
+    const meals = ['bk','ln','dn'];
+    const keys  = ['breakfast','lunch','dinner'];
+    meals.forEach((m,i) => {
+      const meal = todayEntry[keys[i]] || {};
+      const foodEl = document.getElementById(`n-${m}-food`);
+      if (foodEl && meal.food) foodEl.value = meal.food;
+      ['cal','prot','carb','fat'].forEach(f => {
+        const el = document.getElementById(`n-${m}-${f}`);
+        if (el && meal[f]) el.value = meal[f];
+      });
+    });
+    // Re-populate snacks
+    if (todayEntry.snacks?.length) {
+      todayEntry.snacks.forEach(snack => {
+        addSnack();
+        const foodEl = document.getElementById(`n-sk${snackCount}-food`);
+        if (foodEl) foodEl.value = snack.food || '';
+        ['cal','prot','carb','fat'].forEach(f => {
+          const el = document.getElementById(`n-sk${snackCount}-${f}`);
+          if (el && snack[f]) el.value = snack[f];
+        });
+      });
+    }
+    // Water
+    if (todayEntry.water) { todayWaterOz = +todayEntry.water || 0; }
+    updateNutritionTotals();
+  }
+  updateWaterDisplay();
+}
+
 async function autoPopulateStepsLog() {
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('s-date').value = today;
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
       .collection('steplog').doc(today).get();
@@ -2176,7 +2503,7 @@ async function exportAllUsers() {
     allData[uname] = { info: uinfo };
     for (const type of ['workout','steps','body','nutrition']) {
       const doc = await db.collection('userdata').doc(uname).collection(type).doc('entries').get();
-      allData[uname][type] = doc.exists ? `[ENCRYPTED — ${doc.data().data.length} chars]` : '[]';
+      allData[uname][type] = doc.exists ? `[DATA — ${doc.data().data?.length||0} chars]` : '[]';
     }
   }
   const payload = { exportDate: new Date().toISOString(), exportedBy: SESSION.username, users: allData };
