@@ -970,7 +970,10 @@ body.theme-female .goal-chip{border-radius:20px;}
           <div class="lf"><label>DURATION (min)</label><input type="number" id="l-dur" placeholder="110"></div>
           <div class="lf"><label>ENERGY (1–10)</label><input type="number" id="l-energy" min="1" max="10" placeholder="7"></div>
           <div class="lf"><label>DECOMPRESSION</label><select id="l-decomp"><option>YES — FULL</option><option>YES — PARTIAL</option><option>NO</option></select></div>
-          <div class="lf full"><label>EXERCISES (exercise · sets × reps @ weight)</label><textarea id="l-exs" rows="4" placeholder="e.g. Bench Press 5x5 @ 135 lbs&#10;Push-ups 3x15&#10;Goblet Squat 5x5 @ 60 lbs"></textarea></div>
+          <div class="lf full"><label>EXERCISES (exercise · sets × reps @ weight)</label>
+            <textarea id="l-exs" rows="10" placeholder="e.g. Bench Press 5x5 @ 135 lbs&#10;Push-ups 3x15&#10;Goblet Squat 5x5 @ 60 lbs"
+              style="font-family:var(--font-mono);font-size:0.72rem;line-height:1.6;resize:vertical;"></textarea>
+          </div>
           <div class="lf full"><label>NOTES</label><textarea id="l-notes" rows="2" placeholder="How you felt, wins, challenges..."></textarea></div>
         </div>
         <div style="margin-top:14px;"><button class="btn btn-p" onclick="saveEntry('workout')">SAVE SESSION</button></div>
@@ -3009,10 +3012,12 @@ async function autoPopulateWorkoutLog() {
   const targetDate = dateEl?.value || today;
 
   // Clear fields
-  ['l-dur','l-energy','l-exs','l-notes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['l-dur','l-energy','l-exs','l-notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
 
   try {
-    // First check for an existing workout log entry for this date
+    // Check for existing saved workout log entry for this date
     const workouts = await encryptedLoad('workout');
     const existing = workouts.find(w => w.date === targetDate);
     if (existing) {
@@ -3020,7 +3025,6 @@ async function autoPopulateWorkoutLog() {
       if (document.getElementById('l-energy')) document.getElementById('l-energy').value = existing.energy   || '';
       if (document.getElementById('l-exs'))    document.getElementById('l-exs').value    = existing.exercises|| '';
       if (document.getElementById('l-notes'))  document.getElementById('l-notes').value  = existing.notes    || '';
-      // Match workout day
       const sel = document.getElementById('l-day');
       if (sel && existing.day) {
         for (let i=0; i<sel.options.length; i++) {
@@ -3032,26 +3036,81 @@ async function autoPopulateWorkoutLog() {
       return;
     }
 
-    // No existing entry — try checklist data
+    // No saved entry — check checklist/actuals data and build exercise summary live
     const doc = await db.collection('userdata').doc(SESSION.username)
       .collection('wkchecks').doc(targetDate).get();
+
     if (doc.exists) {
-      const dayId = doc.data().dayId;
+      const data   = doc.data();
+      const dayId  = data.dayId;
+      const checks = data.checks || {};
+      const actuals = data.actuals || {};
       const W = SESSION.gender==='female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
       const w = W[dayId];
-      if (w) {
+
+      if (w && dayId) {
+        // Match workout day in select
         const sel = document.getElementById('l-day');
-        for (let i=0; i<sel.options.length; i++) {
-          if (sel.options[i].text.toUpperCase().includes(dayId.toUpperCase())) {
-            sel.selectedIndex = i; break;
+        if (sel) {
+          for (let i=0; i<sel.options.length; i++) {
+            if (sel.options[i].text.toUpperCase().includes(dayId.toUpperCase())) {
+              sel.selectedIndex = i; break;
+            }
           }
         }
-        const checks = doc.data().checks || {};
+
+        // Build exercise summary from actuals
+        const allItems = [...w.warmup, ...w.exercises, ...w.cooldown];
+        const bodyLbs  = SESSION.weight || 0;
+        let totalCals  = 0;
+
+        const lines = allItems.map(item => {
+          const actual  = actuals[item.id] || {};
+          const sets    = (actual.sets || []).filter(s => s?.reps);
+          const bwPct   = BODYWEIGHT_PCT[item.name?.toUpperCase()];
+          const effBwLbs = bwPct ? Math.round(bodyLbs * bwPct) : 0;
+          const cals    = Math.round(calcActualCalories(item, actual) || 0);
+          totalCals    += cals;
+
+          const bwNote  = (sets.length === 0 || !sets.some(s=>s.weight)) && effBwLbs
+            ? ` [BW ${Math.round((bwPct||0)*100)}%≈${effBwLbs}lbs]` : '';
+
+          let detail = '';
+          if (sets.length) {
+            detail = ' — ' + sets.map((s,i) =>
+              `Set ${i+1}: ${s.reps} reps${s.weight ? ' @ '+s.weight+'lbs' : ''}`
+            ).join(' | ');
+          }
+
+          const calNote = cals > 0 ? ` (~${cals} kcal)` : '';
+          const checked = checks[item.id] ? '✓' : '○';
+          return `${checked} ${item.name}${bwNote}${detail}${calNote}`;
+        });
+
+        const sections = [
+          '── WARM-UP ──',
+          ...lines.slice(0, w.warmup.length),
+          '── CORE WORKOUT ──',
+          ...lines.slice(w.warmup.length, w.warmup.length + w.exercises.length),
+          '── COOL-DOWN ──',
+          ...lines.slice(w.warmup.length + w.exercises.length),
+          '',
+          `TOTAL CALORIES BURNED: ~${totalCals} kcal`,
+          bodyLbs ? `Body weight: ${bodyLbs} lbs` : ''
+        ].filter(Boolean);
+
+        const exsEl = document.getElementById('l-exs');
+        if (exsEl) exsEl.value = sections.join('\n');
+
         const doneCount = Object.values(checks).filter(Boolean).length;
-        const totalItems = w.warmup.length + w.exercises.length + w.cooldown.length;
-        if (doneCount > 0) {
-          document.getElementById('l-notes').value = `${doneCount}/${totalItems} items completed via checklist`;
+        const durEl = document.getElementById('l-dur');
+        if (durEl && !durEl.value) {
+          // Estimate duration from number of items checked
+          durEl.value = String(Math.round(doneCount * 2.5 + 10));
         }
+        const notesEl = document.getElementById('l-notes');
+        if (notesEl) notesEl.value =
+          `${doneCount}/${allItems.length} items completed. ~${totalCals} kcal burned.`;
       }
     }
   } catch(e) { console.warn('autoPopulateWorkoutLog:', e.message); }
@@ -3423,17 +3482,24 @@ function calcItemCalories(item, weightLbs) {
 }
 
 // Compute total workout calories for all items in a day
-function calcWorkoutCalories(w, exerciseWeights) {
+function calcWorkoutCalories(w, exerciseWeightsMap) {
   const weightKg = getWeightKg();
   if (!weightKg) return null;
   let total = 0;
   const allItems = [...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
   for (const item of allItems) {
-    const met = EXERCISE_MET[item.name?.toUpperCase()] || 4.0;
-    const dur = estimateDuration(item) / 60;
-    const lbs = exerciseWeights?.[item.id] || 0;
-    const mod = metModifier(lbs, SESSION.weight);
-    total += met * mod * weightKg * dur;
+    const actual = exerciseActuals?.[item.id];
+    if (actual?.sets?.some(s => s?.reps)) {
+      // Use actual reps data for precise calculation
+      total += calcActualCalories(item, actual) || 0;
+    } else {
+      // Fall back to estimated duration + weight modifier
+      const met = EXERCISE_MET[item.name?.toUpperCase()] || 4.0;
+      const dur = estimateDuration(item) / 60;
+      const lbs = exerciseWeightsMap?.[item.id] || 0;
+      const mod = metModifier(lbs, SESSION.weight);
+      total += met * mod * weightKg * dur;
+    }
   }
   return Math.round(total);
 }
