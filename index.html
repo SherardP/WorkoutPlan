@@ -4478,74 +4478,129 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
           </table>` : ''}
           ${item.hotel ? `<div class="hotel-alt">🏨 <strong>HOTEL VARIANT:</strong> ${item.hotel}</div>` : ''}
 
+
           <!-- ── SET TRACKER ── -->
-          ${item.sets ? (() => {
+          ${(() => {
             const savedActual = exerciseActuals[item.id] || {};
             const savedSets   = savedActual.sets || [];
+            const bwPct       = BODYWEIGHT_PCT[item.name?.toUpperCase()];
+            const bodyLbs     = SESSION.weight || 0;
+            const effectiveBwLbs = bwPct ? Math.round(bodyLbs * bwPct) : 0;
 
-            // Parse number of sets from the sets string
+            if (!item.sets) {
+              // ── Warmup / cooldown: simple reps-done input ──
+              const sv = savedSets[0] || {};
+              const calEst = getWeightKg() ? calcActualCalories(item, {sets:[{reps: sv.reps||1}]}) : null;
+              return `<div style="background:var(--bg3);border:1px solid var(--border);padding:10px 12px;margin:8px 0;
+                display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.1em;">REPS DONE</div>
+                <input type="number" id="set-reps-${item.id}-0" value="${sv.reps||''}"
+                  placeholder="${item.detail?.match(/×(\d+)|(\d+) reps/)?.[1]||'—'}" min="0" max="999"
+                  oninput="saveSetData('${item.id}','${dayId}',0);updateItemCalBadge('${item.id}')"
+                  style="width:72px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+                  font-family:var(--font-mono);font-size:0.9rem;padding:6px 8px;outline:none;text-align:center;">
+                ${effectiveBwLbs ? `<div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);">
+                  BW ${Math.round((bwPct||0)*100)}% ≈ ${effectiveBwLbs} lbs</div>` : ''}
+                <div id="cal-live-${item.id}" style="margin-left:auto;font-family:var(--font-mono);font-size:0.68rem;color:var(--accent);">
+                  ${calEst ? `~${calEst} kcal` : ''}
+                </div>
+                <div onclick="toggleSetDone('${item.id}','${dayId}',0)"
+                  style="width:22px;height:22px;border:2px solid ${savedSets[0]?.done?'#4caf50':'var(--border2)'};
+                  border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+                  background:${savedSets[0]?.done?'#4caf5022':'transparent'};transition:all 0.15s;">
+                  ${savedSets[0]?.done?'<span style="color:#4caf50;font-size:0.85rem;">✓</span>':''}
+                </div>
+              </div>`;
+            }
+
+            // ── Strength exercise: full set tracker table ──
             let numSets = 3;
             const s = item.sets.toLowerCase();
             if (s.startsWith('5×5') || s.startsWith('5x5')) numSets = 5;
             else if (s.startsWith('4×') || s.startsWith('4x')) numSets = 4;
             else if (s.startsWith('3×') || s.startsWith('3x')) numSets = 3;
             else if (s.includes('max→')) numSets = 3;
-            else if (s.includes('/leg') || s.includes('/side')) numSets = parseInt(s) || 3;
 
-            // Parse target reps from sets string e.g. "3×12" → 12, "5×5" → 5
-            const repMatch = item.sets.match(/[×x](\d+)/);
+            const repMatch  = item.sets.match(/[×x](\d+)/);
             const targetReps = repMatch ? repMatch[1] : '—';
+            const setsDoneCount = savedSets.filter(sv=>sv?.done).length;
+
+            // Live calorie estimate from actual sets done
+            const actualCalEst = getWeightKg() ? calcActualCalories(item, savedActual) : null;
 
             return `<div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin:8px 0;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;">SET TRACKER — ${item.sets}</div>
-                <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">Target: ${targetReps} reps/set</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+                <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;">
+                  SET TRACKER — ${item.sets}
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                  ${effectiveBwLbs ? `<span style="font-family:var(--font-mono);font-size:0.56rem;color:var(--border2);">
+                    BW ${Math.round((bwPct||0)*100)}% ≈ ${effectiveBwLbs} lbs</span>` : ''}
+                  <span id="cal-live-${item.id}" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent);">
+                    ${actualCalEst ? `~${actualCalEst} kcal` : ''}
+                  </span>
+                  <span style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">
+                    ${setsDoneCount}/${numSets} sets ✓
+                  </span>
+                </div>
               </div>
               <table style="width:100%;border-collapse:collapse;">
                 <tr style="border-bottom:1px solid var(--border);">
-                  <th style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);text-align:left;padding:4px 6px;width:40px;">SET</th>
-                  <th style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);text-align:left;padding:4px 6px;">REPS DONE</th>
-                  ${isWeighted ? `<th style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);text-align:left;padding:4px 6px;">WEIGHT (lbs)</th>` : ''}
-                  <th style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);text-align:center;padding:4px 6px;width:36px;">✓</th>
+                  <th style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);text-align:left;padding:4px 6px;width:36px;">SET</th>
+                  <th style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);text-align:left;padding:4px 6px;">REPS</th>
+                  ${isWeighted ? `<th style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);text-align:left;padding:4px 6px;">LBS</th>` : ''}
+                  <th style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);text-align:left;padding:4px 6px;">~KCAL</th>
+                  <th style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);text-align:center;padding:4px 6px;width:32px;">✓</th>
                 </tr>
                 ${Array.from({length:numSets},(_,si) => {
-                  const sv = savedSets[si] || {};
-                  const isDone = !!sv.done;
-                  return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                    <td style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);padding:5px 6px;">${si+1}</td>
-                    <td style="padding:4px 6px;">
+                  const sv      = savedSets[si] || {};
+                  const isDone  = !!sv.done;
+                  // Per-set calorie estimate
+                  const setReps = parseInt(sv.reps) || 0;
+                  const setWt   = parseFloat(sv.weight) || parseFloat(savedLbs) || effectiveBwLbs || 0;
+                  const setCalEst = (getWeightKg() && setReps)
+                    ? Math.round(calcSetCalories(item, setReps, setWt)) : null;
+
+                  return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);${isDone?'opacity:0.7;':''}">
+                    <td style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:5px 6px;">${si+1}</td>
+                    <td style="padding:4px 5px;">
                       <input type="number" id="set-reps-${item.id}-${si}" value="${sv.reps||''}"
                         placeholder="${targetReps}" min="0" max="999"
-                        oninput="saveSetData('${item.id}','${dayId}',${si})"
-                        style="width:70px;background:var(--bg2);border:1px solid ${isDone?'#4caf5044':'var(--border)'};
-                        color:var(--text);font-family:var(--font-mono);font-size:0.82rem;
-                        padding:5px 7px;outline:none;text-align:center;">
+                        oninput="saveSetData('${item.id}','${dayId}',${si});updateItemCalBadge('${item.id}')"
+                        style="width:62px;background:var(--bg2);border:1px solid ${isDone?'#4caf5044':'var(--border)'};
+                        color:var(--text);font-family:var(--font-mono);font-size:0.8rem;
+                        padding:4px 6px;outline:none;text-align:center;">
                     </td>
-                    ${isWeighted ? `<td style="padding:4px 6px;">
+                    ${isWeighted ? `<td style="padding:4px 5px;">
                       <input type="number" id="set-wt-${item.id}-${si}" value="${sv.weight||savedLbs||''}"
                         placeholder="lbs" min="0" max="500" step="2.5"
-                        oninput="saveSetData('${item.id}','${dayId}',${si});syncWeightInput('${item.id}','lbs')"
-                        style="width:70px;background:var(--bg2);border:1px solid ${isDone?'#4caf5044':'var(--border)'};
-                        color:var(--text);font-family:var(--font-mono);font-size:0.82rem;
-                        padding:5px 7px;outline:none;text-align:center;">
+                        oninput="saveSetData('${item.id}','${dayId}',${si});updateItemCalBadge('${item.id}')"
+                        style="width:62px;background:var(--bg2);border:1px solid ${isDone?'#4caf5044':'var(--border)'};
+                        color:var(--text);font-family:var(--font-mono);font-size:0.8rem;
+                        padding:4px 6px;outline:none;text-align:center;">
                     </td>` : ''}
+                    <td style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent);padding:4px 6px;">
+                      <span id="set-cal-${item.id}-${si}">${setCalEst ? '~'+setCalEst : '—'}</span>
+                    </td>
                     <td style="padding:4px 6px;text-align:center;">
                       <div onclick="toggleSetDone('${item.id}','${dayId}',${si})"
-                        style="width:22px;height:22px;border:2px solid ${isDone?'#4caf50':'var(--border2)'};
+                        style="width:20px;height:20px;border:2px solid ${isDone?'#4caf50':'var(--border2)'};
                         border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
                         background:${isDone?'#4caf5022':'transparent'};transition:all 0.15s;margin:0 auto;">
-                        ${isDone?'<span style="color:#4caf50;font-size:0.85rem;">✓</span>':''}
+                        ${isDone?'<span style="color:#4caf50;font-size:0.8rem;">✓</span>':''}
                       </div>
                     </td>
                   </tr>`;
                 }).join('')}
               </table>
-              ${savedSets.length > 0 ? `<div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-top:8px;">
-                ${savedSets.filter(s=>s.done).length}/${numSets} sets done
-                ${savedSets.filter(s=>s.reps).map((s,i)=>`Set ${i+1}: ${s.reps}${s.weight?' @ '+s.weight+'lbs':''}`).join(' · ')}
+              ${savedSets.some(s=>s?.reps) ? `
+              <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-top:8px;line-height:1.6;">
+                ${savedSets.filter(s=>s?.reps).map((sv,i)=>
+                  `Set ${i+1}: ${sv.reps} reps${sv.weight?' @ '+sv.weight+'lbs':effectiveBwLbs?' (BW ~'+effectiveBwLbs+'lbs)':''}`
+                ).join(' · ')}
               </div>` : ''}
             </div>`;
-          })() : ''}
+          })()}
 
           ${isWeighted && weightKg ? `
           <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin:8px 0;">
@@ -4586,6 +4641,47 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
       </div>`;
     }).join('')}
   </div>`;
+}
+
+// Calculate calories for a single set given reps and weight
+function calcSetCalories(item, reps, weightLbs) {
+  const weightKg = getWeightKg();
+  if (!weightKg || !reps) return 0;
+  const bodyLbs  = SESSION.weight || 0;
+  const met = EXERCISE_MET[item.name?.toUpperCase()] || 4.0;
+  const setMinutes = (reps * 3.5) / 60; // 3.5 sec avg per rep
+  let effectiveLbs = weightLbs || 0;
+  if (!effectiveLbs) {
+    const bwPct = BODYWEIGHT_PCT[item.name?.toUpperCase()];
+    if (bwPct) effectiveLbs = bodyLbs * bwPct;
+  }
+  return met * metModifier(effectiveLbs, bodyLbs) * weightKg * setMinutes;
+}
+
+// Update the calorie badge on the exercise header + all per-set calorie cells
+function updateItemCalBadge(itemId) {
+  const item = findExerciseById(itemId);
+  if (!item) return;
+
+  const actual = exerciseActuals[itemId] || {};
+  const sets = actual.sets || [];
+
+  // Update per-set calorie cells
+  sets.forEach((sv, si) => {
+    const reps   = parseInt(sv?.reps) || 0;
+    const wt     = parseFloat(sv?.weight) || parseFloat(exerciseWeights[itemId]) || 0;
+    const cals   = reps ? Math.round(calcSetCalories(item, reps, wt)) : null;
+    const setCalEl = document.getElementById(`set-cal-${itemId}-${si}`);
+    if (setCalEl) setCalEl.textContent = cals ? '~'+cals : '—';
+  });
+
+  // Update total kcal badge (sum of all sets)
+  const totalCals = calcActualCalories(item, actual);
+  const liveEl  = document.getElementById(`cal-live-${itemId}`);
+  const badgeEl = document.getElementById(`cal-badge-${itemId}`);
+  if (liveEl)  liveEl.textContent  = totalCals ? `~${totalCals} kcal` : '';
+  if (badgeEl) badgeEl.textContent = totalCals ? `~${totalCals} kcal` : '';
+  updateCalorieBurnDisplay();
 }
 
 function syncWeightInput(itemId, fromUnit) {
@@ -4658,18 +4754,22 @@ async function saveSetData(itemId, dayId, setIndex) {
   if (!exerciseActuals[itemId]) exerciseActuals[itemId] = { sets: [] };
   if (!exerciseActuals[itemId].sets[setIndex]) exerciseActuals[itemId].sets[setIndex] = {};
   exerciseActuals[itemId].sets[setIndex].reps   = reps;
-  exerciseActuals[itemId].sets[setIndex].weight = weight;
+  if (weight) exerciseActuals[itemId].sets[setIndex].weight = weight;
 
-  // Update weight in exerciseWeights for calorie calc
+  // Keep exerciseWeights in sync for calorie card
   if (weight) {
     exerciseWeights[itemId] = parseFloat(weight) || 0;
-    // Sync main weight inputs if visible
+    // Sync the summary weight inputs if present
     const lbsEl = document.getElementById(`wt-lbs-${itemId}`);
-    if (lbsEl && !lbsEl.value) lbsEl.value = weight;
-    updateCalorieBurnDisplay();
+    const kgEl  = document.getElementById(`wt-kg-${itemId}`);
+    if (lbsEl) lbsEl.value = weight;
+    if (kgEl)  kgEl.value  = (parseFloat(weight)*0.453592).toFixed(1);
   }
 
-  // Debounced save to Firebase (avoid hammering on every keystroke)
+  // Update calorie display immediately
+  updateItemCalBadge(itemId);
+
+  // Debounced save to Firebase
   clearTimeout(window._setDataSaveTimer);
   window._setDataSaveTimer = setTimeout(async () => {
     const today = localDateStr();
