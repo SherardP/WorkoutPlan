@@ -1358,6 +1358,15 @@ body.theme-female .goal-chip{border-radius:20px;}
 // ═══════════════════════════════════════════════════════════
 // FIREBASE INIT — with error handling
 // ═══════════════════════════════════════════════════════════
+// ── Local date helper — always use device local time, never UTC ──
+function localDateStr(date) {
+  const d = date || new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyBbFkivfcy6McwvmrGkUQt03oe84Wvr5l0",
   authDomain: "operatorfit-9d323.firebaseapp.com",
@@ -1662,7 +1671,7 @@ function launchApp() {
 // LOG ENTRIES
 // ═══════════════════════════════════════════════════════════
 async function saveEntry(type) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   let entry = { saved: new Date().toISOString() };
   if (type === 'workout') {
     entry = { ...entry, date: v('l-date')||today, day: v('l-day'), location: v('l-loc'),
@@ -1881,7 +1890,7 @@ async function runSysCheck() {
     }
     // Workout checklist checks
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateStr();
       const doc = await db.collection('userdata').doc(SESSION.username).collection('wkchecks').doc(today).get();
       doc.exists ? ok('Today\'s checklist', `Saved — day: ${doc.data().dayId||'?'}`) : info('Today\'s checklist', 'No workout started today');
     } catch(e) { warn('Today\'s checklist', `Read error: ${e.message}`); }
@@ -2040,7 +2049,7 @@ async function renderLogSummary() {
   } catch(err) {
     console.error('renderLogSummary error:', err);
     // Show error but also try to render a minimal today summary
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = localDateStr();
     let todayWorkout = null, todaySteps = null, todayNutrition = null;
     try { const w = await encryptedLoad('workout');   todayWorkout   = w.find(x => x.date === todayStr); } catch(e) {}
     try { const s = await encryptedLoad('steps');     todaySteps     = s.find(x => x.date === todayStr); } catch(e) {}
@@ -2090,13 +2099,13 @@ async function _renderLogSummaryInner(el) {
   try { body      = await encryptedLoad('body');      } catch(e) {}
   try { nutrition = await encryptedLoad('nutrition'); } catch(e) {}
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = localDateStr();
   const yd = new Date(); yd.setDate(yd.getDate() - 1);
-  const yestStr = yd.toISOString().split('T')[0];
+  const yestStr = localDateStr(yd);
 
   // ── Yesterday's data (within last 30 days only) ──
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
-  const cutoffStr = cutoff.toISOString().split('T')[0];
+  const cutoffStr = localDateStr(cutoff);
 
   const yestWorkout   = workouts.find(w => w.date === yestStr) || null;
   const yestSteps     = steps.find(s => s.date === yestStr) || null;
@@ -2164,7 +2173,7 @@ async function _renderLogSummaryInner(el) {
 
   // ── Chart data ──
   const last30 = Array.from({length:30}, (_,i) => {
-    const d = new Date(today); d.setDate(d.getDate()-29+i); return d.toISOString().split('T')[0];
+    const d = new Date(today); d.setDate(d.getDate()-29+i); return localDateStr(d);
   });
   const stepsByDate  = Object.fromEntries(steps.map(s => [s.date, +s.total||0]));
   const workoutDates = new Set(workouts.map(w => w.date));
@@ -2677,7 +2686,7 @@ function renderSummaryCharts(last30, stepsByDate, weightByDate, waistByDate, bod
 function setLogDate(fieldId, which) {
   const d = new Date();
   if (which === 'yesterday') d.setDate(d.getDate() - 1);
-  const val = d.toISOString().split('T')[0];
+  const val = localDateStr(d);
   const el = document.getElementById(fieldId);
   if (el) { el.value = val; el.dispatchEvent(new Event('change')); }
 }
@@ -2724,7 +2733,7 @@ function startTodaysWorkout() {
   }, 150);
 }
 async function autoPopulateBodyLog() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const dateEl = document.getElementById('b-date');
   if (dateEl && !dateEl.value) dateEl.value = today;
   const targetDate = dateEl?.value || today;
@@ -2867,7 +2876,7 @@ function updateNutritionTotals() {
 }
 
 async function saveNutrition() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const date = v('n-date') || today;
   const cal  = sumNutritionField('cal');
   const prot = sumNutritionField('prot');
@@ -2902,7 +2911,7 @@ async function saveNutrition() {
 }
 
 async function autoPopulateNutritionLog() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const dateEl = document.getElementById('n-date');
   if (dateEl && !dateEl.value) dateEl.value = today;
   const targetDate = dateEl?.value || today;
@@ -2953,7 +2962,7 @@ async function autoPopulateNutritionLog() {
 }
 
 async function autoPopulateStepsLog() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const dateEl = document.getElementById('s-date');
   if (dateEl && !dateEl.value) dateEl.value = today;
   const targetDate = dateEl?.value || today;
@@ -2994,7 +3003,7 @@ async function autoPopulateStepsLog() {
 }
 
 async function autoPopulateWorkoutLog() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const dateEl = document.getElementById('l-date');
   if (dateEl && !dateEl.value) dateEl.value = today;
   const targetDate = dateEl?.value || today;
@@ -3066,7 +3075,7 @@ async function exportAllUsers() {
   const payload = { exportDate: new Date().toISOString(), exportedBy: SESSION.username, users: allData };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = `operatorfit_export_${new Date().toISOString().split('T')[0]}.json`; a.click();
+  a.href = URL.createObjectURL(blob); a.download = `operatorfit_export_${localDateStr()}.json`; a.click();
   err.textContent = 'EXPORT COMPLETE';
 }
 
@@ -3629,7 +3638,7 @@ function renderRecommendedSplit() {
 // ═══════════════════════════════════════════════════════════
 async function loadStepsPage() {
   await loadGoals();
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
       .collection('steplog').doc(today).get();
@@ -3819,7 +3828,7 @@ async function saveStepSection(sectionId, mode) {
     }
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   // Total = sum of all section steps
   const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (todayStepData[s.id]?.steps || 0), 0);
 
@@ -3857,7 +3866,7 @@ async function saveCustomWalk() {
   if (!name || steps <= 0) { toast('ENTER WALK NAME AND STEPS'); return; }
   const customId = 'custom_' + Date.now();
   todayStepData[customId] = { steps, startSteps: null, endSteps: null, label: name };
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (todayStepData[s.id]?.steps || 0), 0)
     + Object.entries(todayStepData).filter(([k]) => k.startsWith('custom_')).reduce((sum,[,v]) => sum + (v.steps||0), 0);
   try {
@@ -3948,7 +3957,7 @@ function buildWeekGrid() {
 }
 
 function setDefaultDates() {
-  const t = new Date().toISOString().split('T')[0];
+  const t = localDateStr();
   ['l-date','s-date','b-date','n-date'].forEach(id => { const el=document.getElementById(id); if(el) el.value=t; });
 }
 
@@ -4264,7 +4273,7 @@ function buildDayTabs() {
 
 async function showWorkoutDay(dayId) {
   // Load saved checks from Firebase for today
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
       .collection('wkchecks').doc(today).get();
@@ -4468,7 +4477,7 @@ function findExerciseById(itemId) {
 async function toggleCheck(itemId, dayId) {
 
   // Instant save to Firebase
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   try {
     await db.collection('userdata').doc(SESSION.username)
       .collection('wkchecks').doc(today).set({
@@ -4483,7 +4492,7 @@ async function toggleCheck(itemId, dayId) {
 }
 
 async function markWorkoutComplete(dayId) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const W = SESSION.gender==='female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
   const w = W[dayId];
 
@@ -4824,7 +4833,7 @@ function buildStreakCalendar(workouts) {
   startDay.setDate(startDay.getDate() - startDay.getDay()); // align to Sunday
   for (let i=0;i<70;i++) {
     const d = new Date(startDay); d.setDate(startDay.getDate()+i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = localDateStr(d);
     const isToday = d.getTime()===today.getTime();
     const done = workedDays.has(dateStr);
     cells.push(`<div class="streak-cell ${done?'done':''} ${isToday?'today-cell':''}" title="${dateStr}"></div>`);
