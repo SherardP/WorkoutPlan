@@ -1187,12 +1187,21 @@ body.theme-female .goal-chip{border-radius:20px;}
           <div class="card-label">RECIPE MAKER</div>
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
             <div class="card-title" style="margin:0;">BUILD A MEAL</div>
-            <button onclick="saveRecipe()" class="btn btn-s" style="font-size:0.6rem;">💾 SAVE RECIPE</button>
+            <div style="display:flex;gap:6px;">
+              <button onclick="saveRecipe()" class="btn btn-s" style="font-size:0.6rem;">💾 SAVE</button>
+              <button onclick="publishRecipe()" class="btn btn-p" style="font-size:0.6rem;">🌐 SHARE WITH COMMUNITY</button>
+            </div>
           </div>
 
           <div class="log-grid" style="margin-bottom:12px;">
             <div class="lf full"><label>RECIPE NAME</label><input type="text" id="recipe-name" placeholder="e.g. Chicken & Rice Bowl"></div>
-            <div class="lf"><label>SERVINGS MADE</label><input type="number" id="recipe-servings" value="1" min="0.25" step="0.25"></div>
+            <div class="lf"><label>TOTAL SERVINGS</label><input type="number" id="recipe-servings" value="1" min="0.25" step="0.25"></div>
+            <div class="lf full"><label>INSTRUCTIONS (optional)</label>
+              <textarea id="recipe-instructions" rows="3" placeholder="e.g. 1. Cook rice. 2. Season chicken..."></textarea>
+            </div>
+            <div class="lf full"><label>TAGS (comma-separated)</label>
+              <input type="text" id="recipe-tags" placeholder="e.g. keto, high-protein, meal-prep">
+            </div>
           </div>
 
           <!-- Ingredient search -->
@@ -1272,10 +1281,56 @@ body.theme-female .goal-chip{border-radius:20px;}
             </div>
           </div>
           <div id="food-db-status" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:10px;"></div>
-          <input type="text" id="food-db-search" placeholder="Search all foods..." oninput="renderFoodTable()"
-            style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-            font-family:var(--font-mono);font-size:0.78rem;padding:8px 10px;outline:none;margin-bottom:12px;box-sizing:border-box;">
+
+          <!-- Filter bar -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+            <input type="text" id="food-db-search" placeholder="Search foods..." oninput="foodDbFilter.search=this.value;renderFoodTable()"
+              style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.75rem;padding:7px 10px;outline:none;">
+            <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);cursor:pointer;
+              padding:6px 10px;background:var(--bg3);border:1px solid var(--border);">
+              <input type="checkbox" id="food-filter-keto" onchange="foodDbFilter.keto=this.checked;renderFoodTable()" style="accent-color:#4caf50;">
+              KETO ONLY
+            </label>
+            <select onchange="foodDbFilter.source=this.value;renderFoodTable()"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.7rem;padding:7px 8px;outline:none;">
+              <option value="all">All Sources</option>
+              <option value="github">GitHub DB</option>
+              <option value="community">★ Shared</option>
+              <option value="personal">My Foods</option>
+            </select>
+          </div>
+
           <div id="food-db-table" style="overflow-x:auto;"></div>
+        </div>
+
+        <!-- Community Recipes -->
+        <div class="card mb16">
+          <div class="card-label">COMMUNITY RECIPES</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <div class="card-title" style="margin:0;">SHARED RECIPES</div>
+            <button onclick="nutTab('recipe')" class="btn btn-s" style="font-size:0.6rem;">+ SHARE YOUR RECIPE</button>
+          </div>
+          <!-- Filter -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+            <input type="text" id="cr-search" placeholder="Search recipes..." oninput="renderCommunityRecipes()"
+              style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.75rem;padding:7px 10px;outline:none;">
+            <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);cursor:pointer;
+              padding:6px 10px;background:var(--bg3);border:1px solid var(--border);">
+              <input type="checkbox" id="cr-filter-keto" onchange="renderCommunityRecipes()" style="accent-color:#4caf50;">
+              KETO
+            </label>
+            <select id="cr-sort" onchange="renderCommunityRecipes()"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.7rem;padding:7px 8px;outline:none;">
+              <option value="rating">Top Rated</option>
+              <option value="newest">Newest</option>
+              <option value="name">A–Z</option>
+            </select>
+          </div>
+          <div id="community-recipes-list"></div>
         </div>
 
         <!-- Add custom food modal inline -->
@@ -1423,6 +1478,7 @@ body.theme-female .goal-chip{border-radius:20px;}
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-s" onclick="previewFoodMigration()" style="font-size:0.65rem;">🔍 PREVIEW</button>
         <button class="btn btn-p" onclick="runFoodMigration()" style="font-size:0.65rem;">⟳ RUN MIGRATION</button>
+        <button class="btn btn-d" onclick="cleanupUserFoodData()" style="font-size:0.65rem;margin-left:auto;">🗑 DELETE USER COPIES</button>
       </div>
     </div>
 
@@ -2978,10 +3034,22 @@ async function autoPopulateBodyLog() {
 // FOOD DATABASE — GitHub XLSX + custom entries
 // ═══════════════════════════════════════════════════════════
 const FOOD_DB_URL = 'https://raw.githubusercontent.com/sherardp/WorkoutPlan/main/FoodNutrition.xlsx';
-let foodDatabase  = []; // [{name, serving, calories, protein, carbs, fat, fiber, sodium, custom}]
-let activeMealTarget = null; // which meal slot the popup is targeting
-let recipeIngredients = []; // [{food, qty, unit, cals, prot, carb, fat}]
-let savedRecipes = []; // persisted to Firebase
+let foodDatabase      = []; // [{name, serving, calories, protein, carbs, fat, fiber, sodium, keto, source}]
+let activeMealTarget  = null;
+let recipeIngredients = [];
+let savedRecipes      = []; // personal — userdata/{u}/fooddb/recipes
+let communityRecipes  = []; // shared   — fooddb/Recipes
+let foodDbFilter      = { search:'', keto:false, source:'all' };
+
+// ── Keto classification ──
+// Keto = ≤10% of calories from carbs, and has some fat content
+function isKeto(food) {
+  const carbs = parseFloat(food.carbs)    || 0;
+  const fat   = parseFloat(food.fat)      || 0;
+  const cals  = parseFloat(food.calories) || 0;
+  if (!cals) return false;
+  return ((carbs * 4) / cals) <= 0.10 && fat > 0;
+}
 
 // ═══════════════════════════════════════════════════════════
 // UNIT CONVERSION SYSTEM
@@ -3148,7 +3216,7 @@ async function loadFoodDatabase() {
   // ── Custom foods from SHARED collection (visible to all users) ──
   let shared = [];
   try {
-    const doc = await db.collection('fooddb').doc('custom').get();
+    const doc = await db.collection('fooddb').doc('Ingredients').get();
     shared = doc.exists ? (doc.data().foods || []) : [];
   } catch(e) {}
 
@@ -3156,7 +3224,7 @@ async function loadFoodDatabase() {
   let userCustom = [];
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
-      .collection('fooddb').doc('custom').get();
+      .collection('fooddb').doc('Ingredients').get();
     userCustom = doc.exists ? (doc.data().foods || []) : [];
   } catch(e) {}
 
@@ -3188,29 +3256,38 @@ async function loadFoodDatabase() {
       };
     }).filter(f => f.name);
 
-    const totalCustom = shared.length + userCustom.length;
     if (statusEl) statusEl.textContent =
-      `✓ ${foodDatabase.length} foods from GitHub · ${shared.length} community additions · ${userCustom.length} personal`;
+      `✓ ${foodDatabase.length} foods from GitHub · ${shared.length} community · ${userCustom.length} personal`;
   } catch(e) {
     console.warn('XLSX load failed:', e.message);
     if (statusEl) statusEl.textContent = `⚠ GitHub file unavailable: ${e.message}`;
     foodDatabase = [];
   }
 
-  // Merge: GitHub base + shared community + personal (marked distinctly)
-  const sharedFoods   = shared.map(f     => ({...f, custom:true, source:'community'}));
+  // Merge: GitHub base + shared community + personal
+  const sharedFoods   = shared.map(f    => ({...f, custom:true, source:'community'}));
   const personalFoods = userCustom.map(f => ({...f, custom:true, source:'personal'}));
   foodDatabase = [...foodDatabase, ...sharedFoods, ...personalFoods];
 
-  // Load saved recipes (personal — stays per-user)
+  // Tag keto on every entry
+  foodDatabase = foodDatabase.map(f => ({...f, keto: isKeto(f)}));
+
+  // Load personal recipes
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
       .collection('fooddb').doc('recipes').get();
     savedRecipes = doc.exists ? (doc.data().recipes || []) : [];
   } catch(e) {}
 
+  // Load community recipes
+  try {
+    const doc = await db.collection('fooddb').doc('Recipes').get();
+    communityRecipes = doc.exists ? (doc.data().recipes || []) : [];
+  } catch(e) {}
+
   renderFoodTable();
   renderSavedRecipes();
+  renderCommunityRecipes();
   updateUnitSelectors();
 }
 
@@ -3376,40 +3453,60 @@ function closeFoodSearch() {
 function renderFoodTable() {
   const el = document.getElementById('food-db-table');
   if (!el) return;
-  const q = (document.getElementById('food-db-search')?.value || '').toLowerCase();
-  const foods = q ? foodDatabase.filter(f => f.name.toLowerCase().includes(q)) : foodDatabase;
-  if (!foods.length) {
-    el.innerHTML = '<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:12px;">No foods loaded yet. Click RELOAD FROM GITHUB or add your own.</div>';
-    return;
-  }
 
+  // Apply filters
+  const q      = foodDbFilter.search.toLowerCase();
+  const ketoOn = foodDbFilter.keto;
+  const src    = foodDbFilter.source;
+
+  let foods = foodDatabase.filter(f => {
+    if (q && !f.name.toLowerCase().includes(q)) return false;
+    if (ketoOn && !f.keto) return false;
+    if (src === 'community' && f.source !== 'community') return false;
+    if (src === 'personal'  && f.source !== 'personal')  return false;
+    if (src === 'github'    && f.source !== 'github')     return false;
+    return true;
+  });
+
+  const ketoLabel = f => f.keto
+    ? `<span style="font-size:0.48rem;padding:1px 5px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;margin-left:3px;">KETO</span>`
+    : '';
   const sourceBadge = s => {
-    if (s === 'community') return `<span style="font-size:0.5rem;padding:1px 5px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;">★ SHARED</span>`;
-    if (s === 'personal')  return `<span style="font-size:0.5rem;padding:1px 5px;background:var(--accent2)22;color:var(--accent2);border:1px solid var(--accent2)44;">MY FOOD</span>`;
+    if (s === 'community') return `<span style="font-size:0.48rem;padding:1px 5px;background:#ff980022;color:#ff9800;border:1px solid #ff980044;">★ SHARED</span>`;
+    if (s === 'personal')  return `<span style="font-size:0.48rem;padding:1px 5px;background:var(--accent2)22;color:var(--accent2);border:1px solid var(--accent2)44;">MY FOOD</span>`;
     return '';
   };
 
-  el.innerHTML = `<table class="tbl" style="width:100%;font-size:0.63rem;">
-    <tr>
-      <th style="text-align:left;">FOOD</th>
-      <th>SERVING</th><th>KCAL</th><th>PROT</th><th>CARBS</th><th>FAT</th><th></th>
-    </tr>
-    ${foods.slice(0,150).map(f => `
+  if (!foods.length) {
+    el.innerHTML = '<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:12px;">No foods match the current filters.</div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:8px;">
+      Showing ${Math.min(foods.length,150)} of ${foods.length} · ${foodDatabase.filter(f=>f.keto).length} keto-friendly
+    </div>
+    <table class="tbl" style="width:100%;font-size:0.62rem;">
       <tr>
-        <td style="max-width:160px;">
-          ${f.name} ${sourceBadge(f.source||'')}
-        </td>
-        <td style="text-align:center;">${f.serving}</td>
-        <td style="text-align:center;">${f.calories}</td>
-        <td style="text-align:center;">${f.protein}g</td>
-        <td style="text-align:center;">${f.carbs}g</td>
-        <td style="text-align:center;">${f.fat}g</td>
-        <td style="text-align:center;cursor:pointer;color:var(--accent2);font-size:1rem;padding:2px 8px;"
-          onclick="openFoodSearchWithIdx(${foodDatabase.indexOf(f)})" title="Add to meal">+</td>
-      </tr>`).join('')}
-    ${foods.length > 150 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:8px;">
-      Showing 150 of ${foods.length} — search to filter</td></tr>` : ''}
-  </table>`;
+        <th style="text-align:left;">FOOD</th>
+        <th>SERVING</th><th>KCAL</th><th>PROT</th><th>CARBS</th><th>FAT</th><th></th>
+      </tr>
+      ${foods.slice(0,150).map(f => `
+        <tr>
+          <td style="max-width:180px;line-height:1.5;">
+            ${f.name}${ketoLabel(f)}${sourceBadge(f.source||'')}
+          </td>
+          <td style="text-align:center;">${f.serving}</td>
+          <td style="text-align:center;">${f.calories}</td>
+          <td style="text-align:center;">${f.protein}g</td>
+          <td style="text-align:center;">${f.carbs}g</td>
+          <td style="text-align:center;">${f.fat}g</td>
+          <td style="text-align:center;cursor:pointer;color:var(--accent2);font-size:1rem;padding:2px 8px;"
+            onclick="openFoodSearchWithIdx(${foodDatabase.indexOf(f)})" title="Add to meal">+</td>
+        </tr>`).join('')}
+      ${foods.length > 150 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:8px;">
+        Showing 150 of ${foods.length} — use search to narrow results</td></tr>` : ''}
+    </table>`;
 }
 
 function openFoodSearchWithIdx(foodIdx) {
@@ -3455,20 +3552,20 @@ async function saveCustomFood() {
   try {
     if (shareWithAll) {
       // Save to shared community collection — all users see it
-      const doc = await db.collection('fooddb').doc('custom').get();
+      const doc = await db.collection('fooddb').doc('Ingredients').get();
       const existing = doc.exists ? (doc.data().foods || []) : [];
       existing.push({...food, source:'community'});
-      await db.collection('fooddb').doc('custom').set({ foods: existing });
+      await db.collection('fooddb').doc('Ingredients').set({ foods: existing });
       food.source = 'community';
       food.custom = true;
     } else {
       // Save to personal collection only
       const doc = await db.collection('userdata').doc(SESSION.username)
-        .collection('fooddb').doc('custom').get();
+        .collection('fooddb').doc('Ingredients').get();
       const existing = doc.exists ? (doc.data().foods || []) : [];
       existing.push({...food, source:'personal'});
       await db.collection('userdata').doc(SESSION.username)
-        .collection('fooddb').doc('custom').set({ foods: existing });
+        .collection('fooddb').doc('Ingredients').set({ foods: existing });
       food.source = 'personal';
       food.custom = true;
     }
@@ -3671,6 +3768,217 @@ function nutTab(tab) {
   });
   if (tab === 'foods' && !foodDatabase.length) loadFoodDatabase();
   if (tab === 'recipe' && !foodDatabase.length) loadFoodDatabase();
+}
+
+// ═══════════════════════════════════════════════════════════
+// COMMUNITY RECIPES — shared at fooddb/Recipes
+// ═══════════════════════════════════════════════════════════
+
+function renderCommunityRecipes() {
+  const el = document.getElementById('community-recipes-list');
+  if (!el) return;
+
+  const q        = (document.getElementById('cr-search')?.value || '').toLowerCase();
+  const ketoOnly = document.getElementById('cr-filter-keto')?.checked || false;
+  const sort     = document.getElementById('cr-sort')?.value || 'rating';
+
+  let recipes = communityRecipes.filter(r => {
+    if (q && !r.name.toLowerCase().includes(q) &&
+        !(r.tags||[]).some(t => t.toLowerCase().includes(q))) return false;
+    if (ketoOnly && !r.keto) return false;
+    return true;
+  });
+
+  // Sort
+  if (sort === 'rating') recipes.sort((a,b) => (b.avgRating||0) - (a.avgRating||0));
+  else if (sort === 'newest') recipes.sort((a,b) => new Date(b.published||0) - new Date(a.published||0));
+  else recipes.sort((a,b) => a.name.localeCompare(b.name));
+
+  if (!recipes.length) {
+    el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:12px;">
+      No community recipes yet. Be the first to share one via the Recipe Maker tab.</div>`;
+    return;
+  }
+
+  el.innerHTML = recipes.map((r, idx) => {
+    const origIdx = communityRecipes.indexOf(r);
+    const tots = (r.ingredients||[]).reduce((a,b)=>({cals:a.cals+b.cals,prot:a.prot+b.prot}),{cals:0,prot:0});
+    const stars = [1,2,3,4,5].map(n =>
+      `<span onclick="rateRecipe(${origIdx},${n})" style="cursor:pointer;font-size:1rem;color:${n<=(r.userRating||r.avgRating||0)?'#ffd700':'var(--border2)'};">★</span>`
+    ).join('');
+    const ketoTag = r.keto ? `<span style="font-size:0.48rem;padding:1px 5px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;margin-left:4px;">KETO</span>` : '';
+    const tags = (r.tags||[]).map(t =>
+      `<span style="font-size:0.48rem;padding:1px 6px;background:var(--bg3);color:var(--border2);border:1px solid var(--border);margin-right:3px;">${t}</span>`
+    ).join('');
+
+    return `<div style="padding:14px;background:var(--bg3);border:1px solid var(--border);margin-bottom:10px;border-radius:2px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text);font-weight:bold;">
+            ${r.name}${ketoTag}
+          </div>
+          <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:2px;">
+            by @${r.author||'anonymous'} · ${r.ingredients?.length||0} ingredients · ${Math.round(tots.cals)} kcal · ${tots.prot.toFixed(1)}g protein
+          </div>
+          <div style="margin-top:4px;">${tags}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div>${stars}</div>
+          <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);">
+            ${r.avgRating ? r.avgRating.toFixed(1)+' avg' : 'No ratings'} · ${r.ratingCount||0} vote${r.ratingCount!==1?'s':''}
+          </div>
+        </div>
+      </div>
+
+      ${r.instructions ? `<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);
+        line-height:1.7;margin-bottom:8px;padding:8px 10px;background:var(--bg2);border-left:3px solid var(--border);">
+        ${r.instructions.replace(/\n/g,'<br>')}</div>` : ''}
+
+      <!-- Ingredients -->
+      <details style="margin-bottom:8px;">
+        <summary style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);cursor:pointer;letter-spacing:.08em;">
+          VIEW INGREDIENTS (${r.ingredients?.length||0})
+        </summary>
+        <div style="margin-top:6px;">
+          ${(r.ingredients||[]).map(ing =>
+            `<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+              ${ing.name} — ${ing.qty}${ing.unit} · ${ing.cals} kcal · ${ing.prot}g P</div>`
+          ).join('')}
+        </div>
+      </details>
+
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button onclick="importCommunityRecipe(${origIdx})" class="btn btn-s" style="font-size:0.58rem;padding:4px 10px;">
+          ↓ IMPORT TO MY RECIPES
+        </button>
+        <button onclick="addCommunityRecipeToMeal(${origIdx})" class="btn btn-p" style="font-size:0.58rem;padding:4px 10px;">
+          + ADD TO MEAL
+        </button>
+        ${r.author === SESSION.username ? `
+          <button onclick="deleteCommunityRecipe(${origIdx})" style="font-family:var(--font-mono);font-size:0.55rem;padding:4px 8px;
+            background:none;border:1px solid var(--border);color:var(--danger);cursor:pointer;">DELETE</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function publishRecipe() {
+  const name = document.getElementById('recipe-name')?.value?.trim();
+  if (!name || !recipeIngredients.length) { toast('Name your recipe and add ingredients first'); return; }
+  if (!confirm(`Share "${name}" with the community? Everyone can see and use it.`)) return;
+
+  const tags = (document.getElementById('recipe-tags')?.value || '')
+    .split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  const instructions = document.getElementById('recipe-instructions')?.value?.trim() || '';
+
+  // Determine keto status from ingredients
+  const tots = recipeIngredients.reduce((a,b)=>({cals:a.cals+b.cals,carb:a.carb+b.carb}),{cals:0,carb:0});
+  const recipeKeto = tots.cals > 0 && ((tots.carb*4)/tots.cals) <= 0.10;
+
+  const recipe = {
+    name,
+    author:       SESSION.username,
+    published:    new Date().toISOString(),
+    servings:     parseFloat(document.getElementById('recipe-servings')?.value) || 1,
+    ingredients:  [...recipeIngredients],
+    instructions,
+    tags:         recipeKeto && !tags.includes('keto') ? [...tags,'keto'] : tags,
+    keto:         recipeKeto,
+    avgRating:    0,
+    ratingCount:  0,
+    ratings:      {},
+  };
+
+  try {
+    communityRecipes.push(recipe);
+    await db.collection('fooddb').doc('Recipes').set({ recipes: communityRecipes });
+    toast(`✓ "${name}" shared with the community!`);
+    nutTab('foods'); // switch to show community recipes
+    setTimeout(() => renderCommunityRecipes(), 300);
+  } catch(e) { toast('Publish failed: ' + e.message); communityRecipes.pop(); }
+}
+
+async function rateRecipe(recipeIdx, stars) {
+  const r = communityRecipes[recipeIdx];
+  if (!r) return;
+
+  // Store this user's rating
+  if (!r.ratings) r.ratings = {};
+  r.ratings[SESSION.username] = stars;
+  r.userRating = stars;
+
+  // Recalc average
+  const allRatings = Object.values(r.ratings);
+  r.avgRating  = allRatings.reduce((a,b)=>a+b,0) / allRatings.length;
+  r.ratingCount = allRatings.length;
+
+  try {
+    await db.collection('fooddb').doc('Recipes').set({ recipes: communityRecipes });
+    renderCommunityRecipes();
+  } catch(e) { toast('Rating save failed'); }
+}
+
+function importCommunityRecipe(recipeIdx) {
+  const r = communityRecipes[recipeIdx];
+  if (!r) return;
+  // Load into recipe maker
+  recipeIngredients = [...(r.ingredients||[])];
+  document.getElementById('recipe-name').value         = r.name + ' (copy)';
+  document.getElementById('recipe-instructions').value = r.instructions || '';
+  document.getElementById('recipe-tags').value         = (r.tags||[]).join(', ');
+  renderRecipeIngredients();
+  nutTab('recipe');
+  toast(`Imported "${r.name}" — save to keep your own copy`);
+}
+
+function addCommunityRecipeToMeal(recipeIdx) {
+  const r = communityRecipes[recipeIdx];
+  if (!r || !r.ingredients?.length) return;
+  // Load into maker and trigger add-to-meal flow
+  recipeIngredients = [...r.ingredients];
+  document.getElementById('recipe-name').value = r.name;
+  updateRecipeTotals();
+  nutTab('recipe');
+  toast(`"${r.name}" loaded — select portion and click + ADD TO MEAL`);
+}
+
+async function deleteCommunityRecipe(recipeIdx) {
+  const r = communityRecipes[recipeIdx];
+  if (!r || r.author !== SESSION.username) return;
+  if (!confirm(`Delete "${r.name}" from the community?`)) return;
+  communityRecipes.splice(recipeIdx, 1);
+  await db.collection('fooddb').doc('Recipes').set({ recipes: communityRecipes });
+  renderCommunityRecipes();
+  toast('Recipe deleted from community');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN: Clean up per-user food data after migration
+// ═══════════════════════════════════════════════════════════
+async function cleanupUserFoodData() {
+  const statusEl = document.getElementById('migration-status');
+  if (!statusEl) return;
+  if (!confirm('DELETE the per-user food database entries?\n\nThis removes fooddb/custom from every user account.\nOnly do this after confirming migration was successful.')) return;
+
+  statusEl.innerHTML = '<span style="color:var(--accent2);">Cleaning up user food data...</span>';
+  const users = await getUsers();
+  const usernames = Object.keys(users);
+  let deleted = 0, skipped = 0;
+
+  for (const uname of usernames) {
+    try {
+      const ref = db.collection('userdata').doc(uname).collection('fooddb').doc('custom');
+      const doc = await ref.get();
+      if (doc.exists) {
+        await ref.delete();
+        deleted++;
+      } else {
+        skipped++;
+      }
+    } catch(e) { console.warn(`Could not delete fooddb/custom for ${uname}:`, e.message); }
+  }
+
+  statusEl.innerHTML = `<span style="color:#4caf50;">✓ Cleanup complete — deleted from ${deleted} user${deleted!==1?'s':''}, ${skipped} had no data.</span>`;
 }
 
 // ── Nutrition: water tracker state ──
@@ -4047,7 +4355,7 @@ async function previewFoodMigration() {
 
     for (const uname of usernames) {
       const doc = await db.collection('userdata').doc(uname)
-        .collection('fooddb').doc('custom').get();
+        .collection('fooddb').doc('Ingredients').get();
       const foods = doc.exists ? (doc.data().foods || []) : [];
       if (foods.length) {
         lines.push(`<span style="color:var(--text);">@${uname}</span> — ${foods.length} custom food${foods.length>1?'s':''}: ${foods.map(f=>f.name).join(', ')}`);
@@ -4056,14 +4364,14 @@ async function previewFoodMigration() {
     }
 
     // Check what's already in shared
-    const sharedDoc = await db.collection('fooddb').doc('custom').get();
+    const sharedDoc = await db.collection('fooddb').doc('Ingredients').get();
     const alreadyShared = sharedDoc.exists ? (sharedDoc.data().foods || []) : [];
     const alreadyNames = new Set(alreadyShared.map(f => f.name.toLowerCase()));
 
     // Count new vs duplicate
     let newCount = 0;
     for (const uname of usernames) {
-      const doc = await db.collection('userdata').doc(uname).collection('fooddb').doc('custom').get();
+      const doc = await db.collection('userdata').doc(uname).collection('fooddb').doc('Ingredients').get();
       const foods = doc.exists ? (doc.data().foods || []) : [];
       for (const f of foods) {
         if (!alreadyNames.has(f.name.toLowerCase())) newCount++;
@@ -4095,7 +4403,7 @@ async function runFoodMigration() {
     const usernames = Object.keys(users);
 
     // Load current shared DB
-    const sharedDoc = await db.collection('fooddb').doc('custom').get();
+    const sharedDoc = await db.collection('fooddb').doc('Ingredients').get();
     let sharedFoods = sharedDoc.exists ? (sharedDoc.data().foods || []) : [];
     const sharedNames = new Set(sharedFoods.map(f => f.name.toLowerCase()));
 
@@ -4103,7 +4411,7 @@ async function runFoodMigration() {
 
     for (const uname of usernames) {
       const doc = await db.collection('userdata').doc(uname)
-        .collection('fooddb').doc('custom').get();
+        .collection('fooddb').doc('Ingredients').get();
       const foods = doc.exists ? (doc.data().foods || []) : [];
 
       for (const food of foods) {
@@ -4126,7 +4434,7 @@ async function runFoodMigration() {
 
     // Save updated shared collection
     if (added > 0) {
-      await db.collection('fooddb').doc('custom').set({ foods: sharedFoods });
+      await db.collection('fooddb').doc('Ingredients').set({ foods: sharedFoods });
     }
 
     statusEl.innerHTML = `
