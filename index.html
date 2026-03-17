@@ -2504,11 +2504,15 @@ function estimateStepCalBurn(totalSteps) {
   return Math.round(3.5 * weightKg * (minutes / 60));
 }
 
-// Combined calorie burn: workout + steps
+// Precise calorie burn: use saved caloriesBurned if available, else estimate
 function getDayCalBurn(workout, stepsEntry) {
-  const workoutCals = workout ? estimateDayCalBurn(workout) : 0;
-  const stepCals    = stepsEntry ? (estimateStepCalBurn(+stepsEntry.total||0) || 0) : 0;
-  const total = (workoutCals||0) + (stepCals||0);
+  let workoutCals = 0;
+  if (workout) {
+    // markWorkoutComplete saves caloriesBurned calculated from actual reps
+    workoutCals = parseInt(workout.caloriesBurned) || estimateDayCalBurn(workout) || 0;
+  }
+  const stepCals = stepsEntry ? (estimateStepCalBurn(+stepsEntry.total||0) || 0) : 0;
+  const total = workoutCals + stepCals;
   return total > 0 ? total : null;
 }
 
@@ -4542,15 +4546,29 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
       </div>
     </div>
     ${items.map(item => {
-      const checked  = !!workoutChecks[item.id];
-      const typeC    = item.type ? typeColor[item.type]||'var(--border2)' : 'var(--border2)';
-      const typeL    = item.type ? typeLabel[item.type]||'' : item.badge||'';
+      const checked    = !!workoutChecks[item.id];
+      const typeC      = item.type ? typeColor[item.type]||'var(--border2)' : 'var(--border2)';
+      const typeL      = item.type ? typeLabel[item.type]||'' : item.badge||'';
       const isWeighted = WEIGHTED_EXERCISES.has(item.name?.toUpperCase());
-      const savedLbs = exerciseWeights[item.id] || '';
-      const itemCals = getWeightKg() ? calcItemCalories(item, savedLbs) : null;
-      const weightKg = getWeightKg();
+      const savedLbs   = exerciseWeights[item.id] || '';
+      const itemCals   = getWeightKg() ? calcItemCalories(item, savedLbs) : null;
+      const weightKg   = getWeightKg();
 
-      return `<div class="ex-block" id="exblock-${item.id}" style="${checked?'opacity:0.65;border-left:3px solid #4caf50;':''}">
+      // Determine if ALL sets are done — only then collapse/dim the block
+      const savedActual   = exerciseActuals[item.id] || {};
+      const savedSets     = savedActual.sets || [];
+      let numSetsExpected = 3;
+      if (item.sets) {
+        const sl = item.sets.toLowerCase();
+        if (sl.startsWith('5×5') || sl.startsWith('5x5')) numSetsExpected = 5;
+        else if (sl.startsWith('4×') || sl.startsWith('4x')) numSetsExpected = 4;
+      }
+      const allSetsDone  = item.sets
+        ? savedSets.filter(s => s?.done).length >= numSetsExpected
+        : !!savedSets[0]?.done;
+      const shouldCollapse = checked && allSetsDone;
+
+      return `<div class="ex-block" id="exblock-${item.id}" style="${shouldCollapse ? 'opacity:0.55;border-left:3px solid #4caf50;' : checked ? 'border-left:3px solid #4caf5066;' : ''}">
         <div class="ex-header" style="display:flex;align-items:center;gap:12px;padding:12px 16px;">
           <div onclick="toggleCheck('${item.id}','${dayId}')" style="width:22px;height:22px;border:2px solid ${checked?'#4caf50':'var(--border2)'};
             border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -4559,7 +4577,7 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
           </div>
           <div style="flex:1;cursor:pointer;" onclick="toggleEx(this.closest('.ex-block').querySelector('.ex-body'),'${item.id}')">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <div class="ex-name" style="${checked?'text-decoration:line-through;color:var(--text-dim);':''}">${item.name}</div>
+              <div class="ex-name" style="${shouldCollapse?'text-decoration:line-through;color:var(--text-dim);':checked?'color:#4caf50;':''}">${item.name}</div>
               <span style="font-family:var(--font-mono);font-size:0.55rem;padding:2px 7px;
                 background:${typeC}18;color:${typeC};border:1px solid ${typeC}44;">${typeL}</span>
               ${itemCals ? `<span id="cal-badge-${item.id}" style="font-family:var(--font-mono);font-size:0.55rem;padding:2px 7px;
@@ -4570,7 +4588,7 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId) {
           </div>
           <span style="color:var(--border2);font-size:0.9rem;">▾</span>
         </div>
-        <div class="ex-body">
+        <div class="ex-body"${shouldCollapse ? ' style="display:none;"' : ''}>
           <div class="yt-wrap">
             <div class="yt-ph" onclick="loadYT(this,'${item.name.replace(/'/g,"\\'")}')">
               <div class="yt-play"></div>
