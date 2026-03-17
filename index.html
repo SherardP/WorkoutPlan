@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase/firebase-firestore-compat.js"></script>
 <style>
@@ -1069,100 +1070,264 @@ body.theme-female .goal-chip{border-radius:20px;}
 
     <div id="log-nutrition" style="display:none;">
 
-      <!-- Water tracker -->
-      <div class="card mb16">
-        <div class="card-label">HYDRATION</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
-          <div class="card-title" style="margin:0;">WATER INTAKE</div>
-          <div style="text-align:right;">
-            <div style="font-family:var(--font-display);font-size:2rem;color:var(--accent2);" id="water-total-display">0</div>
-            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">oz / <span id="water-goal-display">96</span> oz goal</div>
+      <!-- Nutrition sub-tabs -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+        <button class="btn btn-p" id="ntab-meals"   onclick="nutTab('meals')"   style="font-size:0.62rem;">🍽 MEALS</button>
+        <button class="btn btn-s" id="ntab-recipe"  onclick="nutTab('recipe')"  style="font-size:0.62rem;">👨‍🍳 RECIPE MAKER</button>
+        <button class="btn btn-s" id="ntab-foods"   onclick="nutTab('foods')"   style="font-size:0.62rem;">🥦 FOOD DATABASE</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+          <input type="date" id="n-date" onchange="reloadLogForDate('nutrition')"
+            style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.72rem;padding:5px 9px;outline:none;">
+          <button class="btn btn-s" onclick="setLogDate('n-date','yesterday')" style="font-size:0.58rem;padding:4px 9px;">YESTERDAY</button>
+        </div>
+      </div>
+
+      <!-- ══ MEALS TAB ══ -->
+      <div id="npanel-meals">
+
+        <!-- Water tracker -->
+        <div class="card mb16">
+          <div class="card-label">HYDRATION</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+            <div class="card-title" style="margin:0;">WATER INTAKE</div>
+            <div style="text-align:right;">
+              <div style="font-family:var(--font-display);font-size:2rem;color:#64b5f6;" id="water-total-display">0</div>
+              <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">oz / <span id="water-goal-display">96</span> oz goal</div>
+            </div>
+          </div>
+          <div style="height:5px;background:var(--bg3);border-radius:3px;margin-bottom:12px;">
+            <div id="water-progress-bar" style="height:100%;width:0%;background:#64b5f6;border-radius:3px;transition:width 0.4s;"></div>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">
+            <button onclick="addWater(8)"   class="btn btn-s" style="font-size:0.6rem;padding:5px 10px;">+8oz</button>
+            <button onclick="addWater(12)"  class="btn btn-s" style="font-size:0.6rem;padding:5px 10px;">+12oz</button>
+            <button onclick="addWater(16)"  class="btn btn-s" style="font-size:0.6rem;padding:5px 10px;">+16oz</button>
+            <button onclick="addWater(20)"  class="btn btn-s" style="font-size:0.6rem;padding:5px 10px;">+20oz</button>
+            <button onclick="addWater(32)"  class="btn btn-s" style="font-size:0.6rem;padding:5px 10px;">+32oz</button>
+            <button onclick="resetWater()" class="btn btn-s" style="font-size:0.6rem;padding:5px 10px;color:var(--text-dim);">RESET</button>
+            <input type="number" id="water-custom-oz" placeholder="Custom oz" min="1" max="200"
+              style="width:90px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.78rem;padding:5px 8px;outline:none;">
+            <button onclick="addWaterCustom()" class="btn btn-p" style="font-size:0.62rem;">+ ADD</button>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);">Daily goal: <span id="water-goal-label">96 oz (2.8 L)</span></div>
+        </div>
+
+        <!-- Meals -->
+        <div class="card mb16">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+            <div><div class="card-label">MEALS — TODAY</div><div class="card-title" style="margin:0;">BREAKFAST · LUNCH · DINNER</div></div>
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);" id="nutrition-total-display"></div>
+          </div>
+
+
+          <!-- Breakfast -->
+          <div style="margin-bottom:14px;padding:12px;background:var(--bg3);border-left:3px solid #ff9800;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="font-family:var(--font-mono);font-size:0.6rem;color:#ff9800;letter-spacing:.15em;">☀ BREAKFAST</div>
+              <button onclick="openFoodSearch('bk')" class="btn btn-s" style="font-size:0.55rem;padding:3px 8px;">+ FROM DB</button>
+            </div>
+            <div id="bk-ingredients" style="margin-bottom:8px;"></div>
+            <div class="log-grid">
+              <div class="lf full"><label>NOTES</label><textarea id="n-bk-food" rows="1" placeholder="${'e.g. Eggs, oatmeal, fruit...'}"></textarea></div>
+              <div class="lf"><label>CALORIES</label><input type="number" id="n-bk-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
+              <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-bk-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
+              <div class="lf"><label>CARBS (g)</label><input type="number" id="n-bk-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
+              <div class="lf"><label>FAT (g)</label><input type="number" id="n-bk-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
+            </div>
+          </div>
+
+          <!-- Lunch -->
+          <div style="margin-bottom:14px;padding:12px;background:var(--bg3);border-left:3px solid var(--accent2);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);letter-spacing:.15em;">☀ LUNCH</div>
+              <button onclick="openFoodSearch('ln')" class="btn btn-s" style="font-size:0.55rem;padding:3px 8px;">+ FROM DB</button>
+            </div>
+            <div id="ln-ingredients" style="margin-bottom:8px;"></div>
+            <div class="log-grid">
+              <div class="lf full"><label>NOTES</label><textarea id="n-ln-food" rows="1" placeholder="e.g. Chicken, rice, salad..."></textarea></div>
+              <div class="lf"><label>CALORIES</label><input type="number" id="n-ln-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
+              <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-ln-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
+              <div class="lf"><label>CARBS (g)</label><input type="number" id="n-ln-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
+              <div class="lf"><label>FAT (g)</label><input type="number" id="n-ln-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
+            </div>
+          </div>
+
+          <!-- Dinner -->
+          <div style="margin-bottom:14px;padding:12px;background:var(--bg3);border-left:3px solid #7986cb;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="font-family:var(--font-mono);font-size:0.6rem;color:#7986cb;letter-spacing:.15em;">🌙 DINNER</div>
+              <button onclick="openFoodSearch('dn')" class="btn btn-s" style="font-size:0.55rem;padding:3px 8px;">+ FROM DB</button>
+            </div>
+            <div id="dn-ingredients" style="margin-bottom:8px;"></div>
+            <div class="log-grid">
+              <div class="lf full"><label>NOTES</label><textarea id="n-dn-food" rows="1" placeholder="e.g. Steak, vegetables, sweet potato..."></textarea></div>
+              <div class="lf"><label>CALORIES</label><input type="number" id="n-dn-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
+              <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-dn-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
+              <div class="lf"><label>CARBS (g)</label><input type="number" id="n-dn-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
+              <div class="lf"><label>FAT (g)</label><input type="number" id="n-dn-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
+            </div>
+          </div>
+
+          <!-- Snacks -->
+          <div id="snack-container"></div>
+          <button onclick="addSnack()" class="btn btn-s" style="width:100%;margin-bottom:14px;font-size:0.63rem;">+ ADD SNACK</button>
+
+          <!-- Totals bar -->
+          <div id="nutrition-totals-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;"></div>
+
+          <button class="btn btn-p" onclick="saveNutrition()" style="width:100%;">SAVE NUTRITION</button>
+        </div>
+      </div>
+
+      <!-- ══ RECIPE MAKER TAB ══ -->
+      <div id="npanel-recipe" style="display:none;">
+        <div class="card mb16">
+          <div class="card-label">RECIPE MAKER</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+            <div class="card-title" style="margin:0;">BUILD A MEAL</div>
+            <button onclick="saveRecipe()" class="btn btn-s" style="font-size:0.6rem;">💾 SAVE RECIPE</button>
+          </div>
+
+          <div class="log-grid" style="margin-bottom:12px;">
+            <div class="lf full"><label>RECIPE NAME</label><input type="text" id="recipe-name" placeholder="e.g. Chicken & Rice Bowl"></div>
+            <div class="lf"><label>SERVINGS MADE</label><input type="number" id="recipe-servings" value="1" min="0.25" step="0.25"></div>
+          </div>
+
+          <!-- Ingredient search -->
+          <div style="margin-bottom:12px;">
+            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.1em;margin-bottom:8px;">ADD INGREDIENT</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input type="text" id="recipe-search" placeholder="Search food database..." oninput="searchFoodDb('recipe-search','recipe-results')"
+                style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.78rem;padding:7px 10px;outline:none;">
+              <input type="number" id="recipe-qty" placeholder="Amount" min="0" step="0.5" value="100"
+                style="width:80px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.78rem;padding:7px 10px;outline:none;text-align:center;">
+              <select id="recipe-unit" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.75rem;padding:7px 8px;outline:none;">
+                <option value="g">g</option>
+                <option value="oz">oz</option>
+                <option value="cup">cup</option>
+                <option value="tbsp">tbsp</option>
+                <option value="tsp">tsp</option>
+                <option value="piece">piece</option>
+              </select>
+            </div>
+            <div id="recipe-results" style="margin-top:6px;"></div>
+          </div>
+
+          <!-- Recipe ingredient list -->
+          <div id="recipe-ingredients" style="margin-bottom:14px;"></div>
+
+          <!-- Recipe nutrition totals -->
+          <div id="recipe-totals" style="margin-bottom:14px;"></div>
+
+          <!-- Portion selector -->
+          <div style="background:var(--bg3);padding:12px;border:1px solid var(--border);margin-bottom:12px;">
+            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.1em;margin-bottom:8px;">LOG A PORTION OF THIS RECIPE</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">I ate</span>
+              <input type="number" id="recipe-portion" value="1" min="0.25" step="0.25"
+                style="width:70px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.85rem;padding:6px 8px;outline:none;text-align:center;"
+                oninput="updateRecipePortionPreview()">
+              <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">of</span>
+              <input type="number" id="recipe-total-servings" value="1" min="0.25" step="0.25"
+                style="width:70px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.85rem;padding:6px 8px;outline:none;text-align:center;"
+                oninput="updateRecipePortionPreview()">
+              <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">total servings</span>
+            </div>
+            <div id="recipe-portion-preview" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);margin-top:8px;"></div>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <select id="recipe-meal-target" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.75rem;padding:7px 8px;outline:none;">
+              <option value="bk">Breakfast</option>
+              <option value="ln">Lunch</option>
+              <option value="dn">Dinner</option>
+              <option value="sn">Snack</option>
+            </select>
+            <button onclick="addRecipeToMeal()" class="btn btn-p" style="font-size:0.65rem;">+ ADD TO MEAL</button>
           </div>
         </div>
-        <!-- Water progress bar -->
-        <div style="height:6px;background:var(--bg3);border-radius:3px;margin-bottom:14px;">
-          <div id="water-progress-bar" style="height:100%;width:0%;background:#64b5f6;border-radius:3px;transition:width 0.4s;"></div>
+
+        <!-- Saved recipes -->
+        <div class="card mb16">
+          <div class="card-label">SAVED RECIPES</div>
+          <div class="card-title" style="margin-bottom:12px;">YOUR RECIPES</div>
+          <div id="saved-recipes-list"><div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);">No saved recipes yet. Build one above.</div></div>
         </div>
-        <!-- Quick-add buttons -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-          <button onclick="addWater(8)"   class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+8 oz</button>
-          <button onclick="addWater(12)"  class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+12 oz</button>
-          <button onclick="addWater(16)"  class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+16 oz</button>
-          <button onclick="addWater(20)"  class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+20 oz</button>
-          <button onclick="addWater(32)"  class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;">+32 oz</button>
-          <button onclick="resetWater()" class="btn btn-s" style="font-size:0.62rem;padding:6px 12px;color:var(--text-dim);">RESET</button>
+      </div>
+
+      <!-- ══ FOOD DATABASE TAB ══ -->
+      <div id="npanel-foods" style="display:none;">
+        <div class="card mb16">
+          <div class="card-label">FOOD DATABASE</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+            <div class="card-title" style="margin:0;">INGREDIENTS</div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="loadFoodDatabase()" class="btn btn-s" style="font-size:0.6rem;">⟳ RELOAD FROM GITHUB</button>
+              <button onclick="openAddFoodModal()" class="btn btn-p" style="font-size:0.6rem;">+ ADD FOOD</button>
+            </div>
+          </div>
+          <div id="food-db-status" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:10px;"></div>
+          <input type="text" id="food-db-search" placeholder="Search all foods..." oninput="renderFoodTable()"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.78rem;padding:8px 10px;outline:none;margin-bottom:12px;box-sizing:border-box;">
+          <div id="food-db-table" style="overflow-x:auto;"></div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="number" id="water-custom-oz" placeholder="Custom oz" min="1" max="200"
-            style="width:120px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-            font-family:var(--font-mono);font-size:0.8rem;padding:7px 10px;outline:none;">
-          <button onclick="addWaterCustom()" class="btn btn-p" style="font-size:0.65rem;">+ ADD</button>
-          <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);">
-            Daily goal: <span id="water-goal-label">96 oz (3 liters)</span>
+
+        <!-- Add custom food modal inline -->
+        <div class="card mb16" id="add-food-panel" style="display:none;border:1px solid var(--accent2);">
+          <div class="card-label">ADD CUSTOM FOOD</div>
+          <div class="card-title" style="margin-bottom:12px;">NEW INGREDIENT</div>
+          <div class="log-grid">
+            <div class="lf full"><label>FOOD NAME</label><input type="text" id="nf-name" placeholder="e.g. Brown Rice (cooked)"></div>
+            <div class="lf"><label>SERVING SIZE</label><input type="text" id="nf-serving" placeholder="e.g. 100g"></div>
+            <div class="lf"><label>CALORIES</label><input type="number" id="nf-cal" placeholder="0"></div>
+            <div class="lf"><label>PROTEIN (g)</label><input type="number" id="nf-prot" placeholder="0" step="0.1"></div>
+            <div class="lf"><label>CARBS (g)</label><input type="number" id="nf-carb" placeholder="0" step="0.1"></div>
+            <div class="lf"><label>FAT (g)</label><input type="number" id="nf-fat" placeholder="0" step="0.1"></div>
+            <div class="lf"><label>FIBER (g)</label><input type="number" id="nf-fiber" placeholder="0" step="0.1"></div>
+            <div class="lf"><label>SODIUM (mg)</label><input type="number" id="nf-sodium" placeholder="0"></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button onclick="saveCustomFood()" class="btn btn-p" style="font-size:0.65rem;">SAVE TO DATABASE</button>
+            <button onclick="document.getElementById('add-food-panel').style.display='none'" class="btn btn-s" style="font-size:0.65rem;">CANCEL</button>
           </div>
         </div>
       </div>
 
-      <!-- Meals -->
-      <div class="card mb16">
-        <div class="card-label">MEALS — TODAY</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-          <div class="card-title" style="margin:0;">BREAKFAST · LUNCH · DINNER</div>
-          <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);" id="nutrition-total-display"></div>
+      <!-- Food search popup (shared) -->
+      <div id="food-search-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+        width:min(420px,94vw);background:var(--bg2);border:1px solid var(--accent2);z-index:999;padding:16px;
+        box-shadow:0 8px 32px rgba(0,0,0,0.6);max-height:80vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);letter-spacing:.12em;">ADD FROM DATABASE</div>
+          <button onclick="closeFoodSearch()" style="background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;">✕</button>
         </div>
-
-        <!-- Breakfast -->
-        <div style="margin-bottom:16px;padding:14px;background:var(--bg3);border-left:3px solid #ff9800;">
-          <div style="font-family:var(--font-mono);font-size:0.62rem;color:#ff9800;letter-spacing:.15em;margin-bottom:10px;">☀ BREAKFAST</div>
-          <div class="log-grid">
-            <div class="lf full"><label>WHAT YOU ATE</label><textarea id="n-bk-food" rows="2" placeholder="e.g. Eggs, oatmeal, fruit..."></textarea></div>
-            <div class="lf"><label>CALORIES</label><input type="number" id="n-bk-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
-            <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-bk-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
-            <div class="lf"><label>CARBS (g)</label><input type="number" id="n-bk-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
-            <div class="lf"><label>FAT (g)</label><input type="number" id="n-bk-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
-          </div>
+        <input type="text" id="popup-search-input" placeholder="Search food..." oninput="searchFoodDb('popup-search-input','popup-search-results')"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.8rem;padding:8px 10px;outline:none;box-sizing:border-box;margin-bottom:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+          <input type="number" id="popup-qty" value="100" min="0" step="1"
+            style="width:80px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.8rem;padding:7px 8px;outline:none;text-align:center;">
+          <select id="popup-unit" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.75rem;padding:7px 8px;outline:none;">
+            <option value="g">g</option>
+            <option value="oz">oz</option>
+            <option value="cup">cup</option>
+            <option value="tbsp">tbsp</option>
+            <option value="tsp">tsp</option>
+            <option value="piece">piece</option>
+          </select>
         </div>
-
-        <!-- Lunch -->
-        <div style="margin-bottom:16px;padding:14px;background:var(--bg3);border-left:3px solid var(--accent2);">
-          <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--accent2);letter-spacing:.15em;margin-bottom:10px;">☀ LUNCH</div>
-          <div class="log-grid">
-            <div class="lf full"><label>WHAT YOU ATE</label><textarea id="n-ln-food" rows="2" placeholder="e.g. Chicken, rice, salad..."></textarea></div>
-            <div class="lf"><label>CALORIES</label><input type="number" id="n-ln-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
-            <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-ln-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
-            <div class="lf"><label>CARBS (g)</label><input type="number" id="n-ln-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
-            <div class="lf"><label>FAT (g)</label><input type="number" id="n-ln-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
-          </div>
-        </div>
-
-        <!-- Dinner -->
-        <div style="margin-bottom:16px;padding:14px;background:var(--bg3);border-left:3px solid #7986cb;">
-          <div style="font-family:var(--font-mono);font-size:0.62rem;color:#7986cb;letter-spacing:.15em;margin-bottom:10px;">🌙 DINNER</div>
-          <div class="log-grid">
-            <div class="lf full"><label>WHAT YOU ATE</label><textarea id="n-dn-food" rows="2" placeholder="e.g. Steak, vegetables, sweet potato..."></textarea></div>
-            <div class="lf"><label>CALORIES</label><input type="number" id="n-dn-cal" placeholder="0" oninput="updateNutritionTotals()"></div>
-            <div class="lf"><label>PROTEIN (g)</label><input type="number" id="n-dn-prot" placeholder="0" oninput="updateNutritionTotals()"></div>
-            <div class="lf"><label>CARBS (g)</label><input type="number" id="n-dn-carb" placeholder="0" oninput="updateNutritionTotals()"></div>
-            <div class="lf"><label>FAT (g)</label><input type="number" id="n-dn-fat" placeholder="0" oninput="updateNutritionTotals()"></div>
-          </div>
-        </div>
-
-        <!-- Snacks -->
-        <div id="snack-container"></div>
-        <button onclick="addSnack()" class="btn btn-s" style="width:100%;margin-bottom:16px;font-size:0.65rem;">
-          + ADD SNACK
-        </button>
-
-        <!-- Daily totals summary -->
-        <div id="nutrition-totals-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;"></div>
-
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-          <input type="date" id="n-date" onchange="reloadLogForDate('nutrition')"
-            style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
-            font-family:var(--font-mono);font-size:0.75rem;padding:6px 10px;outline:none;">
-          <button class="btn btn-s" onclick="setLogDate('n-date','yesterday')" style="font-size:0.6rem;padding:5px 10px;">YESTERDAY</button>
-        </div>
-        <button class="btn btn-p" onclick="saveNutrition()" style="width:100%;">SAVE TODAY'S NUTRITION</button>
+        <div id="popup-search-results"></div>
       </div>
 
     </div>
@@ -2792,6 +2957,464 @@ async function autoPopulateBodyLog() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// FOOD DATABASE — GitHub XLSX + custom entries
+// ═══════════════════════════════════════════════════════════
+const FOOD_DB_URL = 'https://raw.githubusercontent.com/sherardp/WorkoutPlan/main/FoodNutrition.xlsx';
+let foodDatabase  = []; // [{name, serving, calories, protein, carbs, fat, fiber, sodium, custom}]
+let activeMealTarget = null; // which meal slot the popup is targeting
+let recipeIngredients = []; // [{food, qty, unit, cals, prot, carb, fat}]
+let savedRecipes = []; // persisted to Firebase
+
+// Unit conversion to grams (approximate, for per-100g scaling)
+const UNIT_TO_G = { g:1, oz:28.35, cup:240, tbsp:15, tsp:5, piece:100 };
+
+async function loadFoodDatabase() {
+  const statusEl = document.getElementById('food-db-status');
+  if (statusEl) statusEl.textContent = 'Loading from GitHub...';
+
+  // Load custom foods from Firebase first
+  let custom = [];
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('fooddb').doc('custom').get();
+    custom = doc.exists ? (doc.data().foods || []) : [];
+  } catch(e) {}
+
+  // Try to load XLSX from GitHub
+  try {
+    const resp = await fetch(FOOD_DB_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const buf  = await resp.arrayBuffer();
+    const wb   = XLSX.read(new Uint8Array(buf), { type:'array' });
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+
+    // Normalize column names — handle various header formats
+    foodDatabase = rows.map(r => {
+      const k = Object.keys(r).map(x => x.trim().toLowerCase());
+      const g = key => {
+        const match = Object.keys(r).find(x => x.trim().toLowerCase().includes(key));
+        return match ? r[match] : '';
+      };
+      return {
+        name:     String(g('name') || g('food') || g('ingredient') || '').trim(),
+        serving:  String(g('serving') || g('portion') || '100g').trim(),
+        calories: parseFloat(g('calor') || g('kcal') || g('cal')) || 0,
+        protein:  parseFloat(g('protein') || g('prot')) || 0,
+        carbs:    parseFloat(g('carb')) || 0,
+        fat:      parseFloat(g('fat')) || 0,
+        fiber:    parseFloat(g('fiber') || g('fibre')) || 0,
+        sodium:   parseFloat(g('sodium') || g('salt')) || 0,
+        custom:   false
+      };
+    }).filter(f => f.name);
+
+    if (statusEl) statusEl.textContent = `✓ Loaded ${foodDatabase.length} foods from GitHub + ${custom.length} custom`;
+  } catch(e) {
+    console.warn('XLSX load failed:', e.message);
+    if (statusEl) statusEl.textContent = `⚠ Could not load GitHub file: ${e.message}. Showing custom foods only.`;
+    foodDatabase = [];
+  }
+
+  // Merge custom foods
+  foodDatabase = [...foodDatabase, ...custom.map(f => ({...f, custom:true}))];
+
+  // Load saved recipes
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('fooddb').doc('recipes').get();
+    savedRecipes = doc.exists ? (doc.data().recipes || []) : [];
+  } catch(e) {}
+
+  renderFoodTable();
+  renderSavedRecipes();
+}
+
+function searchFoodDb(inputId, resultsId) {
+  const q = (document.getElementById(inputId)?.value || '').toLowerCase().trim();
+  const el = document.getElementById(resultsId);
+  if (!el) return;
+  if (!q || q.length < 2) { el.innerHTML = ''; return; }
+
+  const matches = foodDatabase.filter(f => f.name.toLowerCase().includes(q)).slice(0, 12);
+  if (!matches.length) {
+    el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);padding:6px;">No matches. Add it via Food Database tab.</div>`;
+    return;
+  }
+
+  el.innerHTML = matches.map((f,i) => `
+    <div onclick="selectFood(${foodDatabase.indexOf(f)}, '${inputId}', '${resultsId}')"
+      style="padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--border);
+      font-family:var(--font-mono);font-size:0.7rem;background:var(--bg3);"
+      onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='var(--bg3)'">
+      <div style="color:var(--text);">${f.name}</div>
+      <div style="color:var(--text-dim);font-size:0.58rem;">${f.serving} · ${f.calories} kcal · ${f.protein}g protein · ${f.carbs}g carbs · ${f.fat}g fat</div>
+    </div>`).join('');
+}
+
+function selectFood(foodIdx, inputId, resultsId) {
+  const f = foodDatabase[foodIdx];
+  if (!f) return;
+
+  // Clear search
+  const inputEl = document.getElementById(inputId);
+  if (inputEl) inputEl.value = f.name;
+  const resEl = document.getElementById(resultsId);
+  if (resEl) resEl.innerHTML = '';
+
+  if (inputId === 'recipe-search') {
+    // Add to recipe
+    addIngredientToRecipe(foodIdx);
+  } else if (inputId === 'popup-search-input') {
+    // Will be added when user taps "Add to Meal" button
+    window._selectedFoodIdx = foodIdx;
+    // Show confirm button
+    const resContainer = document.getElementById(resultsId);
+    if (resContainer) {
+      resContainer.innerHTML = `
+        <div style="padding:10px;background:var(--bg3);border:1px solid #4caf5044;margin-top:4px;">
+          <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);margin-bottom:6px;">${f.name}</div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
+            Per ${f.serving}: ${f.calories} kcal · ${f.protein}g P · ${f.carbs}g C · ${f.fat}g F
+          </div>
+          <button onclick="confirmAddFoodToMeal()" class="btn btn-p" style="width:100%;font-size:0.65rem;">ADD TO MEAL</button>
+        </div>`;
+    }
+  }
+}
+
+function confirmAddFoodToMeal() {
+  const idx  = window._selectedFoodIdx;
+  const f    = foodDatabase[idx];
+  if (!f || !activeMealTarget) { closeFoodSearch(); return; }
+
+  const qty     = parseFloat(document.getElementById('popup-qty')?.value) || 100;
+  const unit    = document.getElementById('popup-unit')?.value || 'g';
+  const grams   = qty * (UNIT_TO_G[unit] || 1);
+  // Scale nutrition per 100g base
+  const scale   = grams / 100;
+  const cals    = Math.round(f.calories  * scale);
+  const prot    = +((f.protein * scale).toFixed(1));
+  const carb    = +((f.carbs   * scale).toFixed(1));
+  const fat     = +((f.fat     * scale).toFixed(1));
+
+  // Add to ingredient display for that meal
+  const ingEl = document.getElementById(`${activeMealTarget}-ingredients`);
+  if (ingEl) {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:4px;';
+    div.innerHTML = `
+      <div>
+        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);">${f.name} — ${qty}${unit}</div>
+        <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">${cals} kcal · ${prot}g P · ${carb}g C · ${fat}g F</div>
+      </div>
+      <button onclick="this.parentElement.remove();recalcMealTotals('${activeMealTarget}')"
+        style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;">✕</button>`;
+    ingEl.appendChild(div);
+  }
+
+  // Add to the macro fields
+  const addNum = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = (+el.value||0) + val;
+  };
+  addNum(`n-${activeMealTarget}-cal`,  cals);
+  addNum(`n-${activeMealTarget}-prot`, prot);
+  addNum(`n-${activeMealTarget}-carb`, carb);
+  addNum(`n-${activeMealTarget}-fat`,  fat);
+  updateNutritionTotals();
+  closeFoodSearch();
+}
+
+function recalcMealTotals(mealId) {
+  // Recalc from remaining ingredient rows (not perfect but avoids full state tracking)
+  updateNutritionTotals();
+}
+
+function openFoodSearch(mealTarget) {
+  activeMealTarget = mealTarget;
+  const popup = document.getElementById('food-search-popup');
+  if (popup) {
+    popup.style.display = 'block';
+    document.getElementById('popup-search-input')?.focus();
+  }
+}
+
+function closeFoodSearch() {
+  const popup = document.getElementById('food-search-popup');
+  if (popup) popup.style.display = 'none';
+  activeMealTarget = null;
+  window._selectedFoodIdx = null;
+  const inp = document.getElementById('popup-search-input');
+  if (inp) inp.value = '';
+  const res = document.getElementById('popup-search-results');
+  if (res) res.innerHTML = '';
+}
+
+function renderFoodTable() {
+  const el = document.getElementById('food-db-table');
+  if (!el) return;
+  const q = (document.getElementById('food-db-search')?.value || '').toLowerCase();
+  const foods = q ? foodDatabase.filter(f => f.name.toLowerCase().includes(q)) : foodDatabase;
+  if (!foods.length) { el.innerHTML = '<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:12px;">No foods loaded yet. Click RELOAD FROM GITHUB.</div>'; return; }
+
+  el.innerHTML = `<table class="tbl" style="width:100%;font-size:0.65rem;">
+    <tr><th>FOOD</th><th>SERVING</th><th>KCAL</th><th>PROT</th><th>CARBS</th><th>FAT</th><th></th></tr>
+    ${foods.slice(0,100).map((f,i) => `
+      <tr style="${f.custom?'color:var(--accent2);':''}">
+        <td>${f.name}${f.custom?' ★':''}</td>
+        <td>${f.serving}</td>
+        <td>${f.calories}</td>
+        <td>${f.protein}g</td>
+        <td>${f.carbs}g</td>
+        <td>${f.fat}g</td>
+        <td style="text-align:center;cursor:pointer;" onclick="openFoodSearchWithIdx(${foodDatabase.indexOf(f)})">+</td>
+      </tr>`).join('')}
+    ${foods.length > 100 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);">Showing 100 of ${foods.length} — search to filter</td></tr>` : ''}
+  </table>`;
+}
+
+function openFoodSearchWithIdx(foodIdx) {
+  // Quick-add from the table — opens popup pre-loaded with that food
+  window._selectedFoodIdx = foodIdx;
+  const f = foodDatabase[foodIdx];
+  if (!f) return;
+  // Ask which meal
+  const target = prompt(`Add "${f.name}" to which meal?\n1 = Breakfast\n2 = Lunch\n3 = Dinner\n4 = Snack\n(Enter 1-4)`);
+  const map = {'1':'bk','2':'ln','3':'dn','4':'sn'};
+  activeMealTarget = map[target?.trim()] || 'ln';
+  if (!map[target?.trim()]) { activeMealTarget = 'ln'; }
+  // Use popup qty default
+  document.getElementById('popup-qty').value = '100';
+  document.getElementById('popup-unit').value = 'g';
+  confirmAddFoodToMeal();
+}
+
+function openAddFoodModal() {
+  const panel = document.getElementById('add-food-panel');
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveCustomFood() {
+  const name = document.getElementById('nf-name')?.value?.trim();
+  if (!name) { toast('Enter a food name'); return; }
+  const food = {
+    name,
+    serving:  document.getElementById('nf-serving')?.value || '100g',
+    calories: parseFloat(document.getElementById('nf-cal')?.value)  || 0,
+    protein:  parseFloat(document.getElementById('nf-prot')?.value) || 0,
+    carbs:    parseFloat(document.getElementById('nf-carb')?.value) || 0,
+    fat:      parseFloat(document.getElementById('nf-fat')?.value)  || 0,
+    fiber:    parseFloat(document.getElementById('nf-fiber')?.value)|| 0,
+    sodium:   parseFloat(document.getElementById('nf-sodium')?.value)||0,
+    custom:   true
+  };
+
+  // Save to Firebase
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('fooddb').doc('custom').get();
+    const existing = doc.exists ? (doc.data().foods || []) : [];
+    existing.push(food);
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('fooddb').doc('custom').set({ foods: existing });
+    foodDatabase.push(food);
+    renderFoodTable();
+    document.getElementById('add-food-panel').style.display = 'none';
+    // Clear fields
+    ['nf-name','nf-serving','nf-cal','nf-prot','nf-carb','nf-fat','nf-fiber','nf-sodium']
+      .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    toast(`✓ "${name}" added to database`);
+  } catch(e) { toast('Save failed: ' + e.message); }
+}
+
+// ── Recipe maker ──
+function addIngredientToRecipe(foodIdx) {
+  const f    = foodDatabase[foodIdx];
+  const qty  = parseFloat(document.getElementById('recipe-qty')?.value)  || 100;
+  const unit = document.getElementById('recipe-unit')?.value || 'g';
+  const grams = qty * (UNIT_TO_G[unit] || 1);
+  const scale = grams / 100;
+
+  const ing = {
+    name:   f.name,
+    qty, unit, grams,
+    cals:   Math.round(f.calories * scale),
+    prot:   +((f.protein * scale).toFixed(1)),
+    carb:   +((f.carbs   * scale).toFixed(1)),
+    fat:    +((f.fat     * scale).toFixed(1)),
+    fiber:  +((f.fiber   * scale).toFixed(1)),
+  };
+  recipeIngredients.push(ing);
+  renderRecipeIngredients();
+  // Clear search
+  const si = document.getElementById('recipe-search'); if (si) si.value = '';
+  const sr = document.getElementById('recipe-results'); if (sr) sr.innerHTML = '';
+}
+
+function renderRecipeIngredients() {
+  const el = document.getElementById('recipe-ingredients');
+  if (!el) return;
+  if (!recipeIngredients.length) { el.innerHTML = ''; updateRecipeTotals(); return; }
+
+  el.innerHTML = recipeIngredients.map((ing, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;
+      background:var(--bg3);border:1px solid var(--border);margin-bottom:4px;">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">${ing.name} — ${ing.qty}${ing.unit}</div>
+        <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);">
+          ${ing.cals} kcal · ${ing.prot}g P · ${ing.carb}g C · ${ing.fat}g F</div>
+      </div>
+      <button onclick="recipeIngredients.splice(${i},1);renderRecipeIngredients()"
+        style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;padding:4px;">✕</button>
+    </div>`).join('');
+  updateRecipeTotals();
+}
+
+function updateRecipeTotals() {
+  const el = document.getElementById('recipe-totals');
+  if (!el) return;
+  if (!recipeIngredients.length) { el.innerHTML = ''; updateRecipePortionPreview(); return; }
+  const tot = recipeIngredients.reduce((a,b) => ({
+    cals: a.cals+b.cals, prot: a.prot+b.prot, carb: a.carb+b.carb, fat: a.fat+b.fat
+  }), {cals:0,prot:0,carb:0,fat:0});
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;">
+    ${[['CALORIES',tot.cals,'kcal','var(--accent2)'],['PROTEIN',tot.prot,'g','#4caf50'],
+       ['CARBS',tot.carb,'g','#ff9800'],['FAT',tot.fat,'g','#7986cb']].map(([l,v,u,c])=>`
+    <div style="background:var(--bg3);padding:8px;text-align:center;border:1px solid var(--border);">
+      <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);">${l}</div>
+      <div style="font-family:var(--font-display);font-size:1.2rem;color:${c};">${typeof v==='number'?v.toFixed(v<10?1:0):v}</div>
+      <div style="font-family:var(--font-mono);font-size:0.48rem;color:var(--text-dim);">${u}</div>
+    </div>`).join('')}
+  </div>`;
+  updateRecipePortionPreview();
+}
+
+function updateRecipePortionPreview() {
+  const el      = document.getElementById('recipe-portion-preview');
+  const portion = parseFloat(document.getElementById('recipe-portion')?.value) || 1;
+  const total   = parseFloat(document.getElementById('recipe-total-servings')?.value) || 1;
+  if (!el || !recipeIngredients.length) { if(el) el.textContent=''; return; }
+  const ratio = portion / total;
+  const tots  = recipeIngredients.reduce((a,b)=>({cals:a.cals+b.cals,prot:a.prot+b.prot,carb:a.carb+b.carb,fat:a.fat+b.fat}),{cals:0,prot:0,carb:0,fat:0});
+  el.textContent = `Your portion: ${Math.round(tots.cals*ratio)} kcal · ${(tots.prot*ratio).toFixed(1)}g protein · ${(tots.carb*ratio).toFixed(1)}g carbs · ${(tots.fat*ratio).toFixed(1)}g fat`;
+}
+
+function addRecipeToMeal() {
+  const portion = parseFloat(document.getElementById('recipe-portion')?.value) || 1;
+  const total   = parseFloat(document.getElementById('recipe-total-servings')?.value) || 1;
+  const target  = document.getElementById('recipe-meal-target')?.value || 'ln';
+  if (!recipeIngredients.length) { toast('Add ingredients first'); return; }
+
+  const ratio = portion / total;
+  const tots  = recipeIngredients.reduce((a,b)=>({cals:a.cals+b.cals,prot:a.prot+b.prot,carb:a.carb+b.carb,fat:a.fat+b.fat}),{cals:0,prot:0,carb:0,fat:0});
+  const name  = document.getElementById('recipe-name')?.value || 'Recipe';
+
+  // Add to the actual meal target
+  const realTarget = target === 'sn' ? null : target;
+  if (realTarget) {
+    const addNum = (id, val) => { const el=document.getElementById(id); if(el) el.value=(+el.value||0)+val; };
+    addNum(`n-${realTarget}-cal`,  Math.round(tots.cals*ratio));
+    addNum(`n-${realTarget}-prot`, +((tots.prot*ratio).toFixed(1)));
+    addNum(`n-${realTarget}-carb`, +((tots.carb*ratio).toFixed(1)));
+    addNum(`n-${realTarget}-fat`,  +((tots.fat*ratio).toFixed(1)));
+    const foodNote = document.getElementById(`n-${realTarget}-food`);
+    if (foodNote) foodNote.value = (foodNote.value ? foodNote.value+', ' : '') + name;
+    // Show in ingredients area
+    const ingEl = document.getElementById(`${realTarget}-ingredients`);
+    if (ingEl) {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:4px;';
+      div.innerHTML = `<div><div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--accent2);">${name} (${portion}/${total} serving)</div>
+        <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">${Math.round(tots.cals*ratio)} kcal · ${(tots.prot*ratio).toFixed(1)}g P</div></div>
+        <button onclick="this.parentElement.remove();updateNutritionTotals()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;">✕</button>`;
+      ingEl.appendChild(div);
+    }
+    updateNutritionTotals();
+  } else {
+    // Snack
+    addSnack();
+    const sn = snackCount;
+    const el = document.getElementById(`n-sk${sn}-cal`); if(el) el.value = Math.round(tots.cals*ratio);
+    const ep = document.getElementById(`n-sk${sn}-prot`); if(ep) ep.value = (tots.prot*ratio).toFixed(1);
+    const ec = document.getElementById(`n-sk${sn}-carb`); if(ec) ec.value = (tots.carb*ratio).toFixed(1);
+    const ef = document.getElementById(`n-sk${sn}-fat`);  if(ef) ef.value = (tots.fat*ratio).toFixed(1);
+    const ef2= document.getElementById(`n-sk${sn}-food`); if(ef2) ef2.value = name;
+    updateNutritionTotals();
+  }
+
+  toast(`✓ ${name} added to ${target === 'sn' ? 'snack' : ['breakfast','lunch','dinner'][['bk','ln','dn'].indexOf(target)]}`);
+  nutTab('meals'); // Switch back to meals view
+}
+
+async function saveRecipe() {
+  const name = document.getElementById('recipe-name')?.value?.trim();
+  if (!name || !recipeIngredients.length) { toast('Name your recipe and add ingredients'); return; }
+  const recipe = {
+    name,
+    servings: parseFloat(document.getElementById('recipe-servings')?.value) || 1,
+    ingredients: [...recipeIngredients],
+    saved: new Date().toISOString()
+  };
+  savedRecipes.push(recipe);
+  try {
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('fooddb').doc('recipes').set({ recipes: savedRecipes });
+    renderSavedRecipes();
+    toast(`✓ Recipe "${name}" saved`);
+  } catch(e) { toast('Save failed: ' + e.message); }
+}
+
+function renderSavedRecipes() {
+  const el = document.getElementById('saved-recipes-list');
+  if (!el) return;
+  if (!savedRecipes.length) { el.innerHTML = '<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);">No saved recipes yet.</div>'; return; }
+  el.innerHTML = savedRecipes.map((r,i) => {
+    const tots = r.ingredients.reduce((a,b)=>({cals:a.cals+b.cals,prot:a.prot+b.prot}),{cals:0,prot:0});
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;
+      background:var(--bg3);border:1px solid var(--border);margin-bottom:6px;">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">${r.name}</div>
+        <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);">
+          ${r.ingredients.length} ingredients · ${Math.round(tots.cals)} kcal · ${tots.prot.toFixed(1)}g protein total</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="loadRecipeIntoMaker(${i})" class="btn btn-s" style="font-size:0.55rem;padding:3px 8px;">EDIT</button>
+        <button onclick="deleteSavedRecipe(${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadRecipeIntoMaker(idx) {
+  const r = savedRecipes[idx];
+  if (!r) return;
+  recipeIngredients = [...r.ingredients];
+  document.getElementById('recipe-name').value = r.name;
+  renderRecipeIngredients();
+  nutTab('recipe');
+}
+
+async function deleteSavedRecipe(idx) {
+  if (!confirm('Delete this recipe?')) return;
+  savedRecipes.splice(idx, 1);
+  await db.collection('userdata').doc(SESSION.username)
+    .collection('fooddb').doc('recipes').set({ recipes: savedRecipes });
+  renderSavedRecipes();
+}
+
+function nutTab(tab) {
+  ['meals','recipe','foods'].forEach(t => {
+    const panel = document.getElementById(`npanel-${t}`);
+    const btn   = document.getElementById(`ntab-${t}`);
+    if (panel) panel.style.display = t === tab ? 'block' : 'none';
+    if (btn)   btn.className = t === tab ? 'btn btn-p' : 'btn btn-s';
+  });
+  if (tab === 'foods' && !foodDatabase.length) loadFoodDatabase();
+  if (tab === 'recipe' && !foodDatabase.length) loadFoodDatabase();
+}
+
 // ── Nutrition: water tracker state ──
 let todayWaterOz = 0;
 const WATER_GOAL_OZ = 96;
@@ -2923,9 +3546,15 @@ async function autoPopulateNutritionLog() {
   if (dateEl && !dateEl.value) dateEl.value = today;
   const targetDate = dateEl?.value || today;
 
+  // Ensure meals tab is shown
+  nutTab('meals');
+
+  // Load food DB if empty
+  if (!foodDatabase.length) loadFoodDatabase();
+
   // Reset snacks and meal fields
   snackCount = 0;
-  document.getElementById('snack-container').innerHTML = '';
+  const sc = document.getElementById('snack-container'); if (sc) sc.innerHTML = '';
   const meals = ['bk','ln','dn'];
   meals.forEach(m => {
     const foodEl = document.getElementById(`n-${m}-food`);
@@ -2934,6 +3563,8 @@ async function autoPopulateNutritionLog() {
       const el = document.getElementById(`n-${m}-${f}`);
       if (el) el.value = '';
     });
+    const ingEl = document.getElementById(`${m}-ingredients`);
+    if (ingEl) ingEl.innerHTML = '';
   });
   todayWaterOz = 0;
 
@@ -4854,11 +5485,79 @@ function findExerciseById(itemId) {
   return null;
 }
 
+// Update section progress counters without full re-render
+function updateSectionProgress(dayId) {
+  const W = SESSION.gender === 'female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
+  const w = W[dayId];
+  if (!w) return;
+  const allItems = [...w.warmup, ...w.exercises, ...w.cooldown];
+  const checkedCount = allItems.filter(i => workoutChecks[i.id]).length;
+  const pct = Math.round(checkedCount / allItems.length * 100);
+  // Update progress bar
+  const bar = document.querySelector('#sec-workout .prog-fill, [id^="wk-prog-fill"]');
+  // Update % display
+  const pctEl = document.querySelector('[id^="wk-pct"]');
+  // Simpler: just update elements by content search
+  document.querySelectorAll('.ex-block').forEach(block => {
+    const id = block.id?.replace('exblock-', '');
+    if (!id) return;
+    const checked = !!workoutChecks[id];
+    const hdrCheck = block.querySelector('[onclick*="toggleCheck"]');
+    if (hdrCheck) {
+      hdrCheck.style.border = `2px solid ${checked ? '#4caf50' : 'var(--border2)'}`;
+      hdrCheck.style.background = checked ? '#4caf5022' : 'transparent';
+      hdrCheck.innerHTML = checked ? '<span style="color:#4caf50;font-size:0.9rem;">✓</span>' : '';
+    }
+  });
+}
+
 async function toggleCheck(itemId, dayId) {
   // Toggle the check state
   workoutChecks[itemId] = !workoutChecks[itemId];
+  const checked = workoutChecks[itemId];
 
-  // Instant save to Firebase
+  // Update DOM in-place — avoid full re-render which resets open/collapsed state
+  const block = document.getElementById(`exblock-${itemId}`);
+  if (block) {
+    // Check if all sets are done (determines whether to collapse)
+    const savedSets = exerciseActuals[itemId]?.sets || [];
+    const item = findExerciseById(itemId);
+    let numSets = item?.sets ? 3 : 1;
+    if (item?.sets) {
+      const s = item.sets.toLowerCase();
+      if (s.startsWith('5×5') || s.startsWith('5x5')) numSets = 5;
+      else if (s.startsWith('4×') || s.startsWith('4x')) numSets = 4;
+    }
+    const allSetsDone = savedSets.filter(s => s?.done).length >= numSets;
+    const shouldCollapse = checked && allSetsDone;
+
+    block.style.opacity    = shouldCollapse ? '0.55' : '1';
+    block.style.borderLeft = checked ? `3px solid ${shouldCollapse ? '#4caf50' : '#4caf5066'}` : '';
+    const body = block.querySelector('.ex-body');
+    if (body && shouldCollapse) body.style.display = 'none';
+    if (body && !shouldCollapse) body.style.display = '';
+    const nameEl = block.querySelector('.ex-name');
+    if (nameEl) {
+      nameEl.style.textDecoration = shouldCollapse ? 'line-through' : '';
+      nameEl.style.color = shouldCollapse ? 'var(--text-dim)' : checked ? '#4caf50' : '';
+    }
+    // Update the header checkbox
+    const hdrCheck = block.querySelector('[onclick*="toggleCheck"]');
+    if (hdrCheck) {
+      hdrCheck.style.border = `2px solid ${checked ? '#4caf50' : 'var(--border2)'}`;
+      hdrCheck.style.background = checked ? '#4caf5022' : 'transparent';
+      hdrCheck.innerHTML = checked ? '<span style="color:#4caf50;font-size:0.9rem;">✓</span>' : '';
+    }
+    // Update the bottom MARK AS COMPLETE button
+    const markBtn = block.querySelector('button[onclick*="toggleCheck"]');
+    if (markBtn) {
+      markBtn.style.background = checked ? '#4caf5022' : 'var(--bg3)';
+      markBtn.style.color = checked ? '#4caf50' : 'var(--text-dim)';
+      markBtn.textContent = checked ? '✓ MARKED COMPLETE — CLICK TO UNDO' : '☐ MARK AS COMPLETE';
+    }
+  }
+
+  // Save to Firebase
   const today = localDateStr();
   try {
     await db.collection('userdata').doc(SESSION.username)
@@ -4869,9 +5568,6 @@ async function toggleCheck(itemId, dayId) {
         updated: new Date().toISOString()
       });
   } catch(e) { console.error('Check save failed:', e); }
-
-  // Re-render the workout view (updates progress bar + checkboxes)
-  showWorkoutDay(dayId);
 }
 
 async function saveSetData(itemId, dayId, setIndex) {
@@ -4918,25 +5614,58 @@ async function toggleSetDone(itemId, dayId, setIndex) {
   if (!exerciseActuals[itemId]) exerciseActuals[itemId] = { sets: [] };
   if (!exerciseActuals[itemId].sets[setIndex]) exerciseActuals[itemId].sets[setIndex] = {};
 
-  // Capture current reps/weight before re-render
+  // Capture current reps/weight from DOM before saving
   const repsEl   = document.getElementById(`set-reps-${itemId}-${setIndex}`);
   const weightEl = document.getElementById(`set-wt-${itemId}-${setIndex}`);
   if (repsEl?.value)   exerciseActuals[itemId].sets[setIndex].reps   = repsEl.value;
   if (weightEl?.value) exerciseActuals[itemId].sets[setIndex].weight = weightEl.value;
 
-  exerciseActuals[itemId].sets[setIndex].done = !exerciseActuals[itemId].sets[setIndex].done;
+  const nowDone = !exerciseActuals[itemId].sets[setIndex].done;
+  exerciseActuals[itemId].sets[setIndex].done = nowDone;
 
-  // Check if all sets done → auto-check the exercise
-  const setsDone = exerciseActuals[itemId].sets.filter(s => s?.done).length;
-  const item = findExerciseById(itemId);
-  if (item) {
-    const s = item.sets?.toLowerCase() || '';
-    let numSets = 3;
-    if (s.startsWith('5×5') || s.startsWith('5x5')) numSets = 5;
-    else if (s.startsWith('4×') || s.startsWith('4x')) numSets = 4;
-    if (setsDone >= numSets) workoutChecks[itemId] = true;
+  // Update the ✓ checkbox cell in-place (no full re-render)
+  const setDoneEl = document.querySelector(`[onclick*="toggleSetDone('${itemId}','${dayId}',${setIndex})"]`);
+  if (setDoneEl) {
+    setDoneEl.style.border    = `2px solid ${nowDone ? '#4caf50' : 'var(--border2)'}`;
+    setDoneEl.style.background = nowDone ? '#4caf5022' : 'transparent';
+    setDoneEl.innerHTML       = nowDone ? '<span style="color:#4caf50;font-size:0.85rem;">✓</span>' : '';
+    // Dim the row slightly
+    const row = setDoneEl.closest('tr');
+    if (row) row.style.opacity = nowDone ? '0.65' : '1';
   }
 
+  // Count how many sets are now done
+  const setsDone = exerciseActuals[itemId].sets.filter(s => s?.done).length;
+
+  // Only auto-check + collapse when ALL sets are done
+  const item = findExerciseById(itemId);
+  let numSets = item?.sets ? 3 : 1; // warmup/cooldown = 1 "set"
+  if (item?.sets) {
+    const s = item.sets.toLowerCase();
+    if (s.startsWith('5×5') || s.startsWith('5x5')) numSets = 5;
+    else if (s.startsWith('4×') || s.startsWith('4x')) numSets = 4;
+    else if (s.startsWith('3×') || s.startsWith('3x')) numSets = 3;
+  }
+
+  const allDone = setsDone >= numSets;
+  if (allDone) {
+    workoutChecks[itemId] = true;
+    // Now collapse the block since all sets are done
+    const block = document.getElementById(`exblock-${itemId}`);
+    if (block) {
+      block.style.opacity    = '0.55';
+      block.style.borderLeft = '3px solid #4caf50';
+      const body = block.querySelector('.ex-body');
+      if (body) body.style.display = 'none';
+      const nameEl = block.querySelector('.ex-name');
+      if (nameEl) { nameEl.style.textDecoration = 'line-through'; nameEl.style.color = 'var(--text-dim)'; }
+    }
+  }
+
+  // Update calorie badge
+  updateItemCalBadge(itemId);
+
+  // Save to Firebase
   const today = localDateStr();
   try {
     await db.collection('userdata').doc(SESSION.username)
@@ -4948,7 +5677,8 @@ async function toggleSetDone(itemId, dayId, setIndex) {
       });
   } catch(e) { console.error('Set done save failed:', e); }
 
-  showWorkoutDay(dayId);
+  // Update section progress counter without full re-render
+  updateSectionProgress(dayId);
 }
 
 async function markWorkoutComplete(dayId) {
