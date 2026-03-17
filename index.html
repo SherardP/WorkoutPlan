@@ -1273,34 +1273,47 @@ body.theme-female .goal-chip{border-radius:20px;}
       <!-- ══ FOOD DATABASE TAB ══ -->
       <div id="npanel-foods" style="display:none;">
         <div class="card mb16">
-          <div class="card-label">FOOD DATABASE</div>
+          <div class="card-label">INGREDIENTS DATABASE</div>
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-            <div class="card-title" style="margin:0;">INGREDIENTS</div>
+            <div class="card-title" style="margin:0;">GROCERY INGREDIENTS</div>
             <div style="display:flex;gap:8px;">
-              <button onclick="loadFoodDatabase()" class="btn btn-s" style="font-size:0.6rem;">⟳ RELOAD FROM GITHUB</button>
-              <button onclick="openAddFoodModal()" class="btn btn-p" style="font-size:0.6rem;">+ ADD FOOD</button>
+              <button onclick="loadFoodDatabase()" class="btn btn-s" style="font-size:0.6rem;">⟳ RELOAD</button>
+              <button onclick="openAddFoodPanel()" class="btn btn-p" style="font-size:0.6rem;"
+                id="add-ingredient-btn" style="display:none;">+ ADD INGREDIENT</button>
             </div>
           </div>
           <div id="food-db-status" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:10px;"></div>
 
           <!-- Filter bar -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
-            <input type="text" id="food-db-search" placeholder="Search foods..." oninput="foodDbFilter.search=this.value;renderFoodTable()"
+            <input type="text" id="food-db-search" placeholder="Search foods, brands..." oninput="foodDbFilter.search=this.value;renderFoodTable()"
               style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
               font-family:var(--font-mono);font-size:0.75rem;padding:7px 10px;outline:none;">
-            <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);cursor:pointer;
-              padding:6px 10px;background:var(--bg3);border:1px solid var(--border);">
+            <select id="food-db-cat" onchange="foodDbFilter.category=this.value;renderFoodTable()"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.7rem;padding:7px 8px;outline:none;">
+              <option value="">All Categories</option>
+              <option value="protein">Protein</option>
+              <option value="grain">Grains</option>
+              <option value="vegetable">Vegetables</option>
+              <option value="fruit">Fruit</option>
+              <option value="dairy">Dairy</option>
+              <option value="oil_fat">Oils & Fats</option>
+              <option value="nut_seed">Nuts & Seeds</option>
+              <option value="legume">Legumes</option>
+              <option value="condiment">Condiments</option>
+              <option value="spice">Spices</option>
+              <option value="supplement">Supplements</option>
+              <option value="snack">Snacks</option>
+              <option value="beverage">Beverages</option>
+              <option value="sweetener">Sweeteners</option>
+              <option value="other">Other</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;
+              color:var(--text-dim);cursor:pointer;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);">
               <input type="checkbox" id="food-filter-keto" onchange="foodDbFilter.keto=this.checked;renderFoodTable()" style="accent-color:#4caf50;">
               KETO ONLY
             </label>
-            <select onchange="foodDbFilter.source=this.value;renderFoodTable()"
-              style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
-              font-family:var(--font-mono);font-size:0.7rem;padding:7px 8px;outline:none;">
-              <option value="all">All Sources</option>
-              <option value="github">GitHub DB</option>
-              <option value="community">★ Shared</option>
-              <option value="personal">My Foods</option>
-            </select>
           </div>
 
           <div id="food-db-table" style="overflow-x:auto;"></div>
@@ -1336,28 +1349,53 @@ body.theme-female .goal-chip{border-radius:20px;}
 
         <!-- Add custom food modal inline -->
         <div class="card mb16" id="add-food-panel" style="display:none;border:1px solid var(--accent2);">
-          <div class="card-label">ADD CUSTOM FOOD</div>
-          <div class="card-title" style="margin-bottom:12px;">NEW INGREDIENT</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div>
+              <div class="card-label">INGREDIENT DATABASE</div>
+              <div class="card-title" style="margin:0;" id="nf-panel-title">ADD INGREDIENT</div>
+            </div>
+            <input type="hidden" id="nf-edit-idx" value="">
+          </div>
           <div class="log-grid">
-            <div class="lf full"><label>FOOD NAME</label><input type="text" id="nf-name" placeholder="e.g. Brown Rice (cooked)"></div>
-            <div class="lf"><label>SERVING SIZE</label><input type="text" id="nf-serving" placeholder="e.g. 100g"></div>
-            <div class="lf"><label>CALORIES</label><input type="number" id="nf-cal" placeholder="0"></div>
+            <div class="lf full"><label>INGREDIENT NAME</label><input type="text" id="nf-name" placeholder="e.g. Rolled Oats, Old-Fashioned"></div>
+            <div class="lf"><label>BRAND (optional)</label><input type="text" id="nf-brand" placeholder="e.g. Bob's Red Mill"></div>
+            <div class="lf"><label>CATEGORY</label>
+              <select id="nf-category" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.8rem;padding:8px;outline:none;width:100%;">
+                <option value="">— Select —</option>
+                <option value="protein">Protein (meat, fish, eggs, dairy)</option>
+                <option value="grain">Grains & Cereals</option>
+                <option value="vegetable">Vegetables</option>
+                <option value="fruit">Fruit</option>
+                <option value="legume">Legumes & Beans</option>
+                <option value="nut_seed">Nuts & Seeds</option>
+                <option value="oil_fat">Oils & Fats</option>
+                <option value="dairy">Dairy & Alternatives</option>
+                <option value="condiment">Condiments & Sauces</option>
+                <option value="spice">Spices & Herbs</option>
+                <option value="supplement">Supplements & Powders</option>
+                <option value="beverage">Beverages</option>
+                <option value="snack">Packaged Snacks</option>
+                <option value="sweetener">Sweeteners</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="lf"><label>SERVING SIZE</label><input type="text" id="nf-serving" placeholder="e.g. 100g or 1 cup (40g)"></div>
+            <div class="lf"><label>CALORIES (kcal)</label><input type="number" id="nf-cal" placeholder="0"></div>
             <div class="lf"><label>PROTEIN (g)</label><input type="number" id="nf-prot" placeholder="0" step="0.1"></div>
             <div class="lf"><label>CARBS (g)</label><input type="number" id="nf-carb" placeholder="0" step="0.1"></div>
             <div class="lf"><label>FAT (g)</label><input type="number" id="nf-fat" placeholder="0" step="0.1"></div>
             <div class="lf"><label>FIBER (g)</label><input type="number" id="nf-fiber" placeholder="0" step="0.1"></div>
             <div class="lf"><label>SODIUM (mg)</label><input type="number" id="nf-sodium" placeholder="0"></div>
+            <div class="lf"><label>SUGAR (g)</label><input type="number" id="nf-sugar" placeholder="0" step="0.1"></div>
+            <div class="lf"><label>SATURATED FAT (g)</label><input type="number" id="nf-satfat" placeholder="0" step="0.1"></div>
           </div>
-          <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap;">
+          <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--border2);margin:8px 0;">
+            Ingredients are grocery store items you buy — not prepared meals or dishes.
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
             <button onclick="saveCustomFood()" class="btn btn-p" style="font-size:0.65rem;">SAVE TO DATABASE</button>
-            <button onclick="document.getElementById('add-food-panel').style.display='none'" class="btn btn-s" style="font-size:0.65rem;">CANCEL</button>
-            <label style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);cursor:pointer;margin-left:auto;">
-              <input type="checkbox" id="nf-share" style="accent-color:var(--accent2);">
-              Share with all users
-            </label>
-          </div>
-          <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--border2);margin-top:6px;">
-            ★ Shared foods are visible to everyone. Personal foods are only visible to you.
+            <button onclick="closeAddFoodPanel()" class="btn btn-s" style="font-size:0.65rem;">CANCEL</button>
           </div>
         </div>
       </div>
@@ -1522,6 +1560,18 @@ body.theme-female .goal-chip{border-radius:20px;}
       <div class="card-title" style="margin-bottom:8px;">FOOD DATABASE MIGRATION</div>
       <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);line-height:1.7;margin-bottom:14px;">
         Run these steps in order. Each step is safe to re-run.
+      </div>
+
+      <!-- Step 0: Import GitHub XLSX → Ingredients -->
+      <div style="padding:12px;background:var(--bg3);border-left:3px solid #4caf50;margin-bottom:10px;">
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:#4caf50;letter-spacing:.1em;margin-bottom:6px;">STEP 0 — IMPORT GITHUB XLSX → fooddb/Ingredients</div>
+        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:8px;">
+          Fetches FoodNutrition.xlsx from GitHub and imports all rows into the shared Ingredients database. Run once to migrate off GitHub.
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-s" onclick="migrateStep('preview_github')" style="font-size:0.62rem;">🔍 PREVIEW</button>
+          <button class="btn btn-p" onclick="migrateStep('run_github')"    style="font-size:0.62rem;">▶ IMPORT ALL</button>
+        </div>
       </div>
 
       <!-- Step 1: custom → Ingredients -->
@@ -3125,7 +3175,7 @@ let activeMealTarget  = null;
 let recipeIngredients = [];
 let savedRecipes      = []; // personal — userdata/{u}/fooddb/recipes
 let communityRecipes  = []; // shared   — fooddb/Recipes
-let foodDbFilter      = { search:'', keto:false, source:'all' };
+let foodDbFilter = { search:'', keto:false, source:'all', category:'' };
 
 // ── Keto classification ──
 // Keto = ≤10% of calories from carbs, and has some fat content
@@ -3299,14 +3349,18 @@ async function loadFoodDatabase() {
   const statusEl = document.getElementById('food-db-status');
   if (statusEl) statusEl.textContent = 'Loading...';
 
-  // ── Custom foods from SHARED collection (visible to all users) ──
+  // Show add button only for admins
+  const addBtn = document.getElementById('add-ingredient-btn');
+  if (addBtn) addBtn.style.display = SESSION.isAdmin ? '' : 'none';
+
+  // ── Primary source: shared Ingredients collection ──
   let shared = [];
   try {
     const doc = await db.collection('fooddb').doc('Ingredients').get();
     shared = doc.exists ? (doc.data().foods || []) : [];
-  } catch(e) {}
+  } catch(e) { console.warn('Ingredients load failed:', e.message); }
 
-  // ── Also load this user's private custom foods (legacy + personal) ──
+  // ── Personal foods (user's own additions) ──
   let userCustom = [];
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
@@ -3314,49 +3368,19 @@ async function loadFoodDatabase() {
     userCustom = doc.exists ? (doc.data().foods || []) : [];
   } catch(e) {}
 
-  // ── Load XLSX from GitHub ──
-  try {
-    const resp = await fetch(FOOD_DB_URL);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const buf  = await resp.arrayBuffer();
-    const wb   = XLSX.read(new Uint8Array(buf), { type:'array' });
-    const ws   = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
-
-    foodDatabase = rows.map(r => {
-      const g = key => {
-        const match = Object.keys(r).find(x => x.trim().toLowerCase().includes(key));
-        return match ? r[match] : '';
-      };
-      return {
-        name:     String(g('name') || g('food') || g('ingredient') || '').trim(),
-        serving:  String(g('serving') || g('portion') || '100g').trim(),
-        calories: parseFloat(g('calor') || g('kcal') || g('cal')) || 0,
-        protein:  parseFloat(g('protein') || g('prot')) || 0,
-        carbs:    parseFloat(g('carb')) || 0,
-        fat:      parseFloat(g('fat')) || 0,
-        fiber:    parseFloat(g('fiber') || g('fibre')) || 0,
-        sodium:   parseFloat(g('sodium') || g('salt')) || 0,
-        source:   'github',
-        custom:   false
-      };
-    }).filter(f => f.name);
-
-    if (statusEl) statusEl.textContent =
-      `✓ ${foodDatabase.length} foods from GitHub · ${shared.length} community · ${userCustom.length} personal`;
-  } catch(e) {
-    console.warn('XLSX load failed:', e.message);
-    if (statusEl) statusEl.textContent = `⚠ GitHub file unavailable: ${e.message}`;
-    foodDatabase = [];
-  }
-
-  // Merge: GitHub base + shared community + personal
-  const sharedFoods   = shared.map(f    => ({...f, custom:true, source:'community'}));
-  const personalFoods = userCustom.map(f => ({...f, custom:true, source:'personal'}));
-  foodDatabase = [...foodDatabase, ...sharedFoods, ...personalFoods];
+  // Merge and tag
+  foodDatabase = [
+    ...shared.map(f    => ({...f, source: f.source||'community'})),
+    ...userCustom.map(f => ({...f, source:'personal'})),
+  ].filter(f => f.name);
 
   // Tag keto on every entry
   foodDatabase = foodDatabase.map(f => ({...f, keto: isKeto(f)}));
+
+  if (statusEl) {
+    const ketoCount = foodDatabase.filter(f=>f.keto).length;
+    statusEl.textContent = `✓ ${foodDatabase.length} ingredients · ${ketoCount} keto-friendly`;
+  }
 
   // Load personal recipes
   try {
@@ -3540,58 +3564,79 @@ function renderFoodTable() {
   const el = document.getElementById('food-db-table');
   if (!el) return;
 
-  // Apply filters
-  const q      = foodDbFilter.search.toLowerCase();
-  const ketoOn = foodDbFilter.keto;
-  const src    = foodDbFilter.source;
+  const q        = (foodDbFilter.search||'').toLowerCase();
+  const ketoOn   = foodDbFilter.keto   || false;
+  const cat      = foodDbFilter.category || '';
 
   let foods = foodDatabase.filter(f => {
-    if (q && !f.name.toLowerCase().includes(q)) return false;
+    if (q && !f.name.toLowerCase().includes(q) &&
+        !(f.brand||'').toLowerCase().includes(q)) return false;
     if (ketoOn && !f.keto) return false;
-    if (src === 'community' && f.source !== 'community') return false;
-    if (src === 'personal'  && f.source !== 'personal')  return false;
-    if (src === 'github'    && f.source !== 'github')     return false;
+    if (cat && (f.category||'') !== cat) return false;
     return true;
   });
 
   const ketoLabel = f => f.keto
-    ? `<span style="font-size:0.48rem;padding:1px 5px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;margin-left:3px;">KETO</span>`
+    ? `<span style="font-size:0.45rem;padding:1px 4px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;">KETO</span>`
     : '';
-  const sourceBadge = s => {
-    if (s === 'community') return `<span style="font-size:0.48rem;padding:1px 5px;background:#ff980022;color:#ff9800;border:1px solid #ff980044;">★ SHARED</span>`;
-    if (s === 'personal')  return `<span style="font-size:0.48rem;padding:1px 5px;background:var(--accent2)22;color:var(--accent2);border:1px solid var(--accent2)44;">MY FOOD</span>`;
-    return '';
+
+  const catColor = {
+    protein:'#ef9a9a', grain:'#ffe082', vegetable:'#a5d6a7', fruit:'#f48fb1',
+    dairy:'#b3e5fc', oil_fat:'#ffcc80', nut_seed:'#bcaaa4', legume:'#c5e1a5',
+    condiment:'#e6ee9c', spice:'#ffab91', supplement:'#ce93d8', snack:'#80cbc4',
+    beverage:'#90caf9', sweetener:'#fff9c4'
   };
+  const catBadge = f => f.category
+    ? `<span style="font-size:0.45rem;padding:1px 5px;background:${catColor[f.category]||'var(--bg3)'}22;
+        color:${catColor[f.category]||'var(--border2)'};border:1px solid ${catColor[f.category]||'var(--border)'}44;">${f.category}</span>`
+    : '';
 
   if (!foods.length) {
-    el.innerHTML = '<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:12px;">No foods match the current filters.</div>';
+    el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:12px;">
+      No ingredients match the current filters.
+      ${!foodDatabase.length ? '<br><br>Run <strong>Admin → Import GitHub → Ingredients</strong> to populate the database.' : ''}</div>`;
     return;
   }
 
+  const isAdmin = SESSION.isAdmin;
+
   el.innerHTML = `
-    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:8px;">
-      Showing ${Math.min(foods.length,150)} of ${foods.length} · ${foodDatabase.filter(f=>f.keto).length} keto-friendly
+    <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-bottom:6px;">
+      ${foods.length} of ${foodDatabase.length} ingredients
     </div>
-    <table class="tbl" style="width:100%;font-size:0.62rem;">
+    <table class="tbl" style="width:100%;font-size:0.6rem;">
       <tr>
-        <th style="text-align:left;">FOOD</th>
-        <th>SERVING</th><th>KCAL</th><th>PROT</th><th>CARBS</th><th>FAT</th><th></th>
+        <th style="text-align:left;min-width:120px;">INGREDIENT</th>
+        <th style="text-align:left;">BRAND</th>
+        <th>SERVING</th>
+        <th>KCAL</th><th>PROT</th><th>CARBS</th><th>FAT</th>
+        <th></th>
       </tr>
-      ${foods.slice(0,150).map(f => `
-        <tr>
-          <td style="max-width:180px;line-height:1.5;">
-            ${f.name}${ketoLabel(f)}${sourceBadge(f.source||'')}
+      ${foods.slice(0,200).map(f => {
+        const idx = foodDatabase.indexOf(f);
+        return `<tr>
+          <td style="max-width:160px;line-height:1.6;">
+            ${f.name} ${ketoLabel(f)} ${catBadge(f)}
           </td>
-          <td style="text-align:center;">${f.serving}</td>
+          <td style="color:var(--text-dim);font-size:0.55rem;">${f.brand||'—'}</td>
+          <td style="text-align:center;">${f.serving||'100g'}</td>
           <td style="text-align:center;">${f.calories}</td>
           <td style="text-align:center;">${f.protein}g</td>
           <td style="text-align:center;">${f.carbs}g</td>
           <td style="text-align:center;">${f.fat}g</td>
-          <td style="text-align:center;cursor:pointer;color:var(--accent2);font-size:1rem;padding:2px 8px;"
-            onclick="openFoodSearchWithIdx(${foodDatabase.indexOf(f)})" title="Add to meal">+</td>
-        </tr>`).join('')}
-      ${foods.length > 150 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:8px;">
-        Showing 150 of ${foods.length} — use search to narrow results</td></tr>` : ''}
+          <td style="text-align:right;white-space:nowrap;">
+            <span onclick="openFoodSearchWithIdx(${idx})" title="Add to meal"
+              style="cursor:pointer;color:var(--accent2);padding:2px 6px;font-size:0.9rem;">+</span>
+            ${isAdmin ? `
+              <span onclick="editFood(${idx})" title="Edit"
+                style="cursor:pointer;color:var(--text-dim);padding:2px 5px;font-size:0.75rem;">✎</span>
+              <span onclick="deleteFood(${idx})" title="Delete"
+                style="cursor:pointer;color:var(--danger);padding:2px 5px;font-size:0.75rem;">✕</span>` : ''}
+          </td>
+        </tr>`;
+      }).join('')}
+      ${foods.length > 200 ? `<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:8px;">
+        Showing 200 of ${foods.length} — search to narrow</td></tr>` : ''}
     </table>`;
 }
 
@@ -3611,56 +3656,128 @@ function openFoodSearchWithIdx(foodIdx) {
   confirmAddFoodToMeal();
 }
 
-function openAddFoodModal() {
+function openAddFoodModal() { openAddFoodPanel(); }
+
+function openAddFoodPanel(editIdx) {
   const panel = document.getElementById('add-food-panel');
-  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  const titleEl = document.getElementById('nf-panel-title');
+  const idxEl = document.getElementById('nf-edit-idx');
+  if (!panel) return;
+
+  // Clear fields
+  ['nf-name','nf-brand','nf-serving','nf-cal','nf-prot','nf-carb','nf-fat',
+   'nf-fiber','nf-sodium','nf-sugar','nf-satfat'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const catEl = document.getElementById('nf-category');
+  if (catEl) catEl.value = '';
+  if (idxEl) idxEl.value = '';
+
+  if (editIdx !== undefined) {
+    // Pre-fill for edit
+    const f = foodDatabase[editIdx];
+    if (!f) return;
+    if (titleEl) titleEl.textContent = 'EDIT INGREDIENT';
+    if (idxEl)   idxEl.value = editIdx;
+    const set = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
+    set('nf-name',    f.name);
+    set('nf-brand',   f.brand);
+    set('nf-serving', f.serving);
+    set('nf-cal',     f.calories);
+    set('nf-prot',    f.protein);
+    set('nf-carb',    f.carbs);
+    set('nf-fat',     f.fat);
+    set('nf-fiber',   f.fiber);
+    set('nf-sodium',  f.sodium);
+    set('nf-sugar',   f.sugar);
+    set('nf-satfat',  f.satfat);
+    if (catEl) catEl.value = f.category || '';
+  } else {
+    if (titleEl) titleEl.textContent = 'ADD INGREDIENT';
+  }
+
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function closeAddFoodPanel() {
+  const panel = document.getElementById('add-food-panel');
+  if (panel) panel.style.display = 'none';
+}
+
+function editFood(idx) {
+  if (!SESSION.isAdmin) { toast('Admin access required'); return; }
+  openAddFoodPanel(idx);
+}
+
+async function deleteFood(idx) {
+  if (!SESSION.isAdmin) { toast('Admin access required'); return; }
+  const f = foodDatabase[idx];
+  if (!f) return;
+  if (!confirm(`Delete "${f.name}"${f.brand?' ('+f.brand+')':''}?\n\nThis removes it from the shared database.`)) return;
+
+  try {
+    const doc  = await db.collection('fooddb').doc('Ingredients').get();
+    let foods  = doc.exists ? (doc.data().foods||[]) : [];
+    const before = foods.length;
+    foods = foods.filter(fd => fd.name.toLowerCase() !== f.name.toLowerCase());
+    await db.collection('fooddb').doc('Ingredients').set({ foods });
+    toast(`✓ "${f.name}" deleted (${before - foods.length} removed)`);
+    await loadFoodDatabase();
+  } catch(e) { toast('Delete failed: ' + e.message); }
 }
 
 async function saveCustomFood() {
+  if (!SESSION.isAdmin) { toast('Admin access required to modify ingredients'); return; }
   const name = document.getElementById('nf-name')?.value?.trim();
-  if (!name) { toast('Enter a food name'); return; }
+  if (!name) { toast('Enter an ingredient name'); return; }
+
   const food = {
     name,
-    serving:  document.getElementById('nf-serving')?.value || '100g',
-    calories: parseFloat(document.getElementById('nf-cal')?.value)   || 0,
-    protein:  parseFloat(document.getElementById('nf-prot')?.value)  || 0,
-    carbs:    parseFloat(document.getElementById('nf-carb')?.value)  || 0,
-    fat:      parseFloat(document.getElementById('nf-fat')?.value)   || 0,
-    fiber:    parseFloat(document.getElementById('nf-fiber')?.value) || 0,
-    sodium:   parseFloat(document.getElementById('nf-sodium')?.value)|| 0,
+    brand:    document.getElementById('nf-brand')?.value?.trim()   || '',
+    category: document.getElementById('nf-category')?.value        || '',
+    serving:  document.getElementById('nf-serving')?.value?.trim() || '100g',
+    calories: parseFloat(document.getElementById('nf-cal')?.value)    || 0,
+    protein:  parseFloat(document.getElementById('nf-prot')?.value)   || 0,
+    carbs:    parseFloat(document.getElementById('nf-carb')?.value)   || 0,
+    fat:      parseFloat(document.getElementById('nf-fat')?.value)    || 0,
+    fiber:    parseFloat(document.getElementById('nf-fiber')?.value)  || 0,
+    sodium:   parseFloat(document.getElementById('nf-sodium')?.value) || 0,
+    sugar:    parseFloat(document.getElementById('nf-sugar')?.value)  || 0,
+    satfat:   parseFloat(document.getElementById('nf-satfat')?.value) || 0,
+    source:   'community',
+    custom:   true,
     addedBy:  SESSION.username,
-    added:    new Date().toISOString(),
+    updated:  new Date().toISOString(),
   };
 
-  const shareEl = document.getElementById('nf-share');
-  const shareWithAll = shareEl ? shareEl.checked : false;
-
   try {
-    if (shareWithAll) {
-      // Save to shared community collection — all users see it
-      const doc = await db.collection('fooddb').doc('Ingredients').get();
-      const existing = doc.exists ? (doc.data().foods || []) : [];
-      existing.push({...food, source:'community'});
-      await db.collection('fooddb').doc('Ingredients').set({ foods: existing });
-      food.source = 'community';
-      food.custom = true;
+    const doc   = await db.collection('fooddb').doc('Ingredients').get();
+    let foods   = doc.exists ? (doc.data().foods||[]) : [];
+    const editIdx = document.getElementById('nf-edit-idx')?.value;
+
+    if (editIdx !== '') {
+      // Edit: find by name (original name before edit might differ — use idx)
+      const origFood = foodDatabase[parseInt(editIdx)];
+      if (origFood) {
+        const pos = foods.findIndex(fd => fd.name.toLowerCase() === origFood.name.toLowerCase());
+        if (pos >= 0) { foods[pos] = food; }
+        else foods.push(food);
+      } else { foods.push(food); }
+      toast(`✓ "${name}" updated`);
     } else {
-      // Save to personal collection only
-      const doc = await db.collection('userdata').doc(SESSION.username)
-        .collection('fooddb').doc('Ingredients').get();
-      const existing = doc.exists ? (doc.data().foods || []) : [];
-      existing.push({...food, source:'personal'});
-      await db.collection('userdata').doc(SESSION.username)
-        .collection('fooddb').doc('Ingredients').set({ foods: existing });
-      food.source = 'personal';
-      food.custom = true;
+      // New: check for duplicate
+      if (foods.some(fd => fd.name.toLowerCase() === name.toLowerCase())) {
+        if (!confirm(`"${name}" already exists. Replace it?`)) return;
+        foods = foods.filter(fd => fd.name.toLowerCase() !== name.toLowerCase());
+      }
+      foods.push(food);
+      toast(`✓ "${name}" added to Ingredients`);
     }
-    foodDatabase.push(food);
-    renderFoodTable();
-    document.getElementById('add-food-panel').style.display = 'none';
-    ['nf-name','nf-serving','nf-cal','nf-prot','nf-carb','nf-fat','nf-fiber','nf-sodium']
-      .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-    toast(`✓ "${name}" added ${shareWithAll ? 'to community database' : 'to your personal foods'}`);
+
+    await db.collection('fooddb').doc('Ingredients').set({ foods });
+    closeAddFoodPanel();
+    await loadFoodDatabase();
   } catch(e) { toast('Save failed: ' + e.message); }
 }
 
@@ -4425,6 +4542,36 @@ async function exportAllUsers() {
   err.textContent = 'EXPORT COMPLETE';
 }
 
+// Fetch and parse the GitHub XLSX, return normalized food rows
+async function fetchGitHubXLSX() {
+  const resp = await fetch(FOOD_DB_URL);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching GitHub XLSX`);
+  const buf = await resp.arrayBuffer();
+  const wb  = XLSX.read(new Uint8Array(buf), { type:'array' });
+  const ws  = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+  return rows.map(r => {
+    const g = key => {
+      const match = Object.keys(r).find(x => x.trim().toLowerCase().includes(key));
+      return match ? r[match] : '';
+    };
+    return {
+      name:     String(g('name') || g('food') || g('ingredient') || '').trim(),
+      brand:    String(g('brand') || '').trim(),
+      category: String(g('category') || g('cat') || '').trim().toLowerCase(),
+      serving:  String(g('serving') || g('portion') || '100g').trim(),
+      calories: parseFloat(g('calor') || g('kcal') || g('cal'))   || 0,
+      protein:  parseFloat(g('protein') || g('prot'))              || 0,
+      carbs:    parseFloat(g('carb'))                              || 0,
+      fat:      parseFloat(g('fat'))                               || 0,
+      fiber:    parseFloat(g('fiber') || g('fibre'))               || 0,
+      sodium:   parseFloat(g('sodium') || g('salt'))               || 0,
+      sugar:    parseFloat(g('sugar'))                             || 0,
+      satfat:   parseFloat(g('sat') || g('saturated'))             || 0,
+    };
+  }).filter(f => f.name);
+}
+
 // ── Words/patterns that indicate a dish/meal rather than a raw ingredient
 const MEAL_PATTERNS = [
   'casserole','pot pie','stew','soup','lasagna','sandwich','burger','pizza',
@@ -4505,8 +4652,37 @@ async function migrateStep(action) {
       await db.collection('fooddb').doc('custom').delete();
       statusEl.innerHTML = `<span style="color:#4caf50;">✓ fooddb/custom deleted. Migration complete.</span>`;
 
-    } else if (action === 'preview_nutrition') {
-      await previewNutritionMigration();
+    } else if (action === 'preview_github') {
+      statusEl.innerHTML = '<span style="color:var(--accent2);">Fetching GitHub XLSX...</span>';
+      const rows = await fetchGitHubXLSX();
+      const ingDoc = await db.collection('fooddb').doc('Ingredients').get();
+      const existing = new Set((ingDoc.exists ? ingDoc.data().foods||[] : []).map(f=>f.name.toLowerCase()));
+      const newRows = rows.filter(r => !existing.has(r.name.toLowerCase()));
+      statusEl.innerHTML = `
+        <div style="color:#4caf50;margin-bottom:4px;">PREVIEW: GitHub XLSX Import</div>
+        <div style="color:var(--text-dim);font-size:0.62rem;">
+          ${rows.length} rows in XLSX · <strong style="color:var(--text);">${newRows.length} new</strong> · ${rows.length-newRows.length} already in Ingredients
+        </div>
+        ${newRows.length > 0 ? `<div style="margin-top:6px;color:var(--text-dim);font-size:0.58rem;">Sample new: ${newRows.slice(0,10).map(r=>r.name).join(', ')}${newRows.length>10?'...':''}</div>` : ''}`;
+
+    } else if (action === 'run_github') {
+      if (!confirm(`Import all foods from GitHub XLSX into fooddb/Ingredients?\n\nDuplicates (by name) will be skipped.`)) return;
+      statusEl.innerHTML = '<span style="color:var(--accent2);">Importing from GitHub...</span>';
+      const rows = await fetchGitHubXLSX();
+      const ingDoc = await db.collection('fooddb').doc('Ingredients').get();
+      let foods = ingDoc.exists ? (ingDoc.data().foods||[]) : [];
+      const names = new Set(foods.map(f=>f.name.toLowerCase()));
+      let added = 0, skipped = 0;
+      for (const r of rows) {
+        if (names.has(r.name.toLowerCase())) { skipped++; continue; }
+        foods.push({ ...r, source:'community', custom:false, importedFrom:'github', imported: new Date().toISOString() });
+        names.add(r.name.toLowerCase());
+        added++;
+      }
+      await db.collection('fooddb').doc('Ingredients').set({ foods });
+      statusEl.innerHTML = `<span style="color:#4caf50;">✓ Imported ${added} new ingredients from GitHub XLSX (${skipped} duplicates skipped).<br>
+        You can now remove FoodNutrition.xlsx from GitHub if you wish.</span>`;
+      await loadFoodDatabase();
     } else if (action === 'run_nutrition') {
       await runNutritionMigration();
     }
