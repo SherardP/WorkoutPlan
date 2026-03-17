@@ -2007,152 +2007,368 @@ async function adminCreateUser() {
 async function renderLogSummary() {
   const el = document.getElementById('summaryContent');
   if (!el) return;
-  el.innerHTML = '<div class="mono dim" style="padding:24px;text-align:center;">Loading your data...</div>';
+  el.innerHTML = '<div style="padding:32px;text-align:center;font-family:var(--font-mono);font-size:0.72rem;color:var(--accent2);letter-spacing:.12em;">LOADING YOUR DATA...</div>';
 
   const [workouts, steps, body, nutrition] = await Promise.all([
     encryptedLoad('workout'), encryptedLoad('steps'),
     encryptedLoad('body'),    encryptedLoad('nutrition')
   ]);
 
-  // ── Key metrics ──
+  const todayStr = new Date().toISOString().split('T')[0];
+  const yd = new Date(); yd.setDate(yd.getDate()-1);
+  const yestStr = yd.toISOString().split('T')[0];
+
+  // ── Yesterday's data ──
+  const yestWorkout   = workouts.find(w => w.date === yestStr);
+  const yestSteps     = steps.find(s => s.date === yestStr);
+  const yestNutrition = nutrition.find(n => n.date === yestStr);
+  const yestBody      = body.find(b => b.date === yestStr) || body[0];
+
+  // ── Today's data ──
+  const todayWorkout   = workouts.find(w => w.date === todayStr);
+  const todaySteps     = steps.find(s => s.date === todayStr);
+  const todayNutrition = nutrition.find(n => n.date === todayStr);
+
+  // ── Overall metrics ──
   const today = new Date(); today.setHours(0,0,0,0);
-  const wDates = [...new Set(workouts.map(w => { const d=new Date(w.date); d.setHours(0,0,0,0); return d.getTime(); }))].sort((a,b)=>b-a);
+  const wDates = [...new Set(workouts.map(w => {
+    const d = new Date(w.date); d.setHours(0,0,0,0); return d.getTime();
+  }))].sort((a,b) => b-a);
+
   let streak = 0;
-  for (let i=0; i<wDates.length; i++) {
-    const exp = new Date(today); exp.setDate(exp.getDate()-i);
-    if (wDates[i]===exp.getTime()) streak++; else break;
+  for (let i = 0; i < wDates.length; i++) {
+    const exp = new Date(today); exp.setDate(exp.getDate() - i);
+    if (wDates[i] === exp.getTime()) streak++; else break;
   }
+
   const totalSessions  = workouts.length;
-  const weeksTraining  = workouts.length ? Math.max(1, Math.ceil((Date.now()-new Date(workouts[workouts.length-1].date))/(7*86400000))) : 0;
+  const weeksTraining  = workouts.length ? Math.max(1, Math.ceil((Date.now() - new Date(workouts[workouts.length-1].date)) / (7*86400000))) : 0;
   const consistencyPct = weeksTraining ? Math.min(100, Math.round((totalSessions / (weeksTraining * (userGoals.workoutFreq||6))) * 100)) : 0;
-  const avgSteps7d     = steps.length ? Math.round(steps.slice(0,7).reduce((a,s)=>a+(+s.total||0),0)/Math.min(steps.length,7)) : 0;
+  const avgSteps7d     = steps.length ? Math.round(steps.slice(0,7).reduce((a,s) => a + (+s.total||0), 0) / Math.min(steps.length, 7)) : 0;
   const stepGoalHits   = steps.filter(s => (+s.total||0) >= (userGoals.stepGoal||10000)).length;
-  const stepHitPct     = steps.length ? Math.round(stepGoalHits/steps.length*100) : 0;
-  const latestWeight   = body.find(b=>b.weight);
-  const firstWeight    = body.filter(b=>b.weight).slice(-1)[0];
-  const wtChange       = latestWeight && firstWeight && latestWeight!==firstWeight ? (+latestWeight.weight - +firstWeight.weight).toFixed(1) : null;
-  const latestWaist    = body.find(b=>b.waist);
-  const firstWaist     = body.filter(b=>b.waist).slice(-1)[0];
-  const waistChange    = latestWaist && firstWaist && latestWaist!==firstWaist ? (+latestWaist.waist - +firstWaist.waist).toFixed(2) : null;
-  const avgSleep       = body.length ? (body.filter(b=>b.sleep).slice(0,14).reduce((a,b)=>a+(+b.sleep||0),0)/Math.max(1,body.filter(b=>b.sleep).slice(0,14).length)).toFixed(1) : null;
-  const avgStress      = body.length ? (body.filter(b=>b.stress).slice(0,14).reduce((a,b)=>a+(+b.stress||0),0)/Math.max(1,body.filter(b=>b.stress).slice(0,14).length)).toFixed(1) : null;
+  const stepHitPct     = steps.length ? Math.round(stepGoalHits / steps.length * 100) : 0;
+  const latestWeight   = body.find(b => b.weight);
+  const firstWeight    = body.filter(b => b.weight).slice(-1)[0];
+  const wtChange       = latestWeight && firstWeight && latestWeight !== firstWeight ? (+latestWeight.weight - +firstWeight.weight).toFixed(1) : null;
+  const latestWaist    = body.find(b => b.waist);
+  const firstWaist     = body.filter(b => b.waist).slice(-1)[0];
+  const waistChange    = latestWaist && firstWaist && latestWaist !== firstWaist ? (+latestWaist.waist - +firstWaist.waist).toFixed(2) : null;
+  const avgSleep       = body.filter(b=>b.sleep).slice(0,14).length ? (body.filter(b=>b.sleep).slice(0,14).reduce((a,b) => a + (+b.sleep||0), 0) / body.filter(b=>b.sleep).slice(0,14).length).toFixed(1) : null;
+  const avgStress      = body.filter(b=>b.stress).slice(0,14).length ? (body.filter(b=>b.stress).slice(0,14).reduce((a,b) => a + (+b.stress||0), 0) / body.filter(b=>b.stress).slice(0,14).length).toFixed(1) : null;
   const bmi            = getSessionBMI();
 
-  // ── Chart data (last 30 days) ──
-  const last30 = Array.from({length:30},(_,i)=>{ const d=new Date(today); d.setDate(d.getDate()-29+i); return d.toISOString().split('T')[0]; });
-  const stepsByDate  = Object.fromEntries(steps.map(s=>[s.date,+s.total||0]));
-  const weightByDate = Object.fromEntries(body.filter(b=>b.weight).map(b=>[b.date,+b.weight]));
-  const waistByDate  = Object.fromEntries(body.filter(b=>b.waist).map(b=>[b.date,+b.waist]));
-  const workoutDates = new Set(workouts.map(w=>w.date));
+  // ── Calorie balance (yesterday and today) ──
+  const yestCalsBurned = yestWorkout ? (parseInt(yestWorkout.caloriesBurned) || estimateDayCalBurn(yestWorkout)) : null;
+  const yestCalsEaten  = yestNutrition ? (+yestNutrition.calories || 0) : null;
+  const yestCalDeficit = (yestCalsBurned && yestCalsEaten) ? yestCalsBurned - yestCalsEaten : null;
+  const todayCalsBurned = todayWorkout ? (parseInt(todayWorkout.caloriesBurned) || estimateDayCalBurn(todayWorkout)) : null;
+  const todayCalsEaten  = todayNutrition ? (+todayNutrition.calories || 0) : null;
+
+  // ── Chart data ──
+  const last30 = Array.from({length:30}, (_,i) => {
+    const d = new Date(today); d.setDate(d.getDate()-29+i); return d.toISOString().split('T')[0];
+  });
+  const stepsByDate  = Object.fromEntries(steps.map(s => [s.date, +s.total||0]));
+  const weightByDate = Object.fromEntries(body.filter(b=>b.weight).map(b => [b.date, +b.weight]));
+  const waistByDate  = Object.fromEntries(body.filter(b=>b.waist).map(b => [b.date, +b.waist]));
+  const workoutDates = new Set(workouts.map(w => w.date));
 
   el.innerHTML = `
-    <!-- KPI strip -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:20px;">
-      ${kpiCard('🔥 STREAK', streak + (streak===1?' day':' days'), streak>=7?'#4caf50':streak>=3?'#ff9800':'var(--accent2)', streak>=7?'Keep it up!':streak>=1?'Build momentum':'Start today')}
-      ${kpiCard('📊 SESSIONS', totalSessions, 'var(--accent2)', weeksTraining + ' weeks')}
-      ${kpiCard('✓ CONSISTENCY', consistencyPct + '%', consistencyPct>=80?'#4caf50':consistencyPct>=60?'#ff9800':'#f44336', 'vs goal freq')}
-      ${kpiCard('👣 AVG STEPS', avgSteps7d.toLocaleString(), avgSteps7d>=(userGoals.stepGoal||10000)?'#4caf50':'#ff9800', '7-day avg')}
-      ${kpiCard('🎯 STEP GOAL', stepHitPct + '%', stepHitPct>=70?'#4caf50':'#ff9800', 'days goal hit')}
-      ${bmi ? kpiCard('⚖️ BMI', bmi.toFixed(1), bmi<25?'#4caf50':bmi<30?'#ff9800':'#f44336', bmi<25?'Normal':bmi<30?'Overweight':'Obese') : ''}
-      ${wtChange !== null ? kpiCard('⚖️ WEIGHT Δ', (wtChange>0?'+':'')+wtChange+' lbs', wtChange<0?'#4caf50':wtChange>0?'#ff9800':'var(--text)', 'since start') : ''}
-      ${waistChange !== null ? kpiCard('📏 WAIST Δ', (waistChange>0?'+':'')+waistChange+'"', waistChange<0?'#4caf50':waistChange>0?'#ff9800':'var(--text)', 'since start') : ''}
-      ${avgSleep ? kpiCard('😴 AVG SLEEP', avgSleep + 'h', +avgSleep>=7?'#4caf50':+avgSleep>=6?'#ff9800':'#f44336', '14-day avg') : ''}
-      ${avgStress ? kpiCard('🧠 AVG STRESS', avgStress + '/10', +avgStress<=4?'#4caf50':+avgStress<=6?'#ff9800':'#f44336', '14-day avg') : ''}
+
+    <!-- ═══ MOTIVATOR — full width, top of page ═══ -->
+    ${buildMotivator(SESSION.displayName, streak, consistencyPct, totalSessions, weeksTraining,
+      yestWorkout, yestSteps, yestCalsBurned, yestCalsEaten, yestCalDeficit,
+      wtChange, waistChange, avgSteps7d, stepHitPct, avgSleep, avgStress)}
+
+    <!-- ═══ YESTERDAY SUMMARY ═══ -->
+    <div class="card mb16" style="border-left:4px solid var(--accent);">
+      <div class="card-label">YESTERDAY — ${yestStr}</div>
+      <div class="card-title" style="margin-bottom:14px;">DAILY SUMMARY</div>
+
+      <!-- Calorie balance row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+          <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">🔥 CALORIES BURNED</div>
+          <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--accent2);">${yestCalsBurned ? yestCalsBurned.toLocaleString() : '—'}</div>
+          <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--text-dim);">${yestWorkout ? 'from workout' : 'no workout logged'}</div>
+        </div>
+        <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+          <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">🍽 CALORIES EATEN</div>
+          <div style="font-family:var(--font-display);font-size:1.6rem;color:#ff9800;">${yestCalsEaten ? yestCalsEaten.toLocaleString() : '—'}</div>
+          <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--text-dim);">${yestNutrition ? 'logged' : 'not logged'}</div>
+        </div>
+        <div style="background:var(--bg3);padding:12px 8px;text-align:center;border:1px solid var(--border);">
+          <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">⚖️ NET BALANCE</div>
+          <div style="font-family:var(--font-display);font-size:1.6rem;color:${yestCalDeficit === null ? 'var(--text-dim)' : yestCalDeficit > 0 ? '#4caf50' : '#f44336'};">
+            ${yestCalDeficit !== null ? (yestCalDeficit > 0 ? '-' + yestCalDeficit.toLocaleString() : '+' + Math.abs(yestCalDeficit).toLocaleString()) : '—'}
+          </div>
+          <div style="font-family:var(--font-mono);font-size:0.5rem;color:${yestCalDeficit > 0 ? '#4caf50' : '#f44336'};">
+            ${yestCalDeficit !== null ? (yestCalDeficit > 0 ? 'calorie deficit ✓' : 'calorie surplus') : 'log both to see'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Yesterday details -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">
+        ${yestWorkout ? `
+          <div style="background:var(--bg3);padding:10px;border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">WORKOUT</div>
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">${yestWorkout.day||'Session'}</div>
+            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);">${yestWorkout.duration||'—'} min · Energy ${yestWorkout.energy||'—'}/10</div>
+          </div>` : `<div style="background:var(--bg3);padding:10px;border:1px solid var(--border);opacity:0.5;">
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">WORKOUT</div>
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);">REST DAY</div>
+          </div>`}
+        ${yestSteps ? `
+          <div style="background:var(--bg3);padding:10px;border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">STEPS</div>
+            <div style="font-family:var(--font-display);font-size:1.2rem;color:${(+yestSteps.total||0)>=(userGoals.stepGoal||10000)?'#4caf50':'var(--accent2)'};">
+              ${(+yestSteps.total||0).toLocaleString()}
+            </div>
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">goal: ${(userGoals.stepGoal||10000).toLocaleString()}</div>
+          </div>` : ''}
+        ${yestBody && yestBody.sleep ? `
+          <div style="background:var(--bg3);padding:10px;border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">SLEEP</div>
+            <div style="font-family:var(--font-display);font-size:1.2rem;color:${+yestBody.sleep>=7?'#4caf50':+yestBody.sleep>=6?'#ff9800':'#f44336'};">${yestBody.sleep}h</div>
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">stress: ${yestBody.stress||'—'}/10</div>
+          </div>` : ''}
+        ${yestNutrition ? `
+          <div style="background:var(--bg3);padding:10px;border:1px solid var(--border);">
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">PROTEIN</div>
+            <div style="font-family:var(--font-display);font-size:1.2rem;color:${+yestNutrition.protein>=150?'#4caf50':'#ff9800'};">${yestNutrition.protein||'—'}g</div>
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">water: ${yestNutrition.water||'—'} oz</div>
+          </div>` : ''}
+      </div>
     </div>
 
-    <!-- Motivational insight -->
-    ${renderMotivationalInsight(streak, consistencyPct, stepHitPct, avgSteps7d, wtChange, waistChange)}
+    <!-- ═══ TODAY SO FAR ═══ -->
+    ${(todayWorkout || todaySteps || todayNutrition) ? `
+    <div class="card mb16" style="border-left:4px solid #4caf50;">
+      <div class="card-label">TODAY — ${todayStr}</div>
+      <div class="card-title" style="margin-bottom:12px;">IN PROGRESS</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">
+        ${todayWorkout ? `<div style="background:var(--bg3);padding:10px;border:1px solid #4caf5044;">
+          <div style="font-family:var(--font-mono);font-size:0.55rem;color:#4caf50;letter-spacing:.1em;margin-bottom:4px;">✓ WORKOUT DONE</div>
+          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">${todayWorkout.day||'Session'}</div>
+          ${todayCalsBurned ? `<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);">${todayCalsBurned.toLocaleString()} kcal burned</div>` : ''}
+        </div>` : ''}
+        ${todaySteps ? `<div style="background:var(--bg3);padding:10px;border:1px solid #4caf5044;">
+          <div style="font-family:var(--font-mono);font-size:0.55rem;color:#4caf50;letter-spacing:.1em;margin-bottom:4px;">STEPS TODAY</div>
+          <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--accent2);">${(+todaySteps.total||0).toLocaleString()}</div>
+        </div>` : ''}
+        ${todayNutrition ? `<div style="background:var(--bg3);padding:10px;border:1px solid #4caf5044;">
+          <div style="font-family:var(--font-mono);font-size:0.55rem;color:#4caf50;letter-spacing:.1em;margin-bottom:4px;">NUTRITION</div>
+          <div style="font-family:var(--font-display);font-size:1.2rem;color:#ff9800;">${(+todayNutrition.calories||0).toLocaleString()} kcal</div>
+          ${todayCalsBurned && todayCalsEaten ? `<div style="font-family:var(--font-mono);font-size:0.58rem;color:${todayCalsBurned>todayCalsEaten?'#4caf50':'#f44336'};">
+            ${todayCalsBurned>todayCalsEaten ? '✓ In deficit' : '↑ In surplus'}
+          </div>` : ''}
+        </div>` : ''}
+      </div>
+    </div>` : ''}
 
-    <!-- Chart: Steps last 30 days -->
+    <!-- ═══ KPI STRIP ═══ -->
+    <div class="card mb16">
+      <div class="card-label">ALL-TIME METRICS</div>
+      <div class="card-title" style="margin-bottom:12px;">YOUR PROGRESS SNAPSHOT</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:8px;">
+        ${kpiCard('🔥 STREAK', streak + (streak===1?' day':' days'), streak>=14?'#4caf50':streak>=7?'#4caf50':streak>=3?'#ff9800':'var(--accent2)', streak>=14?'Elite 🏆':streak>=7?'Keep building':streak>=1?'Growing':'Start today')}
+        ${kpiCard('📊 SESSIONS', totalSessions, 'var(--accent2)', weeksTraining + ' weeks in')}
+        ${kpiCard('✓ CONSISTENT', consistencyPct + '%', consistencyPct>=80?'#4caf50':consistencyPct>=60?'#ff9800':'#f44336', 'vs goal')}
+        ${kpiCard('👣 AVG STEPS', avgSteps7d.toLocaleString(), avgSteps7d>=(userGoals.stepGoal||10000)?'#4caf50':'#ff9800', '7-day avg')}
+        ${kpiCard('🎯 STEP RATE', stepHitPct + '%', stepHitPct>=70?'#4caf50':'#ff9800', 'goal hit days')}
+        ${bmi ? kpiCard('⚖️ BMI', bmi.toFixed(1), bmi<25?'#4caf50':bmi<30?'#ff9800':'#f44336', bmi<25?'Normal':bmi<30?'Overweight':'Obese') : ''}
+        ${wtChange !== null ? kpiCard('WEIGHT Δ', (wtChange>0?'+':'')+wtChange+' lbs', +wtChange<0?'#4caf50':+wtChange>0?'#ff9800':'var(--text)', 'since start') : ''}
+        ${waistChange !== null ? kpiCard('WAIST Δ', (waistChange>0?'+':'')+waistChange+'"', +waistChange<0?'#4caf50':+waistChange>0?'#ff9800':'var(--text)', 'since start') : ''}
+        ${avgSleep ? kpiCard('😴 SLEEP', avgSleep+'h', +avgSleep>=7?'#4caf50':+avgSleep>=6?'#ff9800':'#f44336', '14-day avg') : ''}
+        ${avgStress ? kpiCard('🧠 STRESS', avgStress+'/10', +avgStress<=4?'#4caf50':+avgStress<=6?'#ff9800':'#f44336', '14-day avg') : ''}
+      </div>
+    </div>
+
+    <!-- ═══ ACTIVITY HEATMAP ═══ -->
+    <div class="card mb16">
+      <div class="card-label">WORKOUT CONSISTENCY</div>
+      <div class="card-title">LAST 30 DAYS</div>
+      <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px;">
+        ${last30.map(d => `
+          <div title="${d}" style="height:26px;border-radius:3px;
+            background:${workoutDates.has(d)?'var(--accent2)':'var(--bg3)'};
+            border:1px solid ${workoutDates.has(d)?'var(--accent)':'var(--border)'};
+            opacity:${workoutDates.has(d)?'1':'0.35'};"></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px;font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);">
+        <span>■ <span style="color:var(--accent2);">TRAINED</span></span>
+        <span>■ <span style="opacity:0.35;">REST</span></span>
+        <span style="margin-left:auto;">${workoutDates.size} of last 30 days</span>
+      </div>
+    </div>
+
+    <!-- ═══ STEPS CHART ═══ -->
     <div class="card mb16">
       <div class="card-label">LAST 30 DAYS</div>
       <div class="card-title">DAILY STEPS</div>
-      <canvas id="summaryStepsChart" height="120"></canvas>
+      <canvas id="summaryStepsChart" height="110"></canvas>
     </div>
 
-    <!-- Chart: Weight trend -->
+    <!-- ═══ WEIGHT TREND ═══ -->
     ${body.filter(b=>b.weight).length >= 2 ? `
     <div class="card mb16">
       <div class="card-label">BODY WEIGHT TREND</div>
       <div class="card-title">WEIGHT OVER TIME</div>
-      <canvas id="summaryWeightChart" height="120"></canvas>
+      <canvas id="summaryWeightChart" height="100"></canvas>
     </div>` : ''}
 
-    <!-- Chart: Workout heatmap (last 30 days) -->
-    <div class="card mb16">
-      <div class="card-label">WORKOUT CONSISTENCY</div>
-      <div class="card-title">LAST 30 DAYS — ACTIVITY HEATMAP</div>
-      <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:8px;">
-        ${last30.map(d => `
-          <div title="${d}" style="height:28px;border-radius:3px;
-            background:${workoutDates.has(d)?'var(--accent2)':'var(--bg3)'};
-            border:1px solid ${workoutDates.has(d)?'var(--accent)':'var(--border)'};
-            opacity:${workoutDates.has(d)?'1':'0.4'};">
-          </div>`).join('')}
-      </div>
-      <div style="display:flex;gap:12px;margin-top:8px;font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">
-        <span>■ <span style="color:var(--accent2);">TRAINED</span></span>
-        <span>■ <span style="opacity:0.4;">REST / NO ENTRY</span></span>
-      </div>
-    </div>
-
-    <!-- Chart: Waist trend -->
+    <!-- ═══ WAIST TREND ═══ -->
     ${body.filter(b=>b.waist).length >= 2 ? `
     <div class="card mb16">
-      <div class="card-label">VISCERAL FAT PROXY</div>
-      <div class="card-title">WAIST MEASUREMENT TREND</div>
+      <div class="card-label">PRIMARY FAT LOSS INDICATOR</div>
+      <div class="card-title">WAIST TREND</div>
       <canvas id="summaryWaistChart" height="100"></canvas>
     </div>` : ''}
 
-    <!-- Chart: Sleep & Stress -->
+    <!-- ═══ SLEEP & STRESS ═══ -->
     ${body.filter(b=>b.sleep).length >= 2 ? `
     <div class="card mb16">
-      <div class="card-label">RECOVERY TRACKING</div>
-      <div class="card-title">SLEEP & STRESS (LAST 14 DAYS)</div>
+      <div class="card-label">RECOVERY</div>
+      <div class="card-title">SLEEP & STRESS — LAST 14 DAYS</div>
       <canvas id="summarySleepChart" height="110"></canvas>
     </div>` : ''}
 
-    <!-- Recent activity list -->
+    <!-- ═══ RECENT WORKOUTS ═══ -->
     <div class="card mb16">
       <div class="card-label">RECENT ACTIVITY</div>
       <div class="card-title">LAST 7 WORKOUTS</div>
       ${workouts.slice(0,7).map(w=>`
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
           <div>
-            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">${w.day||'Workout'}</div>
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">${w.day||'Session'}</div>
             <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">${w.date||'—'} · ${w.location||'—'} · ${w.duration||'—'} min</div>
           </div>
           <div style="text-align:right;">
-            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);">Energy: ${w.energy||'—'}/10</div>
-            <div style="font-family:var(--font-mono);font-size:0.58rem;color:${w.decomp&&w.decomp.includes('YES')?'#4caf50':'var(--text-dim)'};">${w.decomp&&w.decomp.includes('YES')?'✓ Decomp':'No decomp'}</div>
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);">Energy ${w.energy||'—'}/10</div>
+            <div style="font-family:var(--font-mono);font-size:0.55rem;color:${w.decomp&&w.decomp.includes('YES')?'#4caf50':'var(--text-dim)'};">
+              ${w.decomp&&w.decomp.includes('YES')?'✓ Decomp done':'—'}
+            </div>
           </div>
-        </div>`).join('') || '<div class="mono dim" style="padding:12px;">No workouts logged yet</div>'}
+        </div>`).join('') || '<div class="mono dim" style="padding:12px;">No workouts logged yet. Start your first session!</div>'}
     </div>`;
 
-  // Render charts async
   setTimeout(() => {
     renderSummaryCharts(last30, stepsByDate, weightByDate, waistByDate, body, userGoals.stepGoal||10000);
   }, 100);
 }
 
-function kpiCard(label, value, color, sub) {
-  return `<div style="background:var(--bg2);border:1px solid var(--border);padding:12px 8px;text-align:center;">
-    <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">${label}</div>
-    <div style="font-family:var(--font-display);font-size:1.4rem;color:${color};line-height:1;">${value}</div>
-    <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--text-dim);margin-top:2px;">${sub}</div>
-  </div>`;
+// Estimate calorie burn from a workout log entry using workout day name
+function estimateDayCalBurn(workout) {
+  const weightKg = getWeightKg();
+  if (!weightKg || !workout) return null;
+  const dur = parseInt(workout.duration) || 60;
+  // MET varies by workout type
+  const day = (workout.day||'').toLowerCase();
+  let met = 5.5; // default moderate strength
+  if (day.includes('hiit') || day.includes('core')) met = 7.0;
+  else if (day.includes('push') || day.includes('pull') || day.includes('upper')) met = 5.5;
+  else if (day.includes('lower') || day.includes('legs')) met = 6.0;
+  else if (day.includes('full')) met = 6.0;
+  return Math.round(met * weightKg * (dur/60));
 }
 
-function renderMotivationalInsight(streak, consistency, stepHitPct, avgSteps, wtChange, waistChange) {
-  let msg = '', color = 'var(--accent2)';
-  if (streak >= 14) { msg = `🔥 ${streak}-day streak — elite level consistency. Research shows 14+ day streaks predict long-term success.`; color='#4caf50'; }
-  else if (streak >= 7) { msg = `💪 ${streak} days strong. One week of consistency rewires your brain's reward system — keep building.`; color='#4caf50'; }
-  else if (streak >= 3) { msg = `📈 ${streak}-day streak building. Studies show 3+ day streaks are when the habit loop begins to form.`; color='#ff9800'; }
-  else if (streak === 0) { msg = `Today is a new day. Every streak starts with one workout. Your next session starts your next streak.`; color='var(--accent2)'; }
-  if (waistChange < -0.5) { msg += ` Waist is down ${Math.abs(waistChange)}" — visceral fat protocol is working.`; }
-  if (consistency >= 80)  { msg += ` ${consistency}% consistency — this is what real progress looks like.`; }
-  return msg ? `<div style="padding:14px 16px;background:${color}11;border-left:4px solid ${color};margin-bottom:16px;
-    font-family:var(--font-mono);font-size:0.68rem;color:${color};line-height:1.6;">${msg}</div>` : '';
+// ═══════════════════════════════════════════════════════════
+// MOTIVATOR ENGINE — Psychology-driven, data-personalized
+// ═══════════════════════════════════════════════════════════
+function buildMotivator(name, streak, consistency, totalSessions, weeks,
+  yestWorkout, yestSteps, yestCalsBurned, yestCalsEaten, calDeficit,
+  wtChange, waistChange, avgSteps, stepHitPct, avgSleep, avgStress) {
+
+  const first = (name||'').split(' ')[0];
+  let headline = '', body = '', color = 'var(--accent2)', icon = '💪';
+
+  // ── Identity-based framing (strongest long-term motivator per SDT research) ──
+  // Priority order: streak milestone > yesterday's specific win > progress data > encouragement
+
+  if (streak >= 21) {
+    icon = '🏆'; color = '#ffd700';
+    headline = `${first.toUpperCase()}, YOU ARE BUILT DIFFERENTLY.`;
+    body = `${streak} days straight. This isn't motivation anymore — this is identity. Research from University of London shows habits become automatic at 66 days. You're ${Math.round((streak/66)*100)}% of the way to exercise being as automatic as breathing. The person who started this streak made a decision. The person reading this IS a person who shows up.`;
+  } else if (streak >= 14) {
+    icon = '🔥'; color = '#ff6b35';
+    headline = `${streak} DAYS. THIS IS WHERE OTHERS QUIT.`;
+    body = `Two weeks of unbroken consistency — the research is clear: people who reach 14-day streaks are 3× more likely to still be training at 6 months. Your brain has started rewiring. The habit loop is forming. What you're doing right now, this morning, is the most important thing you'll do for your health this year.`;
+  } else if (streak >= 7) {
+    icon = '⚡'; color = '#4caf50';
+    headline = `ONE WEEK STRAIGHT. YOUR BRAIN IS CHANGING.`;
+    body = `Seven consecutive days triggers measurable neurological adaptation. Dopamine pathways tied to exercise are strengthening. This is exactly the point where most people stumble — which means every single session from here is separating you from the version of yourself who used to make excuses.`;
+  } else if (streak >= 3) {
+    icon = '📈'; color = '#ff9800';
+    headline = `${streak} DAYS BUILDING. DON'T STOP NOW.`;
+    body = `The first 3 days are where streaks die. You made it. James Clear's Atomic Habits research shows that 3-day streaks are the first critical checkpoint where identity begins to shift. You're not someone who "is trying to work out" — you're someone who works out. Keep proving it to yourself.`;
+  } else if (yestWorkout) {
+    icon = '✓'; color = '#4caf50';
+    headline = `YOU SHOWED UP YESTERDAY. THAT'S THE JOB.`;
+    body = `${yestWorkout.day||'Your session'} is done. ${yestWorkout.energy ? `Energy level ${yestWorkout.energy}/10 — ` : ''}Every session you finish is a vote for the identity of someone who takes care of their body. Psychology Today: "We don't act based on who we are. We become who we are based on how we act." Yesterday you voted. Today, vote again.`;
+  } else if (calDeficit && calDeficit > 0) {
+    icon = '🎯'; color = '#4caf50';
+    headline = `YESTERDAY: ${calDeficit.toLocaleString()} CALORIE DEFICIT.`;
+    body = `You burned ${yestCalsBurned?.toLocaleString()} and ate ${yestCalsEaten?.toLocaleString()}. A deficit means your body burned stored energy. One pound of fat = 3,500 calories. You're chipping away at it every single day. The scale is a lagging indicator — the work you did yesterday is already happening inside.`;
+  } else if (waistChange && +waistChange < -0.25) {
+    icon = '📏'; color = '#4caf50';
+    headline = `YOUR WAIST IS DOWN ${Math.abs(+waistChange)}" SINCE YOU STARTED.`;
+    body = `Waist circumference is the single best proxy for visceral fat — the dangerous fat around your organs. The fact that it's moving means the protocol is working. This isn't cosmetic. This is your health risk profile literally changing. Keep going.`;
+  } else if (yestSteps && (+yestSteps.total||0) >= (userGoals.stepGoal||10000)) {
+    icon = '👣'; color = '#4caf50';
+    headline = `${(+yestSteps.total).toLocaleString()} STEPS YESTERDAY. GOAL HIT.`;
+    body = `Daily step goal met. Those walks aren't filler — they're the primary driver of your visceral fat loss between sessions. Cortisol drops on each walk. Blood glucose stabilizes. Recovery accelerates. You're doing the invisible work that makes everything else work better.`;
+  } else if (avgStress && +avgStress >= 7) {
+    icon = '🧠'; color = '#ff9800';
+    headline = `HIGH STRESS DETECTED. THIS IS WHEN IT MATTERS MOST.`;
+    body = `Your average stress is ${avgStress}/10 over the last 14 days. High chronic stress elevates cortisol, which stores visceral fat. Here's the power move: the workout you don't feel like doing is the one that lowers cortisol the most. Show up even when it's hard. Especially when it's hard. That's the difference.`;
+  } else if (avgSleep && +avgSleep < 6.5) {
+    icon = '😴'; color = '#ff9800';
+    headline = `SLEEP IS YOUR SECRET WEAPON. USE IT.`;
+    body = `You're averaging ${avgSleep}h — below the 7h threshold where muscle repair and fat burning peak. Poor sleep increases ghrelin (hunger hormone) by 28% and drops leptin (fullness hormone) by 18%. Prioritizing sleep tonight is as important as tomorrow's workout. Do both.`;
+  } else if (totalSessions === 0) {
+    icon = '🚀'; color = 'var(--accent2)';
+    headline = `TODAY IS DAY ONE. DAY ONE IS EVERYTHING.`;
+    body = `Every elite athlete, every transformation story, every person who changed their life — it started with one session. Not a perfect plan. Not the right time. One session. You have the program. You have the structure. The only thing left is to start. Log your first workout today and that number goes from 0 to 1. That's the hardest step.`;
+  } else if (totalSessions > 0) {
+    icon = '💪'; color = 'var(--accent2)';
+    headline = `${totalSessions} SESSIONS LOGGED. THE WORK IS ADDING UP.`;
+    body = `Progress is rarely visible day-to-day but always visible week-to-week. Teresa Amabile's Progress Principle research shows that making forward progress — even small — is the single most powerful motivator that exists. You have ${totalSessions} sessions of proof that you do this. Add another one today.`;
+  }
+
+  // Addendum: specific yesterday data win if headline wasn't already about it
+  let addendum = '';
+  if (calDeficit && calDeficit > 0 && !headline.includes('DEFICIT')) {
+    addendum = ` Yesterday's calorie deficit: ${calDeficit.toLocaleString()} kcal — that's real progress.`;
+  }
+  if (waistChange && +waistChange < -0.25 && !headline.includes('WAIST')) {
+    addendum += ` Waist is down ${Math.abs(+waistChange)}" from your starting point.`;
+  }
+
+  return `<div style="padding:24px 20px;background:linear-gradient(135deg,${color}18 0%,transparent 100%);
+    border:1px solid ${color}44;border-left:5px solid ${color};margin-bottom:20px;position:relative;overflow:hidden;">
+    <!-- Background number for texture -->
+    <div style="position:absolute;right:-10px;top:-20px;font-size:8rem;opacity:0.04;font-family:var(--font-display);
+      color:${color};pointer-events:none;user-select:none;">${icon}</div>
+
+    <div style="display:flex;align-items:flex-start;gap:14px;">
+      <div style="font-size:2rem;flex-shrink:0;margin-top:2px;">${icon}</div>
+      <div style="flex:1;">
+        <div style="font-family:var(--font-display);font-size:clamp(1.1rem,4vw,1.6rem);color:${color};
+          letter-spacing:.05em;line-height:1.15;margin-bottom:10px;">${headline}</div>
+        <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);line-height:1.75;opacity:0.9;">
+          ${body}${addendum ? `<span style="color:${color};">${addendum}</span>` : ''}
+        </div>
+        ${streak > 0 ? `<div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
+          <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;">CURRENT STREAK</div>
+          <div style="display:flex;gap:3px;">${Array.from({length:Math.min(streak,21)},(_,i) =>
+            `<div style="width:${streak>14?6:8}px;height:${streak>14?6:8}px;border-radius:50%;background:${i<streak?color:'var(--bg3)'};"></div>`).join('')}
+            ${streak > 21 ? `<span style="font-family:var(--font-mono);font-size:0.6rem;color:${color};margin-left:4px;">+${streak-21} more</span>` : ''}
+          </div>
+        </div>` : ''}
+      </div>
+    </div>
+  </div>`;
 }
 
 function renderSummaryCharts(last30, stepsByDate, weightByDate, waistByDate, body, stepGoal) {
