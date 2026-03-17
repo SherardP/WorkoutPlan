@@ -1205,15 +1205,12 @@ body.theme-female .goal-chip{border-radius:20px;}
               <input type="number" id="recipe-qty" placeholder="Amount" min="0" step="0.5" value="100"
                 style="width:80px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
                 font-family:var(--font-mono);font-size:0.78rem;padding:7px 10px;outline:none;text-align:center;">
-              <select id="recipe-unit" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              <select id="recipe-unit" onchange="onRecipeUnitChange()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
                 font-family:var(--font-mono);font-size:0.75rem;padding:7px 8px;outline:none;">
                 <option value="g">g</option>
-                <option value="oz">oz</option>
-                <option value="cup">cup</option>
-                <option value="tbsp">tbsp</option>
-                <option value="tsp">tsp</option>
-                <option value="piece">piece</option>
               </select>
+            </div>
+            <div id="recipe-unit-note" style="display:none;font-family:var(--font-mono);font-size:0.58rem;color:#ff9800;padding:4px 0;"></div>
             </div>
             <div id="recipe-results" style="margin-top:6px;"></div>
           </div>
@@ -1295,9 +1292,16 @@ body.theme-female .goal-chip{border-radius:20px;}
             <div class="lf"><label>FIBER (g)</label><input type="number" id="nf-fiber" placeholder="0" step="0.1"></div>
             <div class="lf"><label>SODIUM (mg)</label><input type="number" id="nf-sodium" placeholder="0"></div>
           </div>
-          <div style="display:flex;gap:8px;margin-top:12px;">
+          <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap;">
             <button onclick="saveCustomFood()" class="btn btn-p" style="font-size:0.65rem;">SAVE TO DATABASE</button>
             <button onclick="document.getElementById('add-food-panel').style.display='none'" class="btn btn-s" style="font-size:0.65rem;">CANCEL</button>
+            <label style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);cursor:pointer;margin-left:auto;">
+              <input type="checkbox" id="nf-share" style="accent-color:var(--accent2);">
+              Share with all users
+            </label>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--border2);margin-top:6px;">
+            ★ Shared foods are visible to everyone. Personal foods are only visible to you.
           </div>
         </div>
       </div>
@@ -1317,16 +1321,12 @@ body.theme-female .goal-chip{border-radius:20px;}
           <input type="number" id="popup-qty" value="100" min="0" step="1"
             style="width:80px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
             font-family:var(--font-mono);font-size:0.8rem;padding:7px 8px;outline:none;text-align:center;">
-          <select id="popup-unit" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          <select id="popup-unit" onchange="onPopupUnitChange()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
             font-family:var(--font-mono);font-size:0.75rem;padding:7px 8px;outline:none;">
             <option value="g">g</option>
-            <option value="oz">oz</option>
-            <option value="cup">cup</option>
-            <option value="tbsp">tbsp</option>
-            <option value="tsp">tsp</option>
-            <option value="piece">piece</option>
           </select>
         </div>
+        <div id="popup-unit-note" style="display:none;font-family:var(--font-mono);font-size:0.58rem;color:#ff9800;padding:2px 0;margin-bottom:4px;"></div>
         <div id="popup-search-results"></div>
       </div>
 
@@ -1832,6 +1832,7 @@ function launchApp() {
   buildTimeBudget();
   loadStats();
   setDefaultDates();
+  updateUnitSelectors();
   nav('dashboard');
 }
 
@@ -2966,22 +2967,184 @@ let activeMealTarget = null; // which meal slot the popup is targeting
 let recipeIngredients = []; // [{food, qty, unit, cals, prot, carb, fat}]
 let savedRecipes = []; // persisted to Firebase
 
-// Unit conversion to grams (approximate, for per-100g scaling)
-const UNIT_TO_G = { g:1, oz:28.35, cup:240, tbsp:15, tsp:5, piece:100 };
+// ═══════════════════════════════════════════════════════════
+// UNIT CONVERSION SYSTEM
+// All values convert to grams for per-100g nutrition scaling.
+// "piece" is intentionally kept separate — no volume conversion.
+// ═══════════════════════════════════════════════════════════
+
+// Base conversions: unit → grams
+// Liquid volumes assume water density (1g/ml) as default.
+// Foods that deviate (oil, honey, flour) use their own density multiplier.
+const UNIT_TO_ML = {
+  ml: 1, l: 1000,
+  floz: 29.5735, cup: 236.588, tbsp: 14.7868, tsp: 4.92892,
+  pint: 473.176, quart: 946.353,
+};
+const UNIT_TO_G_SOLID = {
+  g: 1, kg: 1000,
+  oz: 28.3495, lb: 453.592,
+  mg: 0.001,
+};
+
+// Density table (g/ml) for common ingredients — used when converting volume → grams
+// Everything not listed defaults to 1.0 (water density)
+const FOOD_DENSITY = {
+  // Oils & fats
+  'olive oil': 0.91, 'vegetable oil': 0.92, 'coconut oil': 0.92,
+  'butter': 0.91, 'ghee': 0.91,
+  // Sweeteners
+  'honey': 1.42, 'maple syrup': 1.37, 'sugar': 0.85, 'brown sugar': 0.93,
+  'powdered sugar': 0.56,
+  // Flours & powders
+  'flour': 0.53, 'all-purpose flour': 0.53, 'whole wheat flour': 0.52,
+  'almond flour': 0.43, 'protein powder': 0.50, 'cocoa powder': 0.35,
+  'baking powder': 0.90, 'salt': 1.22,
+  // Dairy
+  'milk': 1.03, 'heavy cream': 1.0, 'yogurt': 1.04,
+  'cream cheese': 1.0, 'sour cream': 1.0,
+  // Grains & nuts (dry volume)
+  'rice': 0.75, 'oats': 0.37, 'quinoa': 0.72,
+  'almonds': 0.54, 'walnuts': 0.44, 'peanuts': 0.53,
+  'peanut butter': 1.08,
+  // default for anything not listed
+  'default': 1.0,
+};
+
+// All units the system recognizes, with display labels
+const ALL_UNITS = [
+  // Weight
+  { value:'g',    label:'g (grams)',          type:'weight' },
+  { value:'kg',   label:'kg (kilograms)',      type:'weight' },
+  { value:'oz',   label:'oz (ounces)',         type:'weight' },
+  { value:'lb',   label:'lb (pounds)',         type:'weight' },
+  { value:'mg',   label:'mg (milligrams)',     type:'weight' },
+  // Volume
+  { value:'ml',   label:'ml (milliliters)',    type:'volume' },
+  { value:'l',    label:'L (liters)',          type:'volume' },
+  { value:'floz', label:'fl oz',              type:'volume' },
+  { value:'cup',  label:'cup',                type:'volume' },
+  { value:'tbsp', label:'tbsp (tablespoon)',   type:'volume' },
+  { value:'tsp',  label:'tsp (teaspoon)',      type:'volume' },
+  { value:'pint', label:'pint',               type:'volume' },
+  // Count — no conversion possible
+  { value:'piece',label:'piece / whole',      type:'count' },
+  { value:'slice',label:'slice',              type:'count' },
+  { value:'scoop',label:'scoop',              type:'count' },
+  { value:'serving',label:'serving',         type:'count' },
+];
+
+// Convert qty+unit → grams, given a food name for density lookup
+function convertToGrams(qty, unit, foodName) {
+  const q = parseFloat(qty) || 0;
+  if (!q) return 0;
+  const u = (unit||'g').toLowerCase();
+
+  // Weight — direct conversion
+  if (UNIT_TO_G_SOLID[u] !== undefined) return q * UNIT_TO_G_SOLID[u];
+
+  // Volume — needs density
+  if (UNIT_TO_ML[u] !== undefined) {
+    const ml = q * UNIT_TO_ML[u];
+    // Look up density by food name (partial match)
+    const name = (foodName||'').toLowerCase();
+    let density = FOOD_DENSITY.default;
+    for (const [key, d] of Object.entries(FOOD_DENSITY)) {
+      if (key !== 'default' && name.includes(key)) { density = d; break; }
+    }
+    return ml * density;
+  }
+
+  // Count units — use the food's own serving size if possible (fallback: treat as 1 serving = 100g)
+  // piece/slice/scoop/serving are returned as a multiplier flag
+  return null; // signals "use as serving multiplier, not grams"
+}
+
+// Check if a unit is a count type (no gram conversion)
+function isCountUnit(unit) {
+  return ['piece','slice','scoop','serving'].includes((unit||'').toLowerCase());
+}
+
+// Build unit options HTML
+function unitOptionsHtml(selectedVal) {
+  const groups = [
+    { label:'── WEIGHT ──',  units: ALL_UNITS.filter(u=>u.type==='weight') },
+    { label:'── VOLUME ──',  units: ALL_UNITS.filter(u=>u.type==='volume') },
+    { label:'── COUNT ──',   units: ALL_UNITS.filter(u=>u.type==='count')  },
+  ];
+  return groups.map(g =>
+    `<optgroup label="${g.label}">${
+      g.units.map(u => `<option value="${u.value}"${u.value===selectedVal?' selected':''}>${u.label}</option>`).join('')
+    }</optgroup>`
+  ).join('');
+}
+
+// Scale nutrition from a food's base serving to the user's qty+unit
+function scaleNutrition(food, qty, unit) {
+  const grams = convertToGrams(qty, unit, food.name);
+
+  if (grams === null) {
+    // Count unit — treat as N × one serving
+    const n = parseFloat(qty) || 1;
+    return {
+      cals:  Math.round(food.calories * n),
+      prot:  +((food.protein * n).toFixed(1)),
+      carb:  +((food.carbs   * n).toFixed(1)),
+      fat:   +((food.fat     * n).toFixed(1)),
+      fiber: +((food.fiber   * n).toFixed(1)),
+      grams: null,
+      note:  `${n} × ${food.serving}`
+    };
+  }
+
+  // Parse the food's base serving to grams
+  const baseG = parseServingToGrams(food.serving, food.name);
+  const scale = baseG > 0 ? grams / baseG : grams / 100;
+
+  return {
+    cals:  Math.round(food.calories * scale),
+    prot:  +((food.protein * scale).toFixed(1)),
+    carb:  +((food.carbs   * scale).toFixed(1)),
+    fat:   +((food.fat     * scale).toFixed(1)),
+    fiber: +((food.fiber   * scale).toFixed(1)),
+    grams: Math.round(grams),
+    note:  `${qty}${unit} ≈ ${Math.round(grams)}g`
+  };
+}
+
+// Parse a serving string like "100g", "1 oz", "2 tbsp", "1 cup" → grams
+function parseServingToGrams(servingStr, foodName) {
+  if (!servingStr) return 100;
+  const s = String(servingStr).toLowerCase().trim();
+  // Try matching "NUMBER UNIT"
+  const m = s.match(/^([\d.]+)\s*([a-z]+)/);
+  if (!m) return 100;
+  const num  = parseFloat(m[1]) || 1;
+  const unit = m[2];
+  const g = convertToGrams(num, unit, foodName);
+  return g !== null ? g : 100;
+}
 
 async function loadFoodDatabase() {
   const statusEl = document.getElementById('food-db-status');
-  if (statusEl) statusEl.textContent = 'Loading from GitHub...';
+  if (statusEl) statusEl.textContent = 'Loading...';
 
-  // Load custom foods from Firebase first
-  let custom = [];
+  // ── Custom foods from SHARED collection (visible to all users) ──
+  let shared = [];
+  try {
+    const doc = await db.collection('fooddb').doc('custom').get();
+    shared = doc.exists ? (doc.data().foods || []) : [];
+  } catch(e) {}
+
+  // ── Also load this user's private custom foods (legacy + personal) ──
+  let userCustom = [];
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
       .collection('fooddb').doc('custom').get();
-    custom = doc.exists ? (doc.data().foods || []) : [];
+    userCustom = doc.exists ? (doc.data().foods || []) : [];
   } catch(e) {}
 
-  // Try to load XLSX from GitHub
+  // ── Load XLSX from GitHub ──
   try {
     const resp = await fetch(FOOD_DB_URL);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -2990,9 +3153,7 @@ async function loadFoodDatabase() {
     const ws   = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
 
-    // Normalize column names — handle various header formats
     foodDatabase = rows.map(r => {
-      const k = Object.keys(r).map(x => x.trim().toLowerCase());
       const g = key => {
         const match = Object.keys(r).find(x => x.trim().toLowerCase().includes(key));
         return match ? r[match] : '';
@@ -3006,21 +3167,26 @@ async function loadFoodDatabase() {
         fat:      parseFloat(g('fat')) || 0,
         fiber:    parseFloat(g('fiber') || g('fibre')) || 0,
         sodium:   parseFloat(g('sodium') || g('salt')) || 0,
+        source:   'github',
         custom:   false
       };
     }).filter(f => f.name);
 
-    if (statusEl) statusEl.textContent = `✓ Loaded ${foodDatabase.length} foods from GitHub + ${custom.length} custom`;
+    const totalCustom = shared.length + userCustom.length;
+    if (statusEl) statusEl.textContent =
+      `✓ ${foodDatabase.length} foods from GitHub · ${shared.length} community additions · ${userCustom.length} personal`;
   } catch(e) {
     console.warn('XLSX load failed:', e.message);
-    if (statusEl) statusEl.textContent = `⚠ Could not load GitHub file: ${e.message}. Showing custom foods only.`;
+    if (statusEl) statusEl.textContent = `⚠ GitHub file unavailable: ${e.message}`;
     foodDatabase = [];
   }
 
-  // Merge custom foods
-  foodDatabase = [...foodDatabase, ...custom.map(f => ({...f, custom:true}))];
+  // Merge: GitHub base + shared community + personal (marked distinctly)
+  const sharedFoods   = shared.map(f     => ({...f, custom:true, source:'community'}));
+  const personalFoods = userCustom.map(f => ({...f, custom:true, source:'personal'}));
+  foodDatabase = [...foodDatabase, ...sharedFoods, ...personalFoods];
 
-  // Load saved recipes
+  // Load saved recipes (personal — stays per-user)
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
       .collection('fooddb').doc('recipes').get();
@@ -3029,6 +3195,42 @@ async function loadFoodDatabase() {
 
   renderFoodTable();
   renderSavedRecipes();
+  updateUnitSelectors();
+}
+
+// Populate all unit selector dropdowns with the full unit list
+function updateUnitSelectors() {
+  ['recipe-unit', 'popup-unit'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value || 'g';
+    el.innerHTML = unitOptionsHtml(cur);
+  });
+}
+
+// Show/hide conversion note when count unit selected in popup
+function onPopupUnitChange() {
+  const unit = document.getElementById('popup-unit')?.value;
+  const noteEl = document.getElementById('popup-unit-note');
+  if (!noteEl) return;
+  if (isCountUnit(unit)) {
+    noteEl.textContent = `ℹ ${unit} = 1 full serving of the food (no gram conversion possible)`;
+    noteEl.style.display = 'block';
+  } else {
+    noteEl.style.display = 'none';
+  }
+}
+
+function onRecipeUnitChange() {
+  const unit = document.getElementById('recipe-unit')?.value;
+  const noteEl = document.getElementById('recipe-unit-note');
+  if (!noteEl) return;
+  if (isCountUnit(unit)) {
+    noteEl.textContent = `ℹ ${unit} = 1 full serving (no volume/weight conversion)`;
+    noteEl.style.display = 'block';
+  } else {
+    noteEl.style.display = 'none';
+  }
 }
 
 function searchFoodDb(inputId, resultsId) {
@@ -3089,40 +3291,43 @@ function confirmAddFoodToMeal() {
   const f    = foodDatabase[idx];
   if (!f || !activeMealTarget) { closeFoodSearch(); return; }
 
-  const qty     = parseFloat(document.getElementById('popup-qty')?.value) || 100;
-  const unit    = document.getElementById('popup-unit')?.value || 'g';
-  const grams   = qty * (UNIT_TO_G[unit] || 1);
-  // Scale nutrition per 100g base
-  const scale   = grams / 100;
-  const cals    = Math.round(f.calories  * scale);
-  const prot    = +((f.protein * scale).toFixed(1));
-  const carb    = +((f.carbs   * scale).toFixed(1));
-  const fat     = +((f.fat     * scale).toFixed(1));
+  const qty  = document.getElementById('popup-qty')?.value  || '100';
+  const unit = document.getElementById('popup-unit')?.value || 'g';
 
-  // Add to ingredient display for that meal
+  if (isCountUnit(unit)) {
+    // Count units: validate the food has a known serving size
+    const n = parseFloat(qty) || 1;
+    if (!f.calories) { toast(`No nutrition data for ${f.name}`); return; }
+  }
+
+  const scaled = scaleNutrition(f, qty, unit);
+
+  // Warn if piece conversion is ambiguous
+  if (isCountUnit(unit)) {
+    toast(`Using ${scaled.note} as 1 serving of "${f.name}"`);
+  }
+
+  // Add ingredient chip to the meal section
   const ingEl = document.getElementById(`${activeMealTarget}-ingredients`);
   if (ingEl) {
     const div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:4px;';
+    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:4px;border-radius:2px;';
     div.innerHTML = `
       <div>
-        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);">${f.name} — ${qty}${unit}</div>
-        <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">${cals} kcal · ${prot}g P · ${carb}g C · ${fat}g F</div>
+        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);">${f.name} — ${qty} ${unit}${scaled.grams ? ' (≈'+scaled.grams+'g)' : ''}</div>
+        <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">${scaled.cals} kcal · ${scaled.prot}g P · ${scaled.carb}g C · ${scaled.fat}g F</div>
       </div>
       <button onclick="this.parentElement.remove();recalcMealTotals('${activeMealTarget}')"
-        style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;">✕</button>`;
+        style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;padding:0 4px;">✕</button>`;
     ingEl.appendChild(div);
   }
 
-  // Add to the macro fields
-  const addNum = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.value = (+el.value||0) + val;
-  };
-  addNum(`n-${activeMealTarget}-cal`,  cals);
-  addNum(`n-${activeMealTarget}-prot`, prot);
-  addNum(`n-${activeMealTarget}-carb`, carb);
-  addNum(`n-${activeMealTarget}-fat`,  fat);
+  // Add to macro totals
+  const addNum = (id, val) => { const el=document.getElementById(id); if(el) el.value=+(+(+el.value||0)+val).toFixed(1); };
+  addNum(`n-${activeMealTarget}-cal`,  scaled.cals);
+  addNum(`n-${activeMealTarget}-prot`, scaled.prot);
+  addNum(`n-${activeMealTarget}-carb`, scaled.carb);
+  addNum(`n-${activeMealTarget}-fat`,  scaled.fat);
   updateNutritionTotals();
   closeFoodSearch();
 }
@@ -3157,21 +3362,37 @@ function renderFoodTable() {
   if (!el) return;
   const q = (document.getElementById('food-db-search')?.value || '').toLowerCase();
   const foods = q ? foodDatabase.filter(f => f.name.toLowerCase().includes(q)) : foodDatabase;
-  if (!foods.length) { el.innerHTML = '<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:12px;">No foods loaded yet. Click RELOAD FROM GITHUB.</div>'; return; }
+  if (!foods.length) {
+    el.innerHTML = '<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:12px;">No foods loaded yet. Click RELOAD FROM GITHUB or add your own.</div>';
+    return;
+  }
 
-  el.innerHTML = `<table class="tbl" style="width:100%;font-size:0.65rem;">
-    <tr><th>FOOD</th><th>SERVING</th><th>KCAL</th><th>PROT</th><th>CARBS</th><th>FAT</th><th></th></tr>
-    ${foods.slice(0,100).map((f,i) => `
-      <tr style="${f.custom?'color:var(--accent2);':''}">
-        <td>${f.name}${f.custom?' ★':''}</td>
-        <td>${f.serving}</td>
-        <td>${f.calories}</td>
-        <td>${f.protein}g</td>
-        <td>${f.carbs}g</td>
-        <td>${f.fat}g</td>
-        <td style="text-align:center;cursor:pointer;" onclick="openFoodSearchWithIdx(${foodDatabase.indexOf(f)})">+</td>
+  const sourceBadge = s => {
+    if (s === 'community') return `<span style="font-size:0.5rem;padding:1px 5px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;">★ SHARED</span>`;
+    if (s === 'personal')  return `<span style="font-size:0.5rem;padding:1px 5px;background:var(--accent2)22;color:var(--accent2);border:1px solid var(--accent2)44;">MY FOOD</span>`;
+    return '';
+  };
+
+  el.innerHTML = `<table class="tbl" style="width:100%;font-size:0.63rem;">
+    <tr>
+      <th style="text-align:left;">FOOD</th>
+      <th>SERVING</th><th>KCAL</th><th>PROT</th><th>CARBS</th><th>FAT</th><th></th>
+    </tr>
+    ${foods.slice(0,150).map(f => `
+      <tr>
+        <td style="max-width:160px;">
+          ${f.name} ${sourceBadge(f.source||'')}
+        </td>
+        <td style="text-align:center;">${f.serving}</td>
+        <td style="text-align:center;">${f.calories}</td>
+        <td style="text-align:center;">${f.protein}g</td>
+        <td style="text-align:center;">${f.carbs}g</td>
+        <td style="text-align:center;">${f.fat}g</td>
+        <td style="text-align:center;cursor:pointer;color:var(--accent2);font-size:1rem;padding:2px 8px;"
+          onclick="openFoodSearchWithIdx(${foodDatabase.indexOf(f)})" title="Add to meal">+</td>
       </tr>`).join('')}
-    ${foods.length > 100 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);">Showing 100 of ${foods.length} — search to filter</td></tr>` : ''}
+    ${foods.length > 150 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:8px;">
+      Showing 150 of ${foods.length} — search to filter</td></tr>` : ''}
   </table>`;
 }
 
@@ -3202,55 +3423,76 @@ async function saveCustomFood() {
   const food = {
     name,
     serving:  document.getElementById('nf-serving')?.value || '100g',
-    calories: parseFloat(document.getElementById('nf-cal')?.value)  || 0,
-    protein:  parseFloat(document.getElementById('nf-prot')?.value) || 0,
-    carbs:    parseFloat(document.getElementById('nf-carb')?.value) || 0,
-    fat:      parseFloat(document.getElementById('nf-fat')?.value)  || 0,
-    fiber:    parseFloat(document.getElementById('nf-fiber')?.value)|| 0,
-    sodium:   parseFloat(document.getElementById('nf-sodium')?.value)||0,
-    custom:   true
+    calories: parseFloat(document.getElementById('nf-cal')?.value)   || 0,
+    protein:  parseFloat(document.getElementById('nf-prot')?.value)  || 0,
+    carbs:    parseFloat(document.getElementById('nf-carb')?.value)  || 0,
+    fat:      parseFloat(document.getElementById('nf-fat')?.value)   || 0,
+    fiber:    parseFloat(document.getElementById('nf-fiber')?.value) || 0,
+    sodium:   parseFloat(document.getElementById('nf-sodium')?.value)|| 0,
+    addedBy:  SESSION.username,
+    added:    new Date().toISOString(),
   };
 
-  // Save to Firebase
+  const shareEl = document.getElementById('nf-share');
+  const shareWithAll = shareEl ? shareEl.checked : false;
+
   try {
-    const doc = await db.collection('userdata').doc(SESSION.username)
-      .collection('fooddb').doc('custom').get();
-    const existing = doc.exists ? (doc.data().foods || []) : [];
-    existing.push(food);
-    await db.collection('userdata').doc(SESSION.username)
-      .collection('fooddb').doc('custom').set({ foods: existing });
+    if (shareWithAll) {
+      // Save to shared community collection — all users see it
+      const doc = await db.collection('fooddb').doc('custom').get();
+      const existing = doc.exists ? (doc.data().foods || []) : [];
+      existing.push({...food, source:'community'});
+      await db.collection('fooddb').doc('custom').set({ foods: existing });
+      food.source = 'community';
+      food.custom = true;
+    } else {
+      // Save to personal collection only
+      const doc = await db.collection('userdata').doc(SESSION.username)
+        .collection('fooddb').doc('custom').get();
+      const existing = doc.exists ? (doc.data().foods || []) : [];
+      existing.push({...food, source:'personal'});
+      await db.collection('userdata').doc(SESSION.username)
+        .collection('fooddb').doc('custom').set({ foods: existing });
+      food.source = 'personal';
+      food.custom = true;
+    }
     foodDatabase.push(food);
     renderFoodTable();
     document.getElementById('add-food-panel').style.display = 'none';
-    // Clear fields
     ['nf-name','nf-serving','nf-cal','nf-prot','nf-carb','nf-fat','nf-fiber','nf-sodium']
       .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-    toast(`✓ "${name}" added to database`);
+    toast(`✓ "${name}" added ${shareWithAll ? 'to community database' : 'to your personal foods'}`);
   } catch(e) { toast('Save failed: ' + e.message); }
 }
 
 // ── Recipe maker ──
 function addIngredientToRecipe(foodIdx) {
   const f    = foodDatabase[foodIdx];
-  const qty  = parseFloat(document.getElementById('recipe-qty')?.value)  || 100;
+  if (!f) return;
+  const qty  = document.getElementById('recipe-qty')?.value  || '100';
   const unit = document.getElementById('recipe-unit')?.value || 'g';
-  const grams = qty * (UNIT_TO_G[unit] || 1);
-  const scale = grams / 100;
+
+  const scaled = scaleNutrition(f, qty, unit);
 
   const ing = {
-    name:   f.name,
-    qty, unit, grams,
-    cals:   Math.round(f.calories * scale),
-    prot:   +((f.protein * scale).toFixed(1)),
-    carb:   +((f.carbs   * scale).toFixed(1)),
-    fat:    +((f.fat     * scale).toFixed(1)),
-    fiber:  +((f.fiber   * scale).toFixed(1)),
+    name:  f.name,
+    qty, unit,
+    grams: scaled.grams,
+    note:  scaled.note,
+    cals:  scaled.cals,
+    prot:  scaled.prot,
+    carb:  scaled.carb,
+    fat:   scaled.fat,
+    fiber: scaled.fiber,
   };
   recipeIngredients.push(ing);
   renderRecipeIngredients();
+
   // Clear search
   const si = document.getElementById('recipe-search'); if (si) si.value = '';
   const sr = document.getElementById('recipe-results'); if (sr) sr.innerHTML = '';
+  // Reset qty to 100g default
+  const qi = document.getElementById('recipe-qty'); if (qi) qi.value = '100';
 }
 
 function renderRecipeIngredients() {
