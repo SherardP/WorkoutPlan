@@ -1380,7 +1380,39 @@ body.theme-female .goal-chip{border-radius:20px;}
                 <option value="other">Other</option>
               </select>
             </div>
-            <div class="lf"><label>SERVING SIZE</label><input type="text" id="nf-serving" placeholder="e.g. 100g or 1 cup (40g)"></div>
+            <!-- Serving: numeric amount + unit separately -->
+            <div class="lf"><label>SERVING SIZE (amount)</label>
+              <input type="number" id="nf-serving-qty" placeholder="e.g. 100" min="0" step="any"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.8rem;padding:8px;outline:none;box-sizing:border-box;">
+            </div>
+            <div class="lf"><label>SERVING UNIT</label>
+              <select id="nf-serving-unit" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.8rem;padding:8px;outline:none;width:100%;">
+                <optgroup label="── WEIGHT ──">
+                  <option value="g" selected>g (grams)</option>
+                  <option value="kg">kg (kilograms)</option>
+                  <option value="oz">oz (ounces)</option>
+                  <option value="lb">lb (pounds)</option>
+                  <option value="mg">mg (milligrams)</option>
+                </optgroup>
+                <optgroup label="── VOLUME ──">
+                  <option value="ml">ml (milliliters)</option>
+                  <option value="l">L (liters)</option>
+                  <option value="floz">fl oz</option>
+                  <option value="cup">cup</option>
+                  <option value="tbsp">tbsp (tablespoon)</option>
+                  <option value="tsp">tsp (teaspoon)</option>
+                  <option value="pint">pint</option>
+                </optgroup>
+                <optgroup label="── COUNT ──">
+                  <option value="piece">piece / whole</option>
+                  <option value="slice">slice</option>
+                  <option value="scoop">scoop</option>
+                  <option value="serving">serving</option>
+                </optgroup>
+              </select>
+            </div>
             <div class="lf"><label>CALORIES (kcal)</label><input type="number" id="nf-cal" placeholder="0"></div>
             <div class="lf"><label>PROTEIN (g)</label><input type="number" id="nf-prot" placeholder="0" step="0.1"></div>
             <div class="lf"><label>CARBS (g)</label><input type="number" id="nf-carb" placeholder="0" step="0.1"></div>
@@ -1555,51 +1587,6 @@ body.theme-female .goal-chip{border-radius:20px;}
     </div>
 
 
-    <!-- Food DB Migration Tool -->
-    <div class="card mb16">
-      <div class="card-label">DATA MIGRATION</div>
-      <div class="card-title" style="margin-bottom:4px;">FOOD DATABASE MIGRATION</div>
-      <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);line-height:1.6;margin-bottom:16px;">
-        Run each step in order. Steps are safe to re-run. Results appear below each step.
-      </div>
-
-      <!-- Step 1: GitHub → Ingredients -->
-      <div style="padding:14px;background:var(--bg3);border-left:4px solid #4caf50;margin-bottom:12px;">
-        <div style="font-family:var(--font-mono);font-size:0.62rem;color:#4caf50;letter-spacing:.12em;margin-bottom:6px;">
-          STEP 1 — IMPORT GITHUB → fooddb/Ingredients
-        </div>
-        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:10px;">
-          Fetches FoodNutrition.xlsx from GitHub and copies all rows into the shared Ingredients database. Duplicates (by name) are skipped.
-          The database will show both sources until GitHub is removed.
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <button class="btn btn-s" onclick="mig_github('preview')" style="font-size:0.62rem;">🔍 PREVIEW</button>
-          <button class="btn btn-p" onclick="mig_github('run')"     style="font-size:0.62rem;">▶ IMPORT ALL</button>
-          <button class="btn btn-s" onclick="mig_github('validate')" style="font-size:0.62rem;">✓ VALIDATE</button>
-        </div>
-        <div id="mig-github-status" style="font-family:var(--font-mono);font-size:0.62rem;line-height:1.7;min-height:16px;"></div>
-      </div>
-
-      <!-- Step 2: Ingredients → Recipes (extract recipe-like items) -->
-      <div style="padding:14px;background:var(--bg3);border-left:4px solid var(--accent2);margin-bottom:12px;">
-        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--accent2);letter-spacing:.12em;margin-bottom:6px;">
-          STEP 2 — MIGRATE RECIPES FROM INGREDIENTS → fooddb/Recipes
-        </div>
-        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:10px;">
-          Scans fooddb/Ingredients for items that are clearly prepared dishes/recipes (casserole, pot pie, soup, etc.)
-          and moves them to fooddb/Recipes. Pure grocery ingredients (chicken, rice, oats) are left in place.
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <button class="btn btn-s" onclick="mig_recipes('preview')"  style="font-size:0.62rem;">🔍 PREVIEW</button>
-          <button class="btn btn-p" onclick="mig_recipes('run')"      style="font-size:0.62rem;">▶ MIGRATE</button>
-          <button class="btn btn-s" onclick="mig_recipes('validate')" style="font-size:0.62rem;">✓ VALIDATE</button>
-          <button class="btn btn-d" onclick="mig_recipes('delete')"   style="font-size:0.62rem;">🗑 DELETE FROM INGREDIENTS</button>
-        </div>
-        <div id="mig-recipes-status" style="font-family:var(--font-mono);font-size:0.62rem;line-height:1.7;min-height:16px;"></div>
-      </div>
-
-      <div id="migration-status" style="display:none;"></div>
-    </div>
 
   </div>
 
@@ -3156,7 +3143,6 @@ async function autoPopulateBodyLog() {
 // ═══════════════════════════════════════════════════════════
 // FOOD DATABASE — GitHub XLSX + custom entries
 // ═══════════════════════════════════════════════════════════
-const FOOD_DB_URL = 'https://raw.githubusercontent.com/sherardp/WorkoutPlan/main/FoodNutrition.xlsx';
 let foodDatabase      = []; // [{name, serving, calories, protein, carbs, fat, fiber, sodium, keto, source}]
 let activeMealTarget  = null;
 let recipeIngredients = [];
@@ -3304,8 +3290,8 @@ function scaleNutrition(food, qty, unit) {
     };
   }
 
-  // Parse the food's base serving to grams
-  const baseG = parseServingToGrams(food.serving, food.name);
+  // Parse the food's base serving to grams — prefer structured fields
+  const baseG = parseServingToGrams(food.serving, food.name, food);
   const scale = baseG > 0 ? grams / baseG : grams / 100;
 
   return {
@@ -3319,17 +3305,35 @@ function scaleNutrition(food, qty, unit) {
   };
 }
 
-// Parse a serving string like "100g", "1 oz", "2 tbsp", "1 cup" → grams
-function parseServingToGrams(servingStr, foodName) {
+// Parse legacy serving string → numeric qty  e.g. "100g" → 100, "1 cup" → 1
+function parseServingQty(servingStr) {
   if (!servingStr) return 100;
-  const s = String(servingStr).toLowerCase().trim();
-  // Try matching "NUMBER UNIT"
-  const m = s.match(/^([\d.]+)\s*([a-z]+)/);
-  if (!m) return 100;
-  const num  = parseFloat(m[1]) || 1;
-  const unit = m[2];
-  const g = convertToGrams(num, unit, foodName);
-  return g !== null ? g : 100;
+  const m = String(servingStr).match(/^([\d.]+)/);
+  return m ? parseFloat(m[1]) : 100;
+}
+
+// Parse legacy serving string → unit  e.g. "100g" → "g", "1 cup" → "cup"
+function parseServingUnit(servingStr) {
+  if (!servingStr) return 'g';
+  const s = String(servingStr).trim().toLowerCase();
+  const m = s.match(/^[\d.]+\s*([a-z]+)/);
+  if (!m) return 'g';
+  // normalise common variants
+  const u = m[1];
+  if (u === 'ml' || u === 'mls') return 'ml';
+  if (u === 'fl' || u === 'floz') return 'floz';
+  if (u === 'tsp' || u === 'teaspoon') return 'tsp';
+  if (u === 'tbsp' || u === 'tablespoon') return 'tbsp';
+  return u;
+}
+
+// Parse a serving string OR structured fields → grams
+function parseServingToGrams(servingStr, foodName, food) {
+  // Prefer structured fields if available
+  const qty  = food?.servingQty  || parseServingQty(servingStr);
+  const unit = food?.servingUnit || parseServingUnit(servingStr);
+  const g = convertToGrams(qty, unit, foodName || food?.name || '');
+  return g !== null ? g : qty * 100; // count units: treat as qty × 100g fallback
 }
 
 async function loadFoodDatabase() {
@@ -3347,23 +3351,6 @@ async function loadFoodDatabase() {
     firestoreFoods = doc.exists ? (doc.data().foods||[]) : [];
   } catch(e) { console.warn('Ingredients load failed:', e.message); }
 
-  // ── Also try GitHub XLSX (show both until migration complete) ──
-  let githubFoods = [];
-  try {
-    const rows = await fetchGitHubXLSX();
-    // Mark which ones are already in Firestore
-    const firestoreNames = new Set(firestoreFoods.map(f=>f.name.toLowerCase()));
-    githubFoods = rows.map(r => ({
-      ...r,
-      source:  'github',
-      custom:  false,
-      _githubOnly: !firestoreNames.has(r.name.toLowerCase())
-    }));
-  } catch(e) {
-    // GitHub unavailable — that's fine once migration is done
-    githubFoods = [];
-  }
-
   // ── Personal foods ──
   let userCustom = [];
   try {
@@ -3372,24 +3359,18 @@ async function loadFoodDatabase() {
     userCustom = doc.exists ? (doc.data().foods||[]) : [];
   } catch(e) {}
 
-  // Merge: Firestore first (authoritative), then GitHub-only items, then personal
-  const firestoreSet = new Set(firestoreFoods.map(f=>f.name.toLowerCase()));
-  const githubOnly   = githubFoods.filter(f => f._githubOnly);
-  const personal     = userCustom.map(f => ({...f, source:'personal'}));
-
+  // Merge: shared Firestore + personal
   foodDatabase = [
     ...firestoreFoods.map(f => ({...f, source: f.source||'community'})),
-    ...githubOnly,
-    ...personal,
+    ...userCustom.map(f => ({...f, source:'personal'})),
   ].filter(f => f.name);
 
   // Tag keto
   foodDatabase = foodDatabase.map(f => ({...f, keto: isKeto(f)}));
 
-  const githubOnlyCount = githubOnly.length;
   if (statusEl) {
     const ketoCount = foodDatabase.filter(f=>f.keto).length;
-    statusEl.textContent = `✓ ${firestoreFoods.length} in database · ${githubOnlyCount > 0 ? githubOnlyCount+' GitHub-only (not yet migrated) · ' : ''}${ketoCount} keto-friendly`;
+    statusEl.textContent = `✓ ${foodDatabase.length} ingredients · ${ketoCount} keto-friendly`;
   }
 
   // Load recipes
@@ -3480,16 +3461,22 @@ function selectFood(foodIdx, inputId, resultsId) {
     // Add to recipe
     addIngredientToRecipe(foodIdx);
   } else if (inputId === 'popup-search-input') {
-    // Will be added when user taps "Add to Meal" button
     window._selectedFoodIdx = foodIdx;
-    // Show confirm button
+    // Pre-fill qty/unit with the food's own serving
+    const qtyEl  = document.getElementById('popup-qty');
+    const unitEl = document.getElementById('popup-unit');
+    const defQty  = f.servingQty  || parseServingQty(f.serving)  || 100;
+    const defUnit = f.servingUnit || parseServingUnit(f.serving) || 'g';
+    if (qtyEl)  qtyEl.value  = defQty;
+    if (unitEl) unitEl.value = defUnit;
     const resContainer = document.getElementById(resultsId);
     if (resContainer) {
+      const sLabel = `${defQty} ${defUnit}`;
       resContainer.innerHTML = `
         <div style="padding:10px;background:var(--bg3);border:1px solid #4caf5044;margin-top:4px;">
-          <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);margin-bottom:6px;">${f.name}</div>
+          <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);margin-bottom:4px;">${f.name}${f.brand?' <span style="color:var(--text-dim);font-size:0.58rem;">— '+f.brand+'</span>':''}</div>
           <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
-            Per ${f.serving}: ${f.calories} kcal · ${f.protein}g P · ${f.carbs}g C · ${f.fat}g F
+            Per ${sLabel}: ${f.calories} kcal · ${f.protein}g P · ${f.carbs}g C · ${f.fat}g F
           </div>
           <button onclick="confirmAddFoodToMeal()" class="btn btn-p" style="width:100%;font-size:0.65rem;">ADD TO MEAL</button>
         </div>`;
@@ -3609,8 +3596,6 @@ function renderFoodTable() {
   const isAdmin = SESSION.isAdmin;
 
   const sourceBadge = f => {
-    if (f.source === 'github' && f._githubOnly)
-      return `<span style="font-size:0.43rem;padding:1px 4px;background:#64b5f622;color:#64b5f6;border:1px solid #64b5f644;">GH-ONLY</span>`;
     if (f.source === 'personal')
       return `<span style="font-size:0.43rem;padding:1px 4px;background:var(--accent2)22;color:var(--accent2);border:1px solid var(--accent2)44;">MINE</span>`;
     return '';
@@ -3619,24 +3604,27 @@ function renderFoodTable() {
   el.innerHTML = `
     <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-bottom:6px;">
       ${foods.length} of ${foodDatabase.length} ingredients
-      ${foods.some(f=>f._githubOnly) ? `· <span style="color:#64b5f6;">GH-ONLY = in GitHub but not yet in DB</span>` : ''}
-    </div>
+      </div>
     <table class="tbl" style="width:100%;font-size:0.6rem;">
       <tr>
         <th style="text-align:left;min-width:120px;">INGREDIENT</th>
         <th style="text-align:left;">BRAND</th>
         <th>SERVING</th>
+        <th>UNIT</th>
         <th>KCAL</th><th>PROT</th><th>CARBS</th><th>FAT</th>
         <th></th>
       </tr>
       ${foods.slice(0,200).map(f => {
-        const idx = foodDatabase.indexOf(f);
-        return `<tr style="${f._githubOnly ? 'opacity:0.7;' : ''}">
+        const idx   = foodDatabase.indexOf(f);
+        const sQty  = f.servingQty  || parseServingQty(f.serving);
+        const sUnit = f.servingUnit || parseServingUnit(f.serving);
+        return `<tr>
           <td style="max-width:160px;line-height:1.6;">
             ${f.name} ${ketoLabel(f)} ${catBadge(f)} ${sourceBadge(f)}
           </td>
           <td style="color:var(--text-dim);font-size:0.55rem;">${f.brand||'—'}</td>
-          <td style="text-align:center;">${f.serving||'100g'}</td>
+          <td style="text-align:center;">${sQty}</td>
+          <td style="text-align:center;">${sUnit}</td>
           <td style="text-align:center;">${f.calories}</td>
           <td style="text-align:center;">${f.protein}g</td>
           <td style="text-align:center;">${f.carbs}g</td>
@@ -3645,31 +3633,30 @@ function renderFoodTable() {
             <span onclick="openFoodSearchWithIdx(${idx})" title="Add to meal"
               style="cursor:pointer;color:var(--accent2);padding:2px 6px;font-size:0.9rem;">+</span>
             ${isAdmin ? `
-              <span onclick="editFood(${idx})" title="${f._githubOnly ? 'Edit & save to DB' : 'Edit'}"
-                style="cursor:pointer;color:${f._githubOnly ? '#64b5f6' : 'var(--text-dim)'};padding:2px 5px;font-size:0.75rem;">✎</span>
-              ${!f._githubOnly ? `<span onclick="deleteFood(${idx})" title="Delete"
-                style="cursor:pointer;color:var(--danger);padding:2px 5px;font-size:0.75rem;">✕</span>` : ''}` : ''}
+              <span onclick="editFood(${idx})" title="Edit"
+                style="cursor:pointer;color:var(--text-dim);padding:2px 5px;font-size:0.75rem;">✎</span>
+              <span onclick="deleteFood(${idx})" title="Delete"
+                style="cursor:pointer;color:var(--danger);padding:2px 5px;font-size:0.75rem;">✕</span>` : ''}
           </td>
         </tr>`;
       }).join('')}
-      ${foods.length > 200 ? `<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:8px;">
+      ${foods.length > 200 ? `<tr><td colspan="9" style="text-align:center;color:var(--text-dim);padding:8px;">
         Showing 200 of ${foods.length} — search to narrow</td></tr>` : ''}
     </table>`;
 }
 
 function openFoodSearchWithIdx(foodIdx) {
-  // Quick-add from the table — opens popup pre-loaded with that food
   window._selectedFoodIdx = foodIdx;
   const f = foodDatabase[foodIdx];
   if (!f) return;
-  // Ask which meal
   const target = prompt(`Add "${f.name}" to which meal?\n1 = Breakfast\n2 = Lunch\n3 = Dinner\n4 = Snack\n(Enter 1-4)`);
   const map = {'1':'bk','2':'ln','3':'dn','4':'sn'};
   activeMealTarget = map[target?.trim()] || 'ln';
-  if (!map[target?.trim()]) { activeMealTarget = 'ln'; }
-  // Use popup qty default
-  document.getElementById('popup-qty').value = '100';
-  document.getElementById('popup-unit').value = 'g';
+  // Pre-fill popup with the food's own serving size
+  const qtyEl  = document.getElementById('popup-qty');
+  const unitEl = document.getElementById('popup-unit');
+  if (qtyEl)  qtyEl.value  = f.servingQty  || parseServingQty(f.serving)  || 100;
+  if (unitEl) unitEl.value = f.servingUnit || parseServingUnit(f.serving) || 'g';
   confirmAddFoodToMeal();
 }
 
@@ -3682,7 +3669,7 @@ function openAddFoodPanel(editIdx) {
   if (!panel) return;
 
   // Clear fields
-  ['nf-name','nf-brand','nf-serving','nf-cal','nf-prot','nf-carb','nf-fat',
+  ['nf-name','nf-brand','nf-serving-qty','nf-cal','nf-prot','nf-carb','nf-fat',
    'nf-fiber','nf-sodium','nf-sugar','nf-satfat'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
@@ -3699,7 +3686,9 @@ function openAddFoodPanel(editIdx) {
     const set = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
     set('nf-name',    f.name);
     set('nf-brand',   f.brand);
-    set('nf-serving', f.serving);
+    set('nf-serving-qty',  f.servingQty  || parseServingQty(f.serving)  || 100);
+    const unitEl = document.getElementById('nf-serving-unit');
+    if (unitEl) unitEl.value = f.servingUnit || parseServingUnit(f.serving) || 'g';
     set('nf-cal',     f.calories);
     set('nf-prot',    f.protein);
     set('nf-carb',    f.carbs);
@@ -3708,6 +3697,7 @@ function openAddFoodPanel(editIdx) {
     set('nf-sodium',  f.sodium);
     set('nf-sugar',   f.sugar);
     set('nf-satfat',  f.satfat);
+    const catEl = document.getElementById('nf-category');
     if (catEl) catEl.value = f.category || '';
   } else {
     if (titleEl) titleEl.textContent = 'ADD INGREDIENT';
@@ -3749,23 +3739,28 @@ async function saveCustomFood() {
   const name = document.getElementById('nf-name')?.value?.trim();
   if (!name) { toast('Enter an ingredient name'); return; }
 
+  const servingQty  = parseFloat(document.getElementById('nf-serving-qty')?.value)  || 100;
+  const servingUnit = document.getElementById('nf-serving-unit')?.value || 'g';
+
   const food = {
     name,
-    brand:    document.getElementById('nf-brand')?.value?.trim()   || '',
-    category: document.getElementById('nf-category')?.value        || '',
-    serving:  document.getElementById('nf-serving')?.value?.trim() || '100g',
-    calories: parseFloat(document.getElementById('nf-cal')?.value)    || 0,
-    protein:  parseFloat(document.getElementById('nf-prot')?.value)   || 0,
-    carbs:    parseFloat(document.getElementById('nf-carb')?.value)   || 0,
-    fat:      parseFloat(document.getElementById('nf-fat')?.value)    || 0,
-    fiber:    parseFloat(document.getElementById('nf-fiber')?.value)  || 0,
-    sodium:   parseFloat(document.getElementById('nf-sodium')?.value) || 0,
-    sugar:    parseFloat(document.getElementById('nf-sugar')?.value)  || 0,
-    satfat:   parseFloat(document.getElementById('nf-satfat')?.value) || 0,
-    source:   'community',
-    custom:   true,
-    addedBy:  SESSION.username,
-    updated:  new Date().toISOString(),
+    brand:       document.getElementById('nf-brand')?.value?.trim()   || '',
+    category:    document.getElementById('nf-category')?.value        || '',
+    servingQty,
+    servingUnit,
+    serving:     `${servingQty} ${servingUnit}`,  // keep legacy string for display
+    calories:    parseFloat(document.getElementById('nf-cal')?.value)    || 0,
+    protein:     parseFloat(document.getElementById('nf-prot')?.value)   || 0,
+    carbs:       parseFloat(document.getElementById('nf-carb')?.value)   || 0,
+    fat:         parseFloat(document.getElementById('nf-fat')?.value)    || 0,
+    fiber:       parseFloat(document.getElementById('nf-fiber')?.value)  || 0,
+    sodium:      parseFloat(document.getElementById('nf-sodium')?.value) || 0,
+    sugar:       parseFloat(document.getElementById('nf-sugar')?.value)  || 0,
+    satfat:      parseFloat(document.getElementById('nf-satfat')?.value) || 0,
+    source:      'community',
+    custom:      true,
+    addedBy:     SESSION.username,
+    updated:     new Date().toISOString(),
   };
 
   try {
@@ -4180,235 +4175,6 @@ async function deleteCommunityRecipe(recipeIdx) {
 // ═══════════════════════════════════════════════════════════
 
 // Fetch and parse the GitHub XLSX into normalized food rows
-async function fetchGitHubXLSX() {
-  const resp = await fetch(FOOD_DB_URL);
-  if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching GitHub XLSX`);
-  const buf  = await resp.arrayBuffer();
-  const wb   = XLSX.read(new Uint8Array(buf), { type:'array' });
-  const ws   = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
-  return rows.map(r => {
-    const g = key => {
-      const match = Object.keys(r).find(x => x.trim().toLowerCase().includes(key));
-      return match ? r[match] : '';
-    };
-    return {
-      name:     String(g('name') || g('food') || g('ingredient') || '').trim(),
-      brand:    String(g('brand') || '').trim(),
-      category: String(g('category') || g('cat') || '').trim().toLowerCase(),
-      serving:  String(g('serving') || g('portion') || '100g').trim(),
-      calories: parseFloat(g('calor') || g('kcal') || g('cal'))   || 0,
-      protein:  parseFloat(g('protein') || g('prot'))              || 0,
-      carbs:    parseFloat(g('carb'))                              || 0,
-      fat:      parseFloat(g('fat'))                               || 0,
-      fiber:    parseFloat(g('fiber') || g('fibre'))               || 0,
-      sodium:   parseFloat(g('sodium') || g('salt'))               || 0,
-      sugar:    parseFloat(g('sugar'))                             || 0,
-      satfat:   parseFloat(g('sat') || g('saturated'))             || 0,
-    };
-  }).filter(f => f.name);
-}
-
-// ── STEP 1: GitHub XLSX → fooddb/Ingredients ──────────────
-async function mig_github(action) {
-  const el = document.getElementById('mig-github-status');
-  if (!el) return;
-
-  if (action === 'preview') {
-    el.innerHTML = '<span style="color:var(--accent2);">Fetching GitHub XLSX...</span>';
-    try {
-      const rows   = await fetchGitHubXLSX();
-      const ingDoc = await db.collection('fooddb').doc('Ingredients').get();
-      const existing = new Set((ingDoc.exists ? ingDoc.data().foods||[] : []).map(f=>f.name.toLowerCase()));
-      const newRows  = rows.filter(r => !existing.has(r.name.toLowerCase()));
-      const dupRows  = rows.filter(r =>  existing.has(r.name.toLowerCase()));
-      el.innerHTML = `
-        <div style="color:#4caf50;margin-bottom:4px;">GitHub XLSX: <strong>${rows.length}</strong> rows</div>
-        <div style="color:var(--text-dim);">
-          <strong style="color:var(--text);">${newRows.length}</strong> new ingredients will be added<br>
-          <strong style="color:var(--text-dim);">${dupRows.length}</strong> already exist in Ingredients (will be skipped)<br>
-          ${newRows.length > 0 ? `<span style="font-size:0.58rem;">Sample new: ${newRows.slice(0,8).map(r=>r.name).join(', ')}${newRows.length>8?'…':''}</span>` : ''}
-        </div>`;
-    } catch(e) {
-      el.innerHTML = `<span style="color:var(--danger);">Error: ${e.message}</span>`;
-    }
-
-  } else if (action === 'run') {
-    if (!confirm('Import all foods from GitHub XLSX into fooddb/Ingredients?\nDuplicates (by name) will be skipped.')) return;
-    el.innerHTML = '<span style="color:var(--accent2);">Importing...</span>';
-    try {
-      const rows   = await fetchGitHubXLSX();
-      const ingDoc = await db.collection('fooddb').doc('Ingredients').get();
-      let foods    = ingDoc.exists ? (ingDoc.data().foods||[]) : [];
-      const names  = new Set(foods.map(f=>f.name.toLowerCase()));
-      let added = 0, skipped = 0;
-      for (const r of rows) {
-        if (names.has(r.name.toLowerCase())) { skipped++; continue; }
-        foods.push({...r, source:'community', custom:false,
-          importedFrom:'github', imported: new Date().toISOString()});
-        names.add(r.name.toLowerCase());
-        added++;
-      }
-      await db.collection('fooddb').doc('Ingredients').set({ foods });
-      el.innerHTML = `<span style="color:#4caf50;">✓ Imported <strong>${added}</strong> ingredients from GitHub · <strong>${skipped}</strong> duplicates skipped.<br>
-        Run VALIDATE to confirm, then you can remove FoodNutrition.xlsx from GitHub.</span>`;
-      await loadFoodDatabase();
-    } catch(e) {
-      el.innerHTML = `<span style="color:var(--danger);">Import failed: ${e.message}</span>`;
-    }
-
-  } else if (action === 'validate') {
-    el.innerHTML = '<span style="color:var(--accent2);">Validating...</span>';
-    try {
-      const rows   = await fetchGitHubXLSX();
-      const ingDoc = await db.collection('fooddb').doc('Ingredients').get();
-      const inIngr = new Set((ingDoc.exists ? ingDoc.data().foods||[] : []).map(f=>f.name.toLowerCase()));
-      const missing = rows.filter(r => !inIngr.has(r.name.toLowerCase()));
-      if (missing.length === 0) {
-        el.innerHTML = `<span style="color:#4caf50;">✓ VALIDATION PASSED — All <strong>${rows.length}</strong> GitHub rows exist in fooddb/Ingredients.<br>
-          Safe to remove FoodNutrition.xlsx from GitHub.</span>`;
-      } else {
-        el.innerHTML = `<span style="color:var(--danger);">✗ VALIDATION FAILED — <strong>${missing.length}</strong> rows missing from Ingredients:<br>
-          <span style="font-size:0.58rem;">${missing.map(f=>f.name).join(', ')}</span><br>
-          Re-run IMPORT to fix.</span>`;
-      }
-    } catch(e) {
-      el.innerHTML = `<span style="color:var(--danger);">Validation error: ${e.message}</span>`;
-    }
-  }
-}
-
-// ── STEP 2: Move recipe-like items from Ingredients → Recipes ──
-// Keywords that identify a prepared dish vs a raw grocery ingredient
-const RECIPE_DETECT_WORDS = [
-  'casserole','pot pie','potpie','stew','chowder','soup','chili','lasagna',
-  'sandwich','burger','pizza','curry','stir fry','stir-fry','pasta',
-  'noodle','salad','wrap','burrito','taco','hash','stuffed','grilled',
-  'roasted','baked','sauteed','sautéed','fried chicken','chicken soup',
-  'chicken breast','rotisserie','pot roast','beef stew','chicken pie',
-  'mac and cheese','macaroni','fried rice','lo mein','pad thai',
-  'chicken casserole','chicken pot','meatloaf','meatball','meat loaf',
-  'beef stew','chicken noodle','vegetable soup','tomato soup','clam chowder',
-  'shepherd pie','beef pie','turkey dinner','holiday',
-];
-
-function looksLikeRecipe(name) {
-  const n = name.toLowerCase();
-  return RECIPE_DETECT_WORDS.some(w => n.includes(w));
-}
-
-async function mig_recipes(action) {
-  const el = document.getElementById('mig-recipes-status');
-  if (!el) return;
-
-  const ingDoc = await db.collection('fooddb').doc('Ingredients').get();
-  const allIngredients = ingDoc.exists ? (ingDoc.data().foods||[]) : [];
-  const recipeItems    = allIngredients.filter(f => looksLikeRecipe(f.name));
-  const keepItems      = allIngredients.filter(f => !looksLikeRecipe(f.name));
-
-  if (action === 'preview') {
-    el.innerHTML = '<span style="color:var(--accent2);">Scanning Ingredients...</span>';
-    const recDoc = await db.collection('fooddb').doc('Recipes').get();
-    const existingRecipes = recDoc.exists ? (recDoc.data().recipes||[]) : [];
-    const existNames = new Set(existingRecipes.map(r=>r.name.toLowerCase()));
-    const newRecipes = recipeItems.filter(r => !existNames.has(r.name.toLowerCase()));
-
-    if (recipeItems.length === 0) {
-      el.innerHTML = '<span style="color:var(--text-dim);">No recipe-like items found in Ingredients. Nothing to migrate.</span>';
-    } else {
-      el.innerHTML = `
-        <div style="color:var(--accent2);margin-bottom:4px;">Found <strong>${recipeItems.length}</strong> recipe-like items in Ingredients</div>
-        <div style="color:var(--text-dim);font-size:0.6rem;line-height:1.8;">
-          <strong style="color:#4caf50;">${newRecipes.length}</strong> new to add to Recipes<br>
-          <strong style="color:var(--text-dim);">${recipeItems.length - newRecipes.length}</strong> already in Recipes<br>
-          <strong>${keepItems.length}</strong> items will stay in Ingredients<br>
-          <span style="font-size:0.58rem;margin-top:4px;display:block;">Recipe items: ${recipeItems.slice(0,10).map(f=>f.name).join(', ')}${recipeItems.length>10?'…':''}</span>
-        </div>`;
-    }
-
-  } else if (action === 'run') {
-    if (!confirm(`Move ${recipeItems.length} recipe-like items from Ingredients to Recipes?\n\nItems will stay in Ingredients until you run DELETE.`)) return;
-    el.innerHTML = '<span style="color:var(--accent2);">Migrating...</span>';
-    try {
-      const recDoc = await db.collection('fooddb').doc('Recipes').get();
-      let recipes  = recDoc.exists ? (recDoc.data().recipes||[]) : [];
-      const existNames = new Set(recipes.map(r=>r.name.toLowerCase()));
-      let added = 0, skipped = 0;
-
-      for (const item of recipeItems) {
-        if (existNames.has(item.name.toLowerCase())) { skipped++; continue; }
-        // Convert ingredient entry to a recipe entry
-        recipes.push({
-          name:        item.name,
-          author:      'system',
-          published:   new Date().toISOString(),
-          servings:    1,
-          ingredients: [{ name: item.name, qty: '1', unit: 'serving',
-            cals: item.calories||0, prot: item.protein||0,
-            carb: item.carbs||0,   fat: item.fat||0 }],
-          instructions: '',
-          tags:         item.category ? [item.category] : [],
-          keto:         isKeto(item),
-          avgRating:    0,
-          ratingCount:  0,
-          ratings:      {},
-          migratedFrom: 'Ingredients',
-          migratedAt:   new Date().toISOString(),
-        });
-        existNames.add(item.name.toLowerCase());
-        added++;
-      }
-
-      await db.collection('fooddb').doc('Recipes').set({ recipes });
-      el.innerHTML = `<span style="color:#4caf50;">✓ Moved <strong>${added}</strong> items to Recipes · <strong>${skipped}</strong> already existed.<br>
-        Run VALIDATE to confirm, then DELETE to remove them from Ingredients.</span>`;
-      await loadFoodDatabase();
-    } catch(e) {
-      el.innerHTML = `<span style="color:var(--danger);">Migration failed: ${e.message}</span>`;
-    }
-
-  } else if (action === 'validate') {
-    el.innerHTML = '<span style="color:var(--accent2);">Validating...</span>';
-    try {
-      const recDoc = await db.collection('fooddb').doc('Recipes').get();
-      const inRecipes = new Set((recDoc.exists ? recDoc.data().recipes||[] : []).map(r=>r.name.toLowerCase()));
-      const missing = recipeItems.filter(f => !inRecipes.has(f.name.toLowerCase()));
-      if (missing.length === 0 && recipeItems.length > 0) {
-        el.innerHTML = `<span style="color:#4caf50;">✓ VALIDATION PASSED — All <strong>${recipeItems.length}</strong> recipe items from Ingredients exist in Recipes.<br>
-          Safe to delete them from Ingredients.</span>`;
-      } else if (recipeItems.length === 0) {
-        el.innerHTML = `<span style="color:var(--text-dim);">No recipe-like items found in Ingredients to validate.</span>`;
-      } else {
-        el.innerHTML = `<span style="color:var(--danger);">✗ VALIDATION FAILED — <strong>${missing.length}</strong> items missing from Recipes:<br>
-          <span style="font-size:0.58rem;">${missing.map(f=>f.name).join(', ')}</span><br>
-          Re-run MIGRATE to fix.</span>`;
-      }
-    } catch(e) {
-      el.innerHTML = `<span style="color:var(--danger);">Validation error: ${e.message}</span>`;
-    }
-
-  } else if (action === 'delete') {
-    // First re-validate
-    const recDoc = await db.collection('fooddb').doc('Recipes').get();
-    const inRecipes = new Set((recDoc.exists ? recDoc.data().recipes||[] : []).map(r=>r.name.toLowerCase()));
-    const notMigrated = recipeItems.filter(f => !inRecipes.has(f.name.toLowerCase()));
-    if (notMigrated.length > 0) {
-      el.innerHTML = `<span style="color:var(--danger);">✗ Cannot delete — ${notMigrated.length} items not yet in Recipes: ${notMigrated.map(f=>f.name).join(', ')}<br>Run VALIDATE first.</span>`;
-      return;
-    }
-    if (!confirm(`Permanently remove ${recipeItems.length} recipe items from Ingredients?\n\nThey are confirmed in Recipes. This cannot be undone.`)) return;
-    el.innerHTML = '<span style="color:var(--accent2);">Deleting from Ingredients...</span>';
-    try {
-      await db.collection('fooddb').doc('Ingredients').set({ foods: keepItems });
-      el.innerHTML = `<span style="color:#4caf50;">✓ Deleted <strong>${recipeItems.length}</strong> recipe items from Ingredients.<br>
-        ${keepItems.length} pure ingredients remain.</span>`;
-      await loadFoodDatabase();
-    } catch(e) {
-      el.innerHTML = `<span style="color:var(--danger);">Delete failed: ${e.message}</span>`;
-    }
-  }
-}
-
 async function reEncryptAll() {
   document.getElementById('adminErr').textContent = 'Re-encryption: enter old + new master key. Coming in next version.';
 }
