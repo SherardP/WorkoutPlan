@@ -2167,10 +2167,16 @@ function logTab(t) {
     const b = document.getElementById('lt-'+x);
     if(b) { b.className = x===t?'btn btn-p':'btn btn-s'; }
   });
+  if (t==='workout') {
+    // Sync date from workout page if a date was selected there
+    const wkDate = document.getElementById('workout-date')?.value;
+    const lDate  = document.getElementById('l-date');
+    if (lDate && wkDate) lDate.value = wkDate;
+    autoPopulateWorkoutLog();
+  }
   if (t==='summary')   renderLogSummary();
   if (t==='history')   showHist('workout');
   if (t==='steps')     autoPopulateStepsLog();
-  if (t==='workout')   autoPopulateWorkoutLog();
   if (t==='body')      autoPopulateBodyLog();
   if (t==='nutrition') autoPopulateNutritionLog();
 }
@@ -3141,6 +3147,130 @@ function todayDayId() {
 
 function startTodaysWorkout() {
   nav('workout'); // nav() will auto-select today via the setTimeout below
+}
+
+async function autoPopulateWorkoutLog() {
+  const today   = localDateStr();
+  const dateEl  = document.getElementById('l-date');
+
+  // l-date is already synced from workout-date by logTab — just default to today if empty
+  if (dateEl && !dateEl.value) {
+    dateEl.value = document.getElementById('workout-date')?.value || today;
+  }
+  const targetDate = dateEl?.value || today;
+
+  // ── Auto-select the day-of-week dropdown from the date ──
+  const dayMap = {1:'MONDAY',2:'TUESDAY',3:'WEDNESDAY',4:'THURSDAY',5:'FRIDAY',6:'SATURDAY',0:'SUNDAY'};
+  const dateObj = new Date(targetDate + 'T12:00:00');
+  const dayName = dayMap[dateObj.getDay()];
+  const sel = document.getElementById('l-day');
+  if (sel && dayName) {
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].text.toUpperCase().startsWith(dayName)) {
+        sel.selectedIndex = i; break;
+      }
+    }
+  }
+
+  // ── Clear fields ──
+  ['l-dur','l-energy','l-exs','l-notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+
+  try {
+    // 1. Check for a saved workout log entry for this date first
+    const workouts = await encryptedLoad('workout');
+    const existing = workouts.find(w => w.date === targetDate);
+    if (existing) {
+      if (document.getElementById('l-dur'))    document.getElementById('l-dur').value    = existing.duration  || '';
+      if (document.getElementById('l-energy')) document.getElementById('l-energy').value = existing.energy    || '';
+      if (document.getElementById('l-exs'))    document.getElementById('l-exs').value    = existing.exercises || '';
+      if (document.getElementById('l-notes'))  document.getElementById('l-notes').value  = existing.notes     || '';
+      if (sel && existing.day) {
+        for (let i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].text.toUpperCase().includes(existing.day.split('—')[0].trim().toUpperCase())) {
+            sel.selectedIndex = i; break;
+          }
+        }
+      }
+      return; // saved entry loaded — done
+    }
+
+    // 2. No saved entry — build from wkchecks actuals
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('wkchecks').doc(targetDate).get();
+
+    if (!doc.exists) return; // nothing logged for this date
+
+    const data    = doc.data();
+    const dayId   = data.dayId;
+    const checks  = data.checks  || {};
+    const actuals = data.actuals || {};
+    const W = SESSION.gender === 'female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
+    const w = W[dayId];
+    if (!w || !dayId) return;
+
+    // Match day dropdown
+    if (sel) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].text.toUpperCase().includes(dayId.toUpperCase())) {
+          sel.selectedIndex = i; break;
+        }
+      }
+    }
+
+    // Build exercise summary from actuals
+    const allItems = [...w.warmup, ...w.exercises, ...w.cooldown];
+    const bodyLbs  = SESSION.weight || 0;
+    let totalCals  = 0;
+
+    const lines = allItems.map(item => {
+      const actual  = actuals[item.id] || {};
+      const sets    = (actual.sets || []).filter(s => s?.reps);
+      const bwPct   = BODYWEIGHT_PCT[item.name?.toUpperCase()];
+      const effBwLbs = bwPct ? Math.round(bodyLbs * bwPct) : 0;
+      const cals    = Math.round(calcActualCalories(item, actual) || 0);
+      totalCals    += cals;
+
+      const bwNote = (sets.length === 0 || !sets.some(s => s.weight)) && effBwLbs
+        ? ` [BW ${Math.round((bwPct || 0) * 100)}%≈${effBwLbs}lbs]` : '';
+
+      let detail = '';
+      if (sets.length) {
+        detail = ' — ' + sets.map((s, i) =>
+          `Set ${i+1}: ${s.reps} reps${s.weight ? ' @ '+s.weight+'lbs' : ''}`
+        ).join(' | ');
+      }
+
+      const calNote = cals > 0 ? ` (~${cals} kcal)` : '';
+      const checked = checks[item.id] ? '✓' : '○';
+      return `${checked} ${item.name}${bwNote}${detail}${calNote}`;
+    });
+
+    const doneCount = Object.values(checks).filter(Boolean).length;
+    const sections = [
+      '── WARM-UP ──',
+      ...lines.slice(0, w.warmup.length),
+      '── CORE WORKOUT ──',
+      ...lines.slice(w.warmup.length, w.warmup.length + w.exercises.length),
+      '── COOL-DOWN ──',
+      ...lines.slice(w.warmup.length + w.exercises.length),
+      '',
+      `TOTAL CALORIES BURNED: ~${totalCals} kcal`,
+      bodyLbs ? `Body weight: ${bodyLbs} lbs` : ''
+    ].filter(Boolean);
+
+    const exsEl = document.getElementById('l-exs');
+    if (exsEl) exsEl.value = sections.join('\n');
+
+    const durEl = document.getElementById('l-dur');
+    if (durEl) durEl.value = String(Math.round(doneCount * 2.5 + 10));
+
+    const notesEl = document.getElementById('l-notes');
+    if (notesEl) notesEl.value =
+      `${doneCount}/${allItems.length} items completed via checklist. ~${totalCals} kcal burned.`;
+
+  } catch(e) { console.warn('autoPopulateWorkoutLog:', e.message); }
 }
 
 async function autoPopulateBodyLog() {
