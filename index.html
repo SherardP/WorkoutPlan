@@ -2005,7 +2005,7 @@ function launchApp() {
   setTodayCard();
   buildWeekGrid();
   buildDayTabs();
-  showWorkoutDay('mon');
+  showWorkoutDay(todayDayId() === 'sun' ? 'mon' : todayDayId());
   showPhase(1);
   buildTimeBudget();
   loadStats();
@@ -2131,6 +2131,10 @@ function nav(id) {
     if (b.textContent.toLowerCase().replace(/[^a-z]/g,'').includes(id.replace(/[^a-z]/g,'').slice(0,5))) b.classList.add('active');
   });
   if (id === 'progress') setTimeout(renderCharts, 100);
+  if (id === 'workout')  setTimeout(() => {
+    const day = todayDayId();
+    showWorkoutDay(day === 'sun' ? 'mon' : day);
+  }, 50);
   if (id === 'admin')   { /* manual load only */ }
   if (id === 'log')     setTimeout(() => logTab('summary'), 50);
   if (id === 'steps')   setTimeout(loadStepsPage, 50);
@@ -3091,16 +3095,16 @@ function updateStepsCalBurn() {
     <span style="color:var(--text-dim);font-size:0.58rem;"> · based on your weight (${SESSION.weight} lbs) at avg walking pace</span>`;
 }
 
-// ── Start today's workout ──
-function startTodaysWorkout() {
-  const jsDay = new Date().getDay(); // 0=Sun
-  const dayMap = {1:'mon',2:'tue',3:'wed',4:'thu',5:'fri',6:'sat',0:'sun'};
-  const dayId = dayMap[jsDay];
-  nav('workout');
-  setTimeout(() => {
-    if (dayId !== 'sun') showWorkoutDay(dayId);
-  }, 150);
+// ── Current day of week as workout ID ──
+function todayDayId() {
+  const map = {1:'mon',2:'tue',3:'wed',4:'thu',5:'fri',6:'sat',0:'sun'};
+  return map[new Date().getDay()];
 }
+
+function startTodaysWorkout() {
+  nav('workout'); // nav() will auto-select today via the setTimeout below
+}
+
 async function autoPopulateBodyLog() {
   const today = localDateStr();
   const dateEl = document.getElementById('b-date');
