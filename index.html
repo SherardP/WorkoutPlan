@@ -4580,15 +4580,20 @@ function buildEquipmentUI(eq = {}) {
 
 function addDumbbellRow(data = {}) {
   const div = document.createElement('div');
-  div.style.cssText = 'display:flex;gap:6px;align-items:center;';
+  div.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;';
+  const qty = data.qty ?? 2;
   div.innerHTML = `
-    <span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);white-space:nowrap;">Pair:</span>
+    <select class="db-qty" style="font-family:var(--font-mono);font-size:0.6rem;background:var(--bg);
+      border:1px solid var(--border);color:var(--text);padding:4px 6px;">
+      <option value="1" ${qty===1?'selected':''}>1 dumbbell</option>
+      <option value="2" ${qty===2?'selected':''}>2 dumbbells (pair)</option>
+    </select>
     <input type="number" placeholder="Min lbs" min="1" max="500" step="1" value="${data.minLbs||''}"
-      style="width:72px;font-family:var(--font-mono);font-size:0.65rem;background:var(--bg);
+      style="width:68px;font-family:var(--font-mono);font-size:0.65rem;background:var(--bg);
       border:1px solid var(--border);color:var(--text);padding:4px 6px;" class="db-min">
     <span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);">–</span>
     <input type="number" placeholder="Max lbs" min="1" max="500" step="1" value="${data.maxLbs||''}"
-      style="width:72px;font-family:var(--font-mono);font-size:0.65rem;background:var(--bg);
+      style="width:68px;font-family:var(--font-mono);font-size:0.65rem;background:var(--bg);
       border:1px solid var(--border);color:var(--text);padding:4px 6px;" class="db-max">
     <span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);">lbs</span>
     <select class="db-type" style="font-family:var(--font-mono);font-size:0.6rem;background:var(--bg);
@@ -4641,7 +4646,8 @@ function collectEquipment() {
     const typeEl = row.querySelector('.db-type');
     const minLbs = parseFloat(minEl?.value);
     const maxLbs = parseFloat(maxEl?.value);
-    if (minLbs || maxLbs) eq.dumbbells.push({ minLbs: minLbs||null, maxLbs: maxLbs||null, type: typeEl?.value||'fixed' });
+    const qty = parseInt(row.querySelector('.db-qty')?.value) || 2;
+    if (minLbs || maxLbs) eq.dumbbells.push({ qty, minLbs: minLbs||null, maxLbs: maxLbs||null, type: typeEl?.value||'fixed' });
   });
   // Kettlebell weights
   eq.kettlebellWeights = [];
@@ -4657,7 +4663,7 @@ function equipmentSummary(eq) {
   if (!eq) return 'No equipment set';
   const lines = [];
   if (eq.dumbbells?.length) {
-    lines.push('Dumbbells: ' + eq.dumbbells.map(d=>`${d.minLbs||'?'}–${d.maxLbs||'?'} lbs (${d.type})`).join(', '));
+    lines.push('Dumbbells: ' + eq.dumbbells.map(d=>`${d.qty||2}× ${d.minLbs||'?'}–${d.maxLbs||'?'} lbs (${d.type})`).join(', '));
   }
   if (eq.kettlebellWeights?.length) lines.push('Kettlebells: ' + eq.kettlebellWeights.join(', ') + ' lbs');
   const bars = BARBELL_TYPES.filter(b=>eq[b.id]).map(b=>b.label);
