@@ -2042,8 +2042,22 @@ async function saveEntry(type) {
   const todayIdx = existing.findIndex(e => e.date === (entry.date||today));
   todayIdx >= 0 ? existing[todayIdx] = entry : existing.unshift(entry);
   await encryptedSave(type, existing);
+
+  // Auto-sync weight to user profile whenever a weight value is logged
+  if (type === 'body' && entry.weight) {
+    const newWeight = parseFloat(entry.weight);
+    if (newWeight > 0 && newWeight !== parseFloat(SESSION.weight)) {
+      try {
+        await saveUser(SESSION.username, { weight: String(newWeight) });
+        SESSION.weight = String(newWeight);
+        // Quietly note the sync without interrupting workflow
+        console.info(`Weight synced to profile: ${newWeight} lbs`);
+      } catch(e) { console.warn('Weight profile sync failed:', e.message); }
+    }
+  }
+
   loadStats();
-  toast('✓ SAVED');
+  toast(`✓ SAVED${type === 'body' && entry.weight ? ' — weight updated in profile' : ''}`);
 }
 
 function v(id) { const el = document.getElementById(id); return el ? el.value : ''; }
