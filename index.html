@@ -747,7 +747,17 @@ body.theme-female .goal-chip{border-radius:20px;}
   <!-- ── WORKOUTS ── -->
   <div class="section" id="sec-workout">
     <div class="page-title">WORK<br><span>OUTS</span></div>
-    <div class="page-sub" id="workoutSub">// 6-DAY SPLIT · HOME + HOTEL VARIANTS //</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <div class="page-sub" id="workoutSub" style="margin:0;">// 6-DAY SPLIT · HOME + HOTEL VARIANTS //</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="date" id="workout-date"
+          onchange="onWorkoutDateChange()"
+          style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.72rem;padding:5px 9px;outline:none;">
+        <button class="btn btn-s" onclick="setWorkoutDate('today')"    style="font-size:0.6rem;padding:5px 9px;">TODAY</button>
+        <button class="btn btn-s" onclick="setWorkoutDate('yesterday')" style="font-size:0.6rem;padding:5px 9px;">YESTERDAY</button>
+      </div>
+    </div>
 
     <div class="flex gap8 mb16 fw" id="dayTabs"></div>
     <div id="workoutContent"></div>
@@ -2010,6 +2020,8 @@ function launchApp() {
   buildTimeBudget();
   loadStats();
   setDefaultDates();
+  const wkDateEl = document.getElementById('workout-date');
+  if (wkDateEl) wkDateEl.value = localDateStr();
   updateUnitSelectors();
   nav('dashboard');
 }
@@ -2132,6 +2144,8 @@ function nav(id) {
   });
   if (id === 'progress') setTimeout(renderCharts, 100);
   if (id === 'workout')  setTimeout(() => {
+    const dateEl = document.getElementById('workout-date');
+    if (dateEl && !dateEl.value) dateEl.value = localDateStr();
     const day = todayDayId();
     showWorkoutDay(day === 'sun' ? 'mon' : day);
   }, 50);
@@ -3095,7 +3109,31 @@ function updateStepsCalBurn() {
     <span style="color:var(--text-dim);font-size:0.58rem;"> · based on your weight (${SESSION.weight} lbs) at avg walking pace</span>`;
 }
 
-// ── Current day of week as workout ID ──
+// ── Workout date selection ──
+function getWorkoutDate() {
+  const el = document.getElementById('workout-date');
+  return el?.value || localDateStr();
+}
+
+function setWorkoutDate(which) {
+  const el = document.getElementById('workout-date');
+  if (!el) return;
+  const d = new Date();
+  if (which === 'yesterday') d.setDate(d.getDate() - 1);
+  el.value = localDateStr(d);
+  // Re-render current day with new date
+  onWorkoutDateChange();
+}
+
+function onWorkoutDateChange() {
+  // Figure out what day of the week the selected date is and switch to it
+  const dateStr = getWorkoutDate();
+  const d = new Date(dateStr + 'T12:00:00'); // noon to avoid DST edge
+  const map = {1:'mon',2:'tue',3:'wed',4:'thu',5:'fri',6:'sat',0:'sun'};
+  const dayId = map[d.getDay()];
+  showWorkoutDay(dayId === 'sun' ? 'mon' : dayId);
+}
+
 function todayDayId() {
   const map = {1:'mon',2:'tue',3:'wed',4:'thu',5:'fri',6:'sat',0:'sun'};
   return map[new Date().getDay()];
@@ -5520,12 +5558,17 @@ function buildDayTabs() {
 }
 
 async function showWorkoutDay(dayId) {
-  // Load saved checks and actuals from Firebase for today
-  const today = localDateStr();
+  // Use the date picker value (defaults to today)
+  const today    = localDateStr();
+  const dateEl   = document.getElementById('workout-date');
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  const workDate = dateEl?.value || today;
+  const isToday  = workDate === today;
+
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
-      .collection('wkchecks').doc(today).get();
-    workoutChecks  = doc.exists ? (doc.data().checks  || {}) : {};
+      .collection('wkchecks').doc(workDate).get();
+    workoutChecks   = doc.exists ? (doc.data().checks  || {}) : {};
     exerciseActuals = doc.exists ? (doc.data().actuals || {}) : {};
   } catch(e) { workoutChecks = {}; exerciseActuals = {}; }
 
@@ -5539,19 +5582,27 @@ async function showWorkoutDay(dayId) {
   const w = W[dayId];
   if (!w) return;
 
-  // Reset exercise weights for this day (load saved if available)
   exerciseWeights = {};
 
-  const totalItems = w.warmup.length + w.exercises.length + w.cooldown.length;
+  const totalItems  = w.warmup.length + w.exercises.length + w.cooldown.length;
   const checkedCount = [...w.warmup, ...w.exercises, ...w.cooldown].filter(i => workoutChecks[i.id]).length;
   const pct = Math.round(checkedCount / totalItems * 100);
 
+  // Format date label
+  const dObj = new Date(workDate + 'T12:00:00');
+  const dateLabel = isToday ? 'TODAY' : dObj.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const pastNote  = !isToday
+    ? `<div style="font-family:var(--font-mono);font-size:0.6rem;color:#ff9800;margin-top:4px;letter-spacing:.08em;">
+        📅 LOGGING FOR ${dateLabel.toUpperCase()} — changes save to that date</div>`
+    : '';
+
   document.getElementById('workoutContent').innerHTML = `
-    <div class="card" style="margin-bottom:16px;border-left:4px solid var(--accent2);">
+    <div class="card" style="margin-bottom:16px;border-left:4px solid ${isToday?'var(--accent2)':'#ff9800'};">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
         <div>
-          <div class="card-label">${dayId.toUpperCase()} · ${w.title}</div>
+          <div class="card-label">${dayId.toUpperCase()} · ${w.title} · ${dateLabel}</div>
           <div style="font-family:var(--font-display);font-size:1.3rem;color:var(--accent2);">${w.sub}</div>
+          ${pastNote}
         </div>
         <div style="text-align:right;">
           <div style="font-family:var(--font-display);font-size:2rem;color:${pct===100?'#4caf50':'var(--accent2)'};">${pct}%</div>
@@ -5978,7 +6029,7 @@ async function toggleCheck(itemId, dayId) {
   }
 
   // Save to Firebase
-  const today = localDateStr();
+  const today = getWorkoutDate();
   try {
     await db.collection('userdata').doc(SESSION.username)
       .collection('wkchecks').doc(today).set({
@@ -6017,7 +6068,7 @@ async function saveSetData(itemId, dayId, setIndex) {
   // Debounced save to Firebase
   clearTimeout(window._setDataSaveTimer);
   window._setDataSaveTimer = setTimeout(async () => {
-    const today = localDateStr();
+    const today = getWorkoutDate();
     try {
       await db.collection('userdata').doc(SESSION.username)
         .collection('wkchecks').doc(today).set({
@@ -6086,7 +6137,7 @@ async function toggleSetDone(itemId, dayId, setIndex) {
   updateItemCalBadge(itemId);
 
   // Save to Firebase
-  const today = localDateStr();
+  const today = getWorkoutDate();
   try {
     await db.collection('userdata').doc(SESSION.username)
       .collection('wkchecks').doc(today).set({
@@ -6102,7 +6153,7 @@ async function toggleSetDone(itemId, dayId, setIndex) {
 }
 
 async function markWorkoutComplete(dayId) {
-  const today = localDateStr();
+  const today = getWorkoutDate();
   const W = SESSION.gender==='female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
   const w = W[dayId];
 
@@ -6185,7 +6236,7 @@ async function markWorkoutComplete(dayId) {
   // Upsert workout log entry
   const entry = {
     saved: new Date().toISOString(),
-    date: today,
+    date: getWorkoutDate(),
     day: dayId.toUpperCase() + ' — ' + w.title,
     location: 'Home',
     duration: String(estMinutes),
