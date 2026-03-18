@@ -900,6 +900,30 @@ body.theme-female .goal-chip{border-radius:20px;}
     <!-- Recommended split -->
     <div id="recommendedSplit" style="display:none;"></div>
 
+    <!-- ── OVERALL TRAINING FOCUS ── -->
+    <div class="card mb16">
+      <div class="card-label">TRAINING FOCUS</div>
+      <div class="card-title">WHAT IS YOUR PRIMARY GOAL?</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:12px;">Select all that apply — the app will weight these in future workout suggestions.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;" id="trainingFocusCards"></div>
+    </div>
+
+    <!-- ── SPECIAL FLAGS ── -->
+    <div class="card mb16">
+      <div class="card-label">SPECIAL CONSIDERATIONS</div>
+      <div class="card-title">DO ANY OF THESE APPLY TO YOU?</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:12px;">These affect exercise selection, intensity, and recovery recommendations.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;" id="specialFlagCards"></div>
+    </div>
+
+    <!-- ── PER BODY PART GOALS ── -->
+    <div class="card mb16">
+      <div class="card-label">BODY PART GOALS</div>
+      <div class="card-title">SET A GOAL FOR EACH MUSCLE GROUP</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:14px;">Tap a goal type for each body part. You can set different priorities for different areas.</div>
+      <div id="bodyPartGoalGrid"></div>
+    </div>
+
     <!-- Save button -->
     <button class="btn btn-p" onclick="saveGoals()" style="width:100%;margin-top:8px;">
       ✓ SAVE MY GOALS
@@ -5218,6 +5242,176 @@ let currentDurationGoal = 90;
 // todayStepData stores per-section: { id: { steps, startSteps, endSteps } }
 let todayStepData = {};
 
+// ═══════════════════════════════════════════════════════════
+// EXTENDED GOALS — Training Focus, Special Flags, Body Part Goals
+// ═══════════════════════════════════════════════════════════
+
+const TRAINING_FOCUS_OPTIONS = [
+  { id:'focus-fatloss',    icon:'🔥', label:'Fat Loss',         desc:'Reduce overall body fat percentage through calorie burn and metabolic conditioning' },
+  { id:'focus-visceral',   icon:'🎯', label:'Target Visceral Fat', desc:'Reduce deep abdominal fat — the most harmful type for long-term health' },
+  { id:'focus-muscle',     icon:'💪', label:'Build Muscle (Hypertrophy)', desc:'Increase muscle size through progressive overload, 8–12 rep ranges, higher volume' },
+  { id:'focus-strength',   icon:'🏋️', label:'Increase Strength', desc:'Lift heavier over time — lower reps (3–6), longer rest, compound movements' },
+  { id:'focus-tone',       icon:'✦',  label:'Tone & Define',    desc:'Improve muscle definition and shape without significant size increase — moderate weight, higher reps' },
+  { id:'focus-recomp',     icon:'⚡', label:'Body Recomposition', desc:'Lose fat AND gain muscle simultaneously — best for beginners or those returning after a break' },
+  { id:'focus-endurance',  icon:'🫀', label:'Cardiovascular Endurance', desc:'Improve heart health, stamina, and sustained energy over long durations' },
+  { id:'focus-general',    icon:'🏃', label:'General Fitness',  desc:'Balanced mix of strength, cardio, and flexibility — overall health improvement' },
+  { id:'focus-mobility',   icon:'🧘', label:'Mobility & Flexibility', desc:'Improve range of motion, reduce stiffness, support injury prevention and posture' },
+];
+
+const SPECIAL_FLAG_OPTIONS = [
+  { id:'flag-lowimpact',   icon:'🦵', label:'Low Impact Required',      desc:'Joint pain, high body weight, or injury — avoid high-impact movements like jumping, running, heavy squats' },
+  { id:'flag-knees',       icon:'🦿', label:'Knee Issues',              desc:'Modify or avoid deep squats, lunges, leg extensions — favor leg press, step-ups, lying curls' },
+  { id:'flag-back',        icon:'🔙', label:'Lower Back Issues',        desc:'Avoid heavy deadlifts and loaded flexion — favor cable work, hip hinges with light load, core stabilization' },
+  { id:'flag-shoulders',   icon:'🙆', label:'Shoulder Issues',          desc:'Modify overhead pressing, upright rows — favor neutral-grip and pain-free range movements' },
+  { id:'flag-posture',     icon:'🧍', label:'Posture Correction',       desc:'Strengthen posterior chain (rear delts, rhomboids, glutes) and stretch tight hip flexors and chest' },
+  { id:'flag-hiit',        icon:'⚡', label:'HIIT / High Intensity OK', desc:'Comfortable with high-intensity interval training — can be included in cardio and conditioning work' },
+  { id:'flag-weightloss',  icon:'📉', label:'Weight Loss as Primary Driver', desc:'Scale weight reduction is the main goal — calorie burn and deficit are top priorities' },
+  { id:'flag-hormone',     icon:'⚖️', label:'Hormonal / Metabolic Considerations', desc:'PCOS, thyroid, menopause, or similar — slower fat loss response, benefit from consistent strength training' },
+  { id:'flag-beginner',    icon:'🌱', label:'Beginner / Returning After Break', desc:'New to training or returning — focus on form, consistency, and progressive introduction of load' },
+  { id:'flag-advanced',    icon:'🎖️', label:'Advanced Lifter',          desc:'5+ years consistent training — needs periodization, progressive overload, and more volume to continue progressing' },
+];
+
+const BODY_PARTS = [
+  { id:'bp-chest',      label:'Chest',           sub:'Pectorals',                  icon:'◈' },
+  { id:'bp-back-upper', label:'Upper Back',       sub:'Traps, Rhomboids, Rear Delts', icon:'◈' },
+  { id:'bp-back-lower', label:'Lower Back',       sub:'Erector Spinae',            icon:'◈' },
+  { id:'bp-lats',       label:'Lats',             sub:'Latissimus Dorsi',          icon:'◈' },
+  { id:'bp-shoulders',  label:'Shoulders',        sub:'Front, Side & Rear Delts',  icon:'◈' },
+  { id:'bp-biceps',     label:'Biceps',           sub:'Upper Arm (front)',          icon:'◈' },
+  { id:'bp-triceps',    label:'Triceps',          sub:'Upper Arm (back)',           icon:'◈' },
+  { id:'bp-forearms',   label:'Forearms',         sub:'Grip & Wrist Flexors',      icon:'◈' },
+  { id:'bp-core',       label:'Core / Abs',       sub:'Rectus Abdominis, Obliques', icon:'◈' },
+  { id:'bp-glutes',     label:'Glutes',           sub:'Gluteus Maximus, Medius',   icon:'◈' },
+  { id:'bp-quads',      label:'Quads',            sub:'Front Thigh',               icon:'◈' },
+  { id:'bp-hamstrings', label:'Hamstrings',       sub:'Back Thigh',                icon:'◈' },
+  { id:'bp-calves',     label:'Calves',           sub:'Gastrocnemius, Soleus',     icon:'◈' },
+];
+
+// Goal types per body part — user picks ONE per body part
+const BP_GOAL_TYPES = [
+  { id:'none',    label:'—',        color:'var(--text-dim)',  desc:'No specific goal' },
+  { id:'size',    label:'SIZE',     color:'#ff7a1a',          desc:'Build bigger / more mass (hypertrophy)' },
+  { id:'tone',    label:'TONE',     color:'#4a9eff',          desc:'More defined / muscular looking without mass gain' },
+  { id:'fat',     label:'FAT',      color:'#cc44aa',          desc:'Prioritize fat reduction in this area' },
+  { id:'strengthen', label:'STRONG', color:'#4caf50',         desc:'Get stronger — functional power, not just size' },
+  { id:'maintain',label:'MAINTAIN', color:'var(--border2)',   desc:'Keep current state — no major change needed' },
+];
+
+function renderTrainingFocus() {
+  const el = document.getElementById('trainingFocusCards');
+  if (!el) return;
+  el.innerHTML = TRAINING_FOCUS_OPTIONS.map(opt => {
+    const active = (userGoals.trainingFocus || []).includes(opt.id);
+    return `<div onclick="toggleTrainingFocus('${opt.id}')" id="tfcard-${opt.id}"
+      style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;cursor:pointer;
+      border:1px solid ${active?'var(--accent2)':'var(--border)'};
+      background:${active?'var(--accent-dim)':'var(--bg3)'};
+      transition:all .15s;">
+      <span style="font-size:1.2rem;flex-shrink:0;margin-top:2px;">${opt.icon}</span>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:0.7rem;color:${active?'var(--accent2)':'var(--text)'};letter-spacing:.08em;font-weight:bold;">${opt.label}</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-top:2px;line-height:1.5;">${opt.desc}</div>
+      </div>
+      <div style="margin-left:auto;font-size:1rem;color:${active?'var(--accent2)':'var(--border)'};flex-shrink:0;">${active?'✓':'○'}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTrainingFocus(id) {
+  if (!userGoals.trainingFocus) userGoals.trainingFocus = [];
+  const idx = userGoals.trainingFocus.indexOf(id);
+  if (idx >= 0) userGoals.trainingFocus.splice(idx, 1);
+  else userGoals.trainingFocus.push(id);
+  renderTrainingFocus();
+}
+
+function renderSpecialFlags() {
+  const el = document.getElementById('specialFlagCards');
+  if (!el) return;
+  el.innerHTML = SPECIAL_FLAG_OPTIONS.map(opt => {
+    const active = (userGoals.specialFlags || []).includes(opt.id);
+    return `<div onclick="toggleSpecialFlag('${opt.id}')" id="sfcard-${opt.id}"
+      style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;cursor:pointer;
+      border:1px solid ${active?'var(--accent2)':'var(--border)'};
+      background:${active?'var(--accent-dim)':'var(--bg3)'};
+      transition:all .15s;">
+      <span style="font-size:1.1rem;flex-shrink:0;margin-top:2px;">${opt.icon}</span>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:0.7rem;color:${active?'var(--accent2)':'var(--text)'};letter-spacing:.08em;font-weight:bold;">${opt.label}</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-top:2px;line-height:1.5;">${opt.desc}</div>
+      </div>
+      <div style="margin-left:auto;font-size:1rem;color:${active?'var(--accent2)':'var(--border)'};flex-shrink:0;">${active?'✓':'○'}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSpecialFlag(id) {
+  if (!userGoals.specialFlags) userGoals.specialFlags = [];
+  const idx = userGoals.specialFlags.indexOf(id);
+  if (idx >= 0) userGoals.specialFlags.splice(idx, 1);
+  else userGoals.specialFlags.push(id);
+  renderSpecialFlags();
+}
+
+function renderBodyPartGoals() {
+  const el = document.getElementById('bodyPartGoalGrid');
+  if (!el) return;
+  const bpGoals = userGoals.bodyPartGoals || {};
+
+  // Legend
+  const legend = BP_GOAL_TYPES.map(g =>
+    `<span style="font-family:var(--font-mono);font-size:0.55rem;color:${g.color};
+    background:var(--bg3);border:1px solid ${g.color};padding:2px 7px;white-space:nowrap;">${g.label}</span>`
+  ).join('');
+
+  const rows = BODY_PARTS.map(bp => {
+    const current = bpGoals[bp.id] || 'none';
+    const btns = BP_GOAL_TYPES.map(g => {
+      const active = current === g.id;
+      return `<button type="button" onclick="setBpGoal('${bp.id}','${g.id}')" id="bpbtn-${bp.id}-${g.id}"
+        style="font-family:var(--font-mono);font-size:0.58rem;padding:4px 8px;cursor:pointer;
+        background:${active?g.color:'var(--bg3)'};
+        color:${active?'#000':'var(--text-dim)'};
+        border:1px solid ${active?g.color:'var(--border)'};
+        font-weight:${active?'bold':'normal'};
+        transition:all .1s;">${g.label}</button>`;
+    }).join('');
+
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;
+      border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div style="flex:0 0 120px;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text);letter-spacing:.06em;">${bp.label}</div>
+        <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">${bp.sub}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">${btns}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;">
+      ${legend}
+    </div>
+    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
+      SIZE = grow bigger &nbsp;|&nbsp; TONE = defined/lean &nbsp;|&nbsp; FAT = reduce fat here &nbsp;|&nbsp; STRONG = functional strength &nbsp;|&nbsp; MAINTAIN = keep as-is
+    </div>
+    ${rows}`;
+}
+
+function setBpGoal(bpId, goalId) {
+  if (!userGoals.bodyPartGoals) userGoals.bodyPartGoals = {};
+  userGoals.bodyPartGoals[bpId] = goalId;
+  // Update just the affected row's buttons without full re-render
+  BP_GOAL_TYPES.forEach(g => {
+    const btn = document.getElementById(`bpbtn-${bpId}-${g.id}`);
+    if (!btn) return;
+    const active = g.id === goalId;
+    btn.style.background = active ? g.color : 'var(--bg3)';
+    btn.style.color = active ? '#000' : 'var(--text-dim)';
+    btn.style.borderColor = active ? g.color : 'var(--border)';
+    btn.style.fontWeight = active ? 'bold' : 'normal';
+  });
+}
+
 async function loadGoals() {
   try {
     const doc = await db.collection('userdata').doc(SESSION.username).collection('goals').doc('settings').get();
@@ -5264,6 +5458,9 @@ async function loadGoalsPage() {
   [30,45,60,75,90,120].forEach(n => { const el=document.getElementById('gdur-'+n); if(el) el.classList.toggle('active', currentDurationGoal===n); });
   renderDurationResult(currentDurationGoal);
   renderRecommendedSplit();
+  renderTrainingFocus();
+  renderSpecialFlags();
+  renderBodyPartGoals();
 }
 
 function setStepPreset(n) {
