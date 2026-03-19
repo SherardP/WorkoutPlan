@@ -627,8 +627,8 @@ body.theme-female .goal-chip{border-radius:20px;}
     <button class="nav-btn" onclick="nav('decomp')">DECOMPRESS</button>
     <button class="nav-btn" onclick="nav('log')">LOG DATA</button>
     <button class="nav-btn" onclick="nav('recipes')">🍴 RECIPES</button>
+    <button class="nav-btn" onclick="nav('exlib')">📋 EXERCISES</button>
     <button class="nav-btn" id="adminNavBtn" style="display:none;" onclick="nav('admin')">⚙ ADMIN</button>
-    <button class="nav-btn" id="syscheckNavBtn" style="display:none;" onclick="nav('syscheck')">SYS CHECK</button>
   </nav>
 
   <div class="container">
@@ -1130,6 +1130,7 @@ body.theme-female .goal-chip{border-radius:20px;}
       <!-- Nutrition sub-tabs -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
         <button class="btn btn-p" id="ntab-meals"   onclick="nutTab('meals')"   style="font-size:0.62rem;">🍽 MEALS</button>
+        <button class="btn btn-s" id="ntab-restaurant" onclick="nutTab('restaurant')" style="font-size:0.62rem;">🏪 RESTAURANT</button>
         <button class="btn btn-s" id="ntab-recipe"  onclick="nutTab('recipe')"  style="font-size:0.62rem;">👨‍🍳 RECIPE MAKER</button>
         <button class="btn btn-s" id="ntab-foods"   onclick="nutTab('foods')"   style="font-size:0.62rem;">🥦 FOOD DATABASE</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
@@ -1235,6 +1236,112 @@ body.theme-female .goal-chip{border-radius:20px;}
           <div id="nutrition-totals-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;"></div>
 
           <button class="btn btn-p" onclick="saveNutrition()" style="width:100%;">SAVE NUTRITION</button>
+        </div>
+      </div>
+
+      <!-- ══ RESTAURANT MEALS TAB ══ -->
+      <div id="npanel-restaurant" style="display:none;">
+
+        <!-- Quick log from saved restaurants -->
+        <div class="card mb16">
+          <div class="card-label">LOG RESTAURANT MEAL</div>
+          <div class="card-title">ADD A RESTAURANT ENTRY</div>
+          <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:14px;">
+            Log meals eaten out. Saved entries build your personal restaurant database for fast re-logging.
+          </div>
+
+          <div class="field">
+            <label>RESTAURANT NAME</label>
+            <input type="text" id="rest-name" placeholder="e.g. McDonald's, Chipotle, Local Diner..."
+              oninput="filterRestaurantSuggestions()"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.8rem;padding:8px 10px;outline:none;box-sizing:border-box;">
+            <div id="rest-name-suggestions" style="display:none;background:var(--bg2);border:1px solid var(--border);
+              border-top:none;max-height:120px;overflow-y:auto;"></div>
+          </div>
+
+          <div class="field">
+            <label>MEAL / ITEM NAME</label>
+            <input type="text" id="rest-meal" placeholder="e.g. Double Cheeseburger, Burrito Bowl..."
+              oninput="filterMealSuggestions()"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.8rem;padding:8px 10px;outline:none;box-sizing:border-box;">
+            <div id="rest-meal-suggestions" style="display:none;background:var(--bg2);border:1px solid var(--border);
+              border-top:none;max-height:120px;overflow-y:auto;"></div>
+          </div>
+
+          <!-- Macro grid -->
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;">
+            <div class="field">
+              <label>CALORIES</label>
+              <input type="number" id="rest-cal" placeholder="e.g. 650" min="0" max="5000" step="1">
+            </div>
+            <div class="field">
+              <label>PROTEIN (g)</label>
+              <input type="number" id="rest-protein" placeholder="e.g. 32" min="0" max="500" step="0.1">
+            </div>
+            <div class="field">
+              <label>CARBS (g)</label>
+              <input type="number" id="rest-carbs" placeholder="e.g. 48" min="0" max="500" step="0.1">
+            </div>
+            <div class="field">
+              <label>FAT (g)</label>
+              <input type="number" id="rest-fat" placeholder="e.g. 22" min="0" max="300" step="0.1">
+            </div>
+            <div class="field">
+              <label>FIBER (g) <span style="color:var(--text-dim);font-size:0.55rem;">optional</span></label>
+              <input type="number" id="rest-fiber" placeholder="0" min="0" max="100" step="0.1">
+            </div>
+            <div class="field">
+              <label>SODIUM (mg) <span style="color:var(--text-dim);font-size:0.55rem;">optional</span></label>
+              <input type="number" id="rest-sodium" placeholder="0" min="0" max="10000" step="1">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>MEAL TYPE</label>
+            <select id="rest-mealtype"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.75rem;padding:8px 10px;outline:none;">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch" selected>Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
+          </div>
+
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:14px;">
+            <input type="checkbox" id="rest-save-db" checked style="accent-color:var(--accent);">
+            <label for="rest-save-db" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);cursor:pointer;">
+              Save to my restaurant database for quick re-use
+            </label>
+          </div>
+
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-p" onclick="logRestaurantMeal()" style="flex:1;">✓ LOG THIS MEAL</button>
+            <button class="btn btn-s" onclick="clearRestaurantForm()" style="white-space:nowrap;">CLEAR</button>
+          </div>
+          <div id="rest-msg" style="font-family:var(--font-mono);font-size:0.65rem;min-height:18px;margin-top:8px;"></div>
+        </div>
+
+        <!-- My saved restaurant meals -->
+        <div class="card mb16">
+          <div class="card-label">MY RESTAURANT DATABASE</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <div class="card-title" style="margin:0;">SAVED MEALS</div>
+            <input type="text" id="rest-db-search" placeholder="Search..." oninput="renderRestaurantDb()"
+              style="width:180px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.65rem;padding:5px 9px;outline:none;">
+          </div>
+          <div id="rest-db-list" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">
+            Loading...
+          </div>
+        </div>
+
+        <!-- Today's restaurant total -->
+        <div class="card" id="rest-today-card" style="display:none;">
+          <div class="card-label">TODAY FROM RESTAURANTS</div>
+          <div id="rest-today-summary"></div>
         </div>
       </div>
 
@@ -1579,6 +1686,60 @@ body.theme-female .goal-chip{border-radius:20px;}
     </div>
   </div>
 
+  <!-- ── EXERCISE LIBRARY ── -->
+  <div class="section" id="sec-exlib">
+    <div class="page-title">EXERCISE<br><span>LIBRARY</span></div>
+    <div class="page-sub">// ALL EXERCISES · GROUPED BY EQUIPMENT · FILTER BY MUSCLE //</div>
+
+    <!-- Filters -->
+    <div class="card mb16">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="exlib-search" placeholder="Search exercises..."
+          oninput="renderExLib()"
+          style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);
+          color:var(--text);font-family:var(--font-mono);font-size:0.75rem;padding:8px 12px;outline:none;">
+        <select id="exlib-muscle" onchange="renderExLib()"
+          style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.65rem;padding:8px 10px;outline:none;">
+          <option value="">ALL MUSCLES</option>
+          <option value="chest">Chest</option>
+          <option value="back-upper">Upper Back</option>
+          <option value="back-lower">Lower Back</option>
+          <option value="lats">Lats</option>
+          <option value="shoulders">Shoulders</option>
+          <option value="biceps">Biceps</option>
+          <option value="triceps">Triceps</option>
+          <option value="forearms">Forearms</option>
+          <option value="core">Core / Abs</option>
+          <option value="glutes">Glutes</option>
+          <option value="quads">Quads</option>
+          <option value="hamstrings">Hamstrings</option>
+          <option value="calves">Calves</option>
+        </select>
+        <select id="exlib-goal" onchange="renderExLib()"
+          style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.65rem;padding:8px 10px;outline:none;">
+          <option value="">ALL GOALS</option>
+          <option value="size">Size / Hypertrophy</option>
+          <option value="strength">Strength</option>
+          <option value="tone">Tone / Define</option>
+          <option value="fat">Fat Loss</option>
+          <option value="endurance">Endurance</option>
+          <option value="posture">Posture</option>
+          <option value="lowimpact">Low Impact</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;
+          color:var(--text-dim);cursor:pointer;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);">
+          <input type="checkbox" id="exlib-mine" onchange="renderExLib()" style="accent-color:var(--accent);">
+          MY EQUIPMENT ONLY
+        </label>
+      </div>
+    </div>
+
+    <!-- Library output -->
+    <div id="exlib-output"></div>
+  </div>
+
   <!-- ── ADMIN ── -->
   <div class="section" id="sec-admin">
     <div class="page-title">ADMIN<br><span>PANEL</span></div>
@@ -1648,37 +1809,6 @@ body.theme-female .goal-chip{border-radius:20px;}
 
   </div><!-- /container -->
 </div><!-- /appScreen -->
-
-<!-- SYS CHECK SECTION -->
-<div class="container" id="syscheckContainer" style="display:none;">
-<div class="section active" id="sec-syscheck">
-  <div class="page-title">SYS<br><span>CHECK</span></div>
-  <div class="page-sub">// LIVE DIAGNOSTIC — FIREBASE · SESSION · DATA STATUS //</div>
-
-  <!-- Live status cards -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
-    <div style="background:var(--bg2);border:1px solid var(--border);padding:16px;text-align:center;">
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;">
-        <span id="sc-db-dot" style="width:14px;height:14px;border-radius:50%;background:#555;display:inline-block;flex-shrink:0;"></span>
-        <span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;">DATABASE</span>
-      </div>
-      <div id="sc-db-status" style="font-family:var(--font-display);font-size:1rem;color:var(--text-dim);">—</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);padding:16px;text-align:center;">
-      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:6px;">USERS</div>
-      <div id="sc-users" style="font-family:var(--font-display);font-size:1.8rem;color:var(--accent2);">—</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);padding:16px;text-align:center;">
-      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:6px;">SESSION</div>
-      <div id="sc-session" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);word-break:break-all;">—</div>
-    </div>
-  </div>
-
-  <button class="btn btn-p" onclick="runSysCheck()" style="margin-bottom:20px;width:100%;">⟳ RUN DIAGNOSTICS</button>
-
-  <div id="syscheckOutput"></div>
-</div>
-</div>
 
 <!-- PROFILE EDITOR MODAL -->
 <div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;">
@@ -2092,7 +2222,6 @@ function doLogout() {
   SESSION = null;
   clearRememberToken();
   document.getElementById('appScreen').classList.remove('visible');
-  document.getElementById('syscheckContainer').style.display = 'none';
   document.getElementById('appScreen').style.display = '';
   document.getElementById('authScreen').style.display = 'flex';
   document.getElementById('li-user').value = '';
@@ -2112,7 +2241,6 @@ function launchApp() {
   document.getElementById('appLogo').textContent = SESSION.gender === 'female' ? 'BLOOMFIT' : 'OPERATORFIT';
   if (SESSION.isAdmin) {
     document.getElementById('adminNavBtn').style.display = '';
-    document.getElementById('syscheckNavBtn').style.display = '';
   }
   setTodayCard();
   buildWeekGrid();
@@ -2241,18 +2369,6 @@ async function loadStats() {
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════
 function nav(id) {
-  // Handle syscheck separately — it lives outside main container
-  if (id === 'syscheck') {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('syscheckContainer').style.display = 'block';
-    document.getElementById('syscheckNavBtn').classList.add('active');
-    // Always auto-run on every visit
-    runSysCheck();
-    window.scrollTo(0,0);
-    return;
-  }
-  document.getElementById('syscheckContainer').style.display = 'none';
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   const s = document.getElementById('sec-'+id);
@@ -2271,6 +2387,7 @@ function nav(id) {
   if (id === 'log')     setTimeout(() => logTab('summary'), 50);
   if (id === 'steps')   setTimeout(loadStepsPage, 50);
   if (id === 'goals')   setTimeout(loadGoalsPage, 50);
+  if (id === 'exlib')   setTimeout(renderExLib, 50);
   if (id === 'recipes') {
     if (!communityRecipes.length) loadFoodDatabase().then(renderRecipeViewer);
     else renderRecipeViewer();
@@ -3443,6 +3560,352 @@ async function autoPopulateBodyLog() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// EXERCISE LIBRARY
+// ═══════════════════════════════════════════════════════════
+
+// Equipment group labels for display
+const EQ_GROUPS = [
+  { label:'BODYWEIGHT',          ids:[],                                         icon:'🤸' },
+  { label:'DUMBBELLS',           ids:['db'],                                      icon:'🏋️' },
+  { label:'KETTLEBELL',          ids:['acc-kb'],                                  icon:'🔔' },
+  { label:'BARBELL',             ids:['bar-olympic','bar-standard','bar-trap','bar-ezcurl','bar-safety'], icon:'⚡' },
+  { label:'BENCH',               ids:['bench-flat','bench-adj'],                  icon:'🪑' },
+  { label:'POWER RACK / SQUAT',  ids:['rack-power','rack-half','rack-pullup','rack-dip'], icon:'🏗️' },
+  { label:'LAT PULLDOWN',        ids:['mach-latpull'],                            icon:'🔧' },
+  { label:'CABLE MACHINE',       ids:['mach-cable'],                              icon:'🔧' },
+  { label:'CHEST PRESS MACHINE', ids:['mach-chestpress'],                        icon:'🔧' },
+  { label:'SEATED ROW MACHINE',  ids:['mach-seatedrow'],                         icon:'🔧' },
+  { label:'LEG PRESS MACHINE',   ids:['mach-legpress'],                          icon:'🔧' },
+  { label:'LEG EXT / CURL',      ids:['mach-legext','mach-legcurl'],             icon:'🔧' },
+  { label:'SHOULDER PRESS MACH.',ids:['mach-shoulderpr'],                        icon:'🔧' },
+  { label:'PEC DECK / FLY',      ids:['mach-pecdeck'],                           icon:'🔧' },
+  { label:'BICEP CURL MACHINE',  ids:['mach-biccurl'],                           icon:'🔧' },
+  { label:'TRICEP MACHINE',      ids:['mach-tricext'],                           icon:'🔧' },
+  { label:'HIP ABDUCTION MACH.', ids:['mach-hipabduct'],                         icon:'🔧' },
+  { label:'BACK EXT. BENCH',     ids:['mach-backext'],                           icon:'🔧' },
+  { label:'CALF MACHINE',        ids:['mach-calf'],                              icon:'🔧' },
+  { label:'ASSISTED PULL-UP',    ids:['mach-assisted'],                          icon:'🔧' },
+  { label:'RESISTANCE BANDS',    ids:['acc-bands'],                               icon:'🔁' },
+  { label:'TRX / SUSPENSION',    ids:['acc-trx'],                                 icon:'🔁' },
+  { label:'AB ROLLER',           ids:['acc-abroll'],                              icon:'⚙️' },
+  { label:'PULL-UP BAR',         ids:['acc-pullbar'],                             icon:'🔩' },
+  { label:'DIP BARS',            ids:['acc-dipbar'],                              icon:'🔩' },
+  { label:'PREACHER BENCH',      ids:['rack-preacher'],                           icon:'🪑' },
+  { label:'CARDIO EQUIPMENT',    ids:['cardio-treadmill','cardio-bike-up','cardio-bike-rec','cardio-airbike','cardio-rower','cardio-elliptical','cardio-stairmill','acc-jumprope'], icon:'🫀' },
+];
+
+const GOAL_BADGE_COLOR = {
+  size:'#ff7a1a', strength:'#4caf50', tone:'#4a9eff',
+  fat:'#cc44aa', endurance:'#64b5f6', posture:'#ffc107',
+  lowimpact:'#80cbc4', recomp:'#ff9800', general:'var(--border2)', beginner:'#a5d6a7',
+};
+
+function exMatchesGroup(ex, group) {
+  if (group.ids.length === 0) return ex.eq.length === 0;
+  return ex.eq.some(r => group.ids.includes(r));
+}
+
+function renderExLib() {
+  const el = document.getElementById('exlib-output');
+  if (!el) return;
+
+  const search   = (document.getElementById('exlib-search')?.value || '').toLowerCase();
+  const muscle   = document.getElementById('exlib-muscle')?.value  || '';
+  const goal     = document.getElementById('exlib-goal')?.value    || '';
+  const mineOnly = document.getElementById('exlib-mine')?.checked  || false;
+  const userEq   = SESSION?.equipment || {};
+
+  let filtered = EX_DB.filter(ex => {
+    if (search && !ex.name.toLowerCase().includes(search) && !ex.muscles.join(' ').includes(search)) return false;
+    if (muscle && !ex.muscles.includes(muscle)) return false;
+    if (goal   && !ex.goals.includes(goal))     return false;
+    if (mineOnly && !userHasEquipment(ex.eq, userEq)) return false;
+    return true;
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);
+      padding:20px;text-align:center;">No exercises match your filters.</div>`;
+    return;
+  }
+
+  // Group by equipment
+  const groups = EQ_GROUPS.map(grp => ({
+    ...grp,
+    exercises: filtered.filter(ex => exMatchesGroup(ex, grp)),
+  })).filter(grp => grp.exercises.length > 0);
+
+  el.innerHTML = groups.map(grp => {
+    const userHas = grp.ids.length === 0
+      ? true
+      : grp.ids.some(id => userEq[id] || (id === 'db' && (userEq.dumbbells||[]).length > 0));
+    const hasTag = userHas
+      ? `<span style="font-family:var(--font-mono);font-size:0.55rem;color:#4caf50;
+          background:rgba(76,175,80,0.15);border:1px solid #4caf50;padding:2px 7px;margin-left:8px;">✓ YOU HAVE THIS</span>`
+      : `<span style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);
+          background:var(--bg3);border:1px solid var(--border);padding:2px 7px;margin-left:8px;">NOT IN YOUR GYM</span>`;
+
+    const rows = grp.exercises.map(ex => {
+      const goalBadges = ex.goals.map(g =>
+        `<span style="font-family:var(--font-mono);font-size:0.52rem;padding:1px 6px;
+          border:1px solid ${GOAL_BADGE_COLOR[g]||'var(--border)'};
+          color:${GOAL_BADGE_COLOR[g]||'var(--text-dim)'};">${g.toUpperCase()}</span>`
+      ).join(' ');
+      const muscleStr = ex.muscles.map(m => m.replace('-',' ')).join(', ');
+      const setsStr = ex.sets_h;
+      const impactDot = ex.impact === 'high'
+        ? `<span style="color:#f44336;font-size:0.6rem;" title="High impact">⬆</span>`
+        : `<span style="color:#4caf50;font-size:0.6rem;" title="Low impact">✓</span>`;
+
+      return `<div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;
+        padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);
+        ${!userHasEquipment(ex.eq, userEq) ? 'opacity:0.45;' : ''}">
+        <div style="flex:1;min-width:180px;">
+          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);
+            letter-spacing:.06em;margin-bottom:3px;">
+            ${impactDot} ${ex.name.toUpperCase()}
+          </div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">
+            ${muscleStr}
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;flex-shrink:0;">
+          ${goalBadges}
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--accent2);
+          white-space:nowrap;flex-shrink:0;">${setsStr}</div>
+        ${ex.ytId ? `<a href="https://www.youtube.com/watch?v=${ex.ytId}" target="_blank"
+          style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);
+          text-decoration:none;white-space:nowrap;flex-shrink:0;">▶ VIDEO</a>` : ''}
+      </div>`;
+    }).join('');
+
+    return `<div class="card mb16">
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+        <span style="font-size:1.1rem;">${grp.icon}</span>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--accent2);
+          letter-spacing:.08em;">${grp.label}</div>
+        ${hasTag}
+        <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.58rem;
+          color:var(--text-dim);">${grp.exercises.length} exercise${grp.exercises.length!==1?'s':''}</div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);
+        display:flex;gap:10px;padding:0 14px 8px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <span>EXERCISE</span><span style="margin-left:auto;">GOALS</span>
+        <span style="width:70px;text-align:right;">DEFAULT SETS</span>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESTAURANT MEALS
+// ═══════════════════════════════════════════════════════════
+let restaurantDb = []; // [{restaurant, meal, calories, protein, carbs, fat, fiber, sodium, addedAt}]
+
+async function loadRestaurantDb() {
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('restaurant').doc('meals').get();
+    restaurantDb = doc.exists ? (doc.data().meals || []) : [];
+  } catch(e) { restaurantDb = []; }
+}
+
+async function saveRestaurantDb() {
+  await db.collection('userdata').doc(SESSION.username)
+    .collection('restaurant').doc('meals').set({ meals: restaurantDb, updated: new Date().toISOString() });
+}
+
+function filterRestaurantSuggestions() {
+  const q = (document.getElementById('rest-name')?.value || '').toLowerCase();
+  const box = document.getElementById('rest-name-suggestions');
+  if (!box) return;
+  if (!q || q.length < 1) { box.style.display = 'none'; return; }
+  const names = [...new Set(restaurantDb.map(r => r.restaurant).filter(n => n.toLowerCase().includes(q)))].slice(0, 6);
+  if (!names.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = names.map(n =>
+    `<div onclick="selectRestaurant('${n.replace(/'/g,"\\'")}'); this.parentElement.style.display='none';"
+      style="padding:7px 12px;font-family:var(--font-mono);font-size:0.68rem;color:var(--text);
+      cursor:pointer;border-bottom:1px solid var(--border);"
+      onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">${n}</div>`
+  ).join('');
+}
+
+function selectRestaurant(name) {
+  const el = document.getElementById('rest-name');
+  if (el) el.value = name;
+  filterMealSuggestions();
+}
+
+function filterMealSuggestions() {
+  const restName = (document.getElementById('rest-name')?.value || '').toLowerCase();
+  const q        = (document.getElementById('rest-meal')?.value  || '').toLowerCase();
+  const box      = document.getElementById('rest-meal-suggestions');
+  if (!box) return;
+  if (!q || q.length < 1) { box.style.display = 'none'; return; }
+  const matches = restaurantDb
+    .filter(r => (!restName || r.restaurant.toLowerCase().includes(restName)) && r.meal.toLowerCase().includes(q))
+    .slice(0, 6);
+  if (!matches.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = matches.map(m =>
+    `<div onclick="fillRestaurantForm(${JSON.stringify(m).replace(/"/g,'&quot;')}); this.parentElement.style.display='none';"
+      style="padding:7px 12px;font-family:var(--font-mono);font-size:0.68rem;color:var(--text);
+      cursor:pointer;border-bottom:1px solid var(--border);"
+      onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+      <span style="color:var(--accent2);">${m.restaurant}</span> — ${m.meal}
+      <span style="color:var(--text-dim);font-size:0.58rem;"> · ${m.calories} cal</span>
+    </div>`
+  ).join('');
+}
+
+function fillRestaurantForm(entry) {
+  document.getElementById('rest-name').value    = entry.restaurant || '';
+  document.getElementById('rest-meal').value    = entry.meal       || '';
+  document.getElementById('rest-cal').value     = entry.calories   || '';
+  document.getElementById('rest-protein').value = entry.protein    || '';
+  document.getElementById('rest-carbs').value   = entry.carbs      || '';
+  document.getElementById('rest-fat').value     = entry.fat        || '';
+  document.getElementById('rest-fiber').value   = entry.fiber      || '';
+  document.getElementById('rest-sodium').value  = entry.sodium     || '';
+}
+
+function clearRestaurantForm() {
+  ['rest-name','rest-meal','rest-cal','rest-protein','rest-carbs','rest-fat','rest-fiber','rest-sodium']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('rest-msg').textContent = '';
+}
+
+async function logRestaurantMeal() {
+  const msg = document.getElementById('rest-msg');
+  const restaurant = document.getElementById('rest-name')?.value.trim();
+  const meal       = document.getElementById('rest-meal')?.value.trim();
+  const calories   = parseFloat(document.getElementById('rest-cal')?.value)     || 0;
+  const protein    = parseFloat(document.getElementById('rest-protein')?.value) || 0;
+  const carbs      = parseFloat(document.getElementById('rest-carbs')?.value)   || 0;
+  const fat        = parseFloat(document.getElementById('rest-fat')?.value)     || 0;
+  const fiber      = parseFloat(document.getElementById('rest-fiber')?.value)   || 0;
+  const sodium     = parseFloat(document.getElementById('rest-sodium')?.value)  || 0;
+  const mealtype   = document.getElementById('rest-mealtype')?.value || 'lunch';
+  const saveToDb   = document.getElementById('rest-save-db')?.checked;
+
+  if (!restaurant) { msg.style.color='var(--danger)'; msg.textContent='RESTAURANT NAME REQUIRED'; return; }
+  if (!meal)       { msg.style.color='var(--danger)'; msg.textContent='MEAL NAME REQUIRED'; return; }
+  if (!calories)   { msg.style.color='var(--danger)'; msg.textContent='CALORIES REQUIRED'; return; }
+
+  msg.style.color = 'var(--accent2)'; msg.textContent = 'SAVING...';
+
+  try {
+    const dateStr = document.getElementById('n-date')?.value || localDateStr();
+    const entry = { restaurant, meal, calories, protein, carbs, fat, fiber, sodium, mealtype,
+      source: 'restaurant', saved: new Date().toISOString() };
+
+    // Log as a nutrition entry for the day
+    const existing = await encryptedLoad('nutrition');
+    const dayEntries = existing.filter(e => e.date === dateStr);
+    const newEntry   = { ...entry, date: dateStr, id: 'rest_' + Date.now() };
+    await encryptedSave('nutrition', [...existing, newEntry]);
+
+    // Save to personal restaurant DB
+    if (saveToDb) {
+      if (!restaurantDb) restaurantDb = [];
+      // Update existing or add new
+      const existIdx = restaurantDb.findIndex(r =>
+        r.restaurant.toLowerCase() === restaurant.toLowerCase() && r.meal.toLowerCase() === meal.toLowerCase()
+      );
+      const dbEntry = { restaurant, meal, calories, protein, carbs, fat, fiber, sodium, addedAt: new Date().toISOString() };
+      if (existIdx >= 0) restaurantDb[existIdx] = dbEntry;
+      else restaurantDb.unshift(dbEntry);
+      // Keep max 200 entries
+      if (restaurantDb.length > 200) restaurantDb = restaurantDb.slice(0, 200);
+      await saveRestaurantDb();
+      renderRestaurantDb();
+    }
+
+    msg.style.color = '#4caf50';
+    msg.textContent = `✓ LOGGED — ${calories} cal · ${protein}g protein`;
+    setTimeout(() => { msg.textContent = ''; clearRestaurantForm(); }, 2500);
+    renderRestaurantTodaySummary(dateStr);
+  } catch(e) {
+    msg.style.color = 'var(--danger)'; msg.textContent = 'ERROR: ' + e.message;
+  }
+}
+
+function renderRestaurantDb() {
+  const el = document.getElementById('rest-db-list');
+  if (!el) return;
+  const q = (document.getElementById('rest-db-search')?.value || '').toLowerCase();
+  const items = restaurantDb.filter(r =>
+    !q || r.restaurant.toLowerCase().includes(q) || r.meal.toLowerCase().includes(q)
+  );
+  if (!items.length) {
+    el.innerHTML = `<div style="color:var(--text-dim);padding:8px 0;">No saved meals yet. Log a restaurant meal above and check "Save to database".</div>`;
+    return;
+  }
+  el.innerHTML = items.map((r, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;
+      border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;">
+      <div style="flex:1;min-width:160px;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);">${r.restaurant}</div>
+        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text);">${r.meal}</div>
+        <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">
+          ${r.calories} cal · P:${r.protein||0}g · C:${r.carbs||0}g · F:${r.fat||0}g
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button onclick="fillRestaurantForm(${JSON.stringify(r).replace(/"/g,'&quot;')})"
+          class="btn btn-s" style="font-size:0.58rem;padding:3px 8px;">FILL FORM</button>
+        <button onclick="deleteRestaurantEntry(${i})"
+          style="font-family:var(--font-mono);font-size:0.68rem;background:none;border:none;
+          color:var(--danger);cursor:pointer;padding:2px 4px;">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+async function deleteRestaurantEntry(idx) {
+  if (!confirm('Remove this meal from your database?')) return;
+  restaurantDb.splice(idx, 1);
+  await saveRestaurantDb();
+  renderRestaurantDb();
+}
+
+async function renderRestaurantTodaySummary(dateStr) {
+  const card = document.getElementById('rest-today-card');
+  const el   = document.getElementById('rest-today-summary');
+  if (!card || !el) return;
+  try {
+    const entries = await encryptedLoad('nutrition');
+    const restToday = entries.filter(e => e.date === dateStr && e.source === 'restaurant');
+    if (!restToday.length) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    const totCal  = restToday.reduce((s,e) => s + (e.calories||0), 0);
+    const totProt = restToday.reduce((s,e) => s + (e.protein||0),  0);
+    const totCarb = restToday.reduce((s,e) => s + (e.carbs||0),    0);
+    const totFat  = restToday.reduce((s,e) => s + (e.fat||0),      0);
+    el.innerHTML = `
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:10px;">
+        <div><div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);">CALORIES</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--accent2);">${totCal}</div></div>
+        <div><div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);">PROTEIN</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--text);">${totProt.toFixed(1)}g</div></div>
+        <div><div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);">CARBS</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--text);">${totCarb.toFixed(1)}g</div></div>
+        <div><div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border2);">FAT</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--text);">${totFat.toFixed(1)}g</div></div>
+      </div>
+      ${restToday.map(e => `
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);
+          font-size:0.6rem;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span style="color:var(--accent2);">${e.restaurant}</span>
+          <span style="color:var(--text);">${e.meal}</span>
+          <span style="color:var(--text-dim);">${e.calories} cal</span>
+        </div>`).join('')}`;
+  } catch(e) { card.style.display = 'none'; }
+}
+
+// ═══════════════════════════════════════════════════════════
 // FOOD DATABASE — GitHub XLSX + custom entries
 // ═══════════════════════════════════════════════════════════
 let foodDatabase      = []; // [{name, serving, calories, protein, carbs, fat, fiber, sodium, keto, source}]
@@ -4277,7 +4740,7 @@ async function deleteSavedRecipe(idx) {
 }
 
 function nutTab(tab) {
-  ['meals','recipe','foods'].forEach(t => {
+  ['meals','restaurant','recipe','foods'].forEach(t => {
     const panel = document.getElementById(`npanel-${t}`);
     const btn   = document.getElementById(`ntab-${t}`);
     if (panel) panel.style.display = t === tab ? 'block' : 'none';
@@ -4285,6 +4748,7 @@ function nutTab(tab) {
   });
   if (tab === 'foods' && !foodDatabase.length) loadFoodDatabase();
   if (tab === 'recipe' && !foodDatabase.length) loadFoodDatabase();
+  if (tab === 'restaurant') { loadRestaurantDb(); renderRestaurantDb(); }
 }
 
 // ═══════════════════════════════════════════════════════════
