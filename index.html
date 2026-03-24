@@ -3453,7 +3453,7 @@ async function autoPopulateWorkoutLog() {
     }
 
     // Build exercise summary from actuals
-    const allItems = [...w.warmup, ...w.exercises, ...w.cooldown];
+    const allItems = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
     const bodyLbs  = SESSION.weight || 0;
     let totalCals  = 0;
 
@@ -3592,6 +3592,8 @@ const EQ_GROUPS = [
   { label:'DIP BARS',            ids:['acc-dipbar'],                              icon:'🔩' },
   { label:'PREACHER BENCH',      ids:['rack-preacher'],                           icon:'🪑' },
   { label:'CARDIO EQUIPMENT',    ids:['cardio-treadmill','cardio-bike-up','cardio-bike-rec','cardio-airbike','cardio-rower','cardio-elliptical','cardio-stairmill','acc-jumprope'], icon:'🫀' },
+  { label:'YOGA (bodyweight)',   ids:['__yoga__'],                                          icon:'🧘' },
+  { label:'PILATES (mat)',       ids:['__pilates__'],                                       icon:'🌀' },
 ];
 
 const GOAL_BADGE_COLOR = {
@@ -3601,7 +3603,9 @@ const GOAL_BADGE_COLOR = {
 };
 
 function exMatchesGroup(ex, group) {
-  if (group.ids.length === 0) return ex.eq.length === 0;
+  if (group.ids.includes('__yoga__'))    return ex.goals.includes('yoga');
+  if (group.ids.includes('__pilates__')) return ex.goals.includes('pilates');
+  if (group.ids.length === 0) return ex.eq.length === 0 && !ex.goals.includes('yoga') && !ex.goals.includes('pilates');
   return ex.eq.some(r => group.ids.includes(r));
 }
 
@@ -3636,7 +3640,7 @@ function renderExLib() {
   })).filter(grp => grp.exercises.length > 0);
 
   el.innerHTML = groups.map(grp => {
-    const userHas = grp.ids.length === 0
+    const userHas = grp.ids.includes('__yoga__') || grp.ids.includes('__pilates__') || grp.ids.length === 0
       ? true
       : grp.ids.some(id => userEq[id] || (id === 'db' && (userEq.dumbbells||[]).length > 0));
     const hasTag = userHas
@@ -5590,7 +5594,7 @@ function calcWorkoutCalories(w, exerciseWeightsMap) {
   const weightKg = getWeightKg();
   if (!weightKg) return null;
   let total = 0;
-  const allItems = [...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
+  const allItems = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
   for (const item of allItems) {
     const actual = exerciseActuals?.[item.id];
     if (actual?.sets?.some(s => s?.reps)) {
@@ -5752,6 +5756,8 @@ const TRAINING_FOCUS_OPTIONS = [
   { id:'focus-endurance',  icon:'🫀', label:'Cardiovascular Endurance', desc:'Improve heart health, stamina, and sustained energy over long durations' },
   { id:'focus-general',    icon:'🏃', label:'General Fitness',  desc:'Balanced mix of strength, cardio, and flexibility — overall health improvement' },
   { id:'focus-mobility',   icon:'🧘', label:'Mobility & Flexibility', desc:'Improve range of motion, reduce stiffness, support injury prevention and posture' },
+  { id:'focus-yoga',       icon:'🧘', label:'Yoga Practice',          desc:'Structured yoga sessions — choose your style: Hatha (foundations), Vinyasa (flow), Power (strength), Yin (deep stretch), Restorative (recovery), Ashtanga (athletic)' },
+  { id:'focus-pilates',    icon:'🌀', label:'Pilates',                 desc:'Core-centred, low-impact precision training — builds deep stabiliser strength, posture, and body awareness. Mat-based.' },
 ];
 
 const SPECIAL_FLAG_OPTIONS = [
@@ -6562,72 +6568,195 @@ const EX_DB = [
   {id:'elliptical',      name:'Elliptical',                muscles:[],                                    eq:['cardio-elliptical'],           impact:'low',  goals:['fat','endurance','lowimpact'],    sets_h:'1×25min', sets_s:'1×20min',rest_h:0,   rest_s:0,   ytId:''},
   {id:'jump_rope',       name:'Jump Rope',                 muscles:[],                                    eq:['acc-jumprope'],                impact:'high', goals:['fat','endurance'],                sets_h:'5×2min',  sets_s:'4×1min', rest_h:60,  rest_s:60,  ytId:''},
   {id:'hiit_bike',       name:'HIIT Air Bike Intervals',   muscles:[],                                    eq:['cardio-airbike'],              impact:'low',  goals:['fat','endurance','recomp'],       sets_h:'8×20s on/40s off',sets_s:'6×20s',rest_h:0,rest_s:0, ytId:''},
+
+  // ── YOGA ────────────────────────────────────────────────
+  // All yoga is bodyweight (eq:[]) and categorized by style/goal
+  {id:'yoga_sun_sal',    name:'Sun Salutation (Vinyasa)',  muscles:['chest','back-upper','core','shoulders','hamstrings'],eq:[],impact:'low',goals:['yoga','mobility','endurance','fat'],sets_h:'5–10 rounds',sets_s:'3 rounds',rest_h:30,rest_s:60,  ytId:'eqVMAPM00GM'},
+  {id:'yoga_warrior1',   name:'Warrior I Sequence',        muscles:['quads','glutes','shoulders'],        eq:[],              impact:'low',  goals:['yoga','strength','mobility'],      sets_h:'3×60 sec/side',sets_s:'2×45s',rest_h:30,rest_s:30,  ytId:'eqVMAPM00GM'},
+  {id:'yoga_warrior2',   name:'Warrior II Sequence',       muscles:['quads','glutes','shoulders'],        eq:[],              impact:'low',  goals:['yoga','strength','tone'],          sets_h:'3×60 sec/side',sets_s:'2×45s',rest_h:30,rest_s:30,  ytId:'eqVMAPM00GM'},
+  {id:'yoga_chair',      name:'Chair Pose (Utkatasana)',   muscles:['quads','glutes','core'],             eq:[],              impact:'low',  goals:['yoga','strength','tone','lowimpact'],sets_h:'3×30–60s',sets_s:'3×30s',rest_h:30,rest_s:30,  ytId:'eqVMAPM00GM'},
+  {id:'yoga_tree',       name:'Tree Pose (Balance)',       muscles:['core','glutes'],                     eq:[],              impact:'low',  goals:['yoga','mobility','posture'],       sets_h:'3×45s/side',sets_s:'2×30s',rest_h:20,rest_s:20,   ytId:'eqVMAPM00GM'},
+  {id:'yoga_downdog',    name:'Downward Dog Hold',         muscles:['hamstrings','calves','shoulders','lats'],eq:[],          impact:'low',  goals:['yoga','mobility','posture'],       sets_h:'3×45–60s',sets_s:'3×30s',rest_h:30,rest_s:30,    ytId:'eqVMAPM00GM'},
+  {id:'yoga_pigeon',     name:'Pigeon Pose (deep hold)',   muscles:['glutes','hamstrings'],               eq:[],              impact:'low',  goals:['yoga','mobility','lowimpact'],     sets_h:'2×90s/side',sets_s:'2×60s',rest_h:30,rest_s:30,   ytId:'O11Md_bJCfk'},
+  {id:'yoga_low_lunge',  name:'Low Lunge (Crescent)',      muscles:['quads','glutes','core'],             eq:[],              impact:'low',  goals:['yoga','mobility','tone'],          sets_h:'3×45s/side',sets_s:'2×30s',rest_h:20,rest_s:20,   ytId:'YQmpR9OO7Zk'},
+  {id:'yoga_boat',       name:'Boat Pose (Navasana)',      muscles:['core'],                              eq:[],              impact:'low',  goals:['yoga','strength','tone'],          sets_h:'3×30s',sets_s:'3×20s',rest_h:30,rest_s:30,         ytId:'ASdvN_XEl_c'},
+  {id:'yoga_bridge',     name:'Bridge Pose (Setu)',        muscles:['glutes','hamstrings','core'],        eq:[],              impact:'low',  goals:['yoga','strength','tone','lowimpact'],sets_h:'3×30s',sets_s:'3×20s',rest_h:30,rest_s:30,       ytId:'wPM8icPu6H8'},
+  {id:'yoga_plank_yog',  name:'Yoga Plank Hold',          muscles:['core','shoulders','chest'],          eq:[],              impact:'low',  goals:['yoga','strength','tone'],          sets_h:'3×45s',sets_s:'3×30s',rest_h:30,rest_s:45,         ytId:'ASdvN_XEl_c'},
+  {id:'yoga_yin_strap',  name:'Yin Dragon Pose',          muscles:['quads','hamstrings','glutes'],       eq:[],              impact:'low',  goals:['yoga','mobility','lowimpact'],     sets_h:'2×3 min/side',sets_s:'1×2 min',rest_h:60,rest_s:60, ytId:'O11Md_bJCfk'},
+  {id:'yoga_yin_butter', name:'Yin Butterfly Pose',       muscles:['hamstrings','glutes'],               eq:[],              impact:'low',  goals:['yoga','mobility','lowimpact'],     sets_h:'1×3 min',sets_s:'1×2 min',rest_h:60,rest_s:60,      ytId:'O11Md_bJCfk'},
+  {id:'yoga_power_flow', name:'Power Yoga Flow',          muscles:['chest','core','shoulders','quads'],  eq:[],              impact:'mod',  goals:['yoga','fat','endurance'],          sets_h:'1×20 min',sets_s:'1×15 min',rest_h:0,rest_s:0,      ytId:'eqVMAPM00GM'},
+  {id:'yoga_ashtanga',   name:'Ashtanga Primary Series',  muscles:['chest','core','back-upper','quads','hamstrings'],eq:[],  impact:'mod',  goals:['yoga','strength','endurance'],    sets_h:'1×30 min',sets_s:'1×20 min',rest_h:0,rest_s:0,      ytId:'eqVMAPM00GM'},
+  {id:'yoga_restorative',name:'Restorative Yoga Session', muscles:[],                                    eq:[],              impact:'low',  goals:['yoga','mobility','lowimpact','posture'],sets_h:'1×30 min',sets_s:'1×20 min',rest_h:0,rest_s:0, ytId:'eqVMAPM00GM'},
+
+  // ── PILATES ─────────────────────────────────────────────
+  {id:'pil_hundred',     name:'The Hundred',              muscles:['core'],                              eq:[],              impact:'low',  goals:['pilates','tone','strength'],       sets_h:'3×100 pumps',sets_s:'2×100',rest_h:60,rest_s:60,   ytId:'ASdvN_XEl_c'},
+  {id:'pil_roll_up',     name:'Roll Up',                  muscles:['core'],                              eq:[],              impact:'low',  goals:['pilates','tone','mobility'],       sets_h:'3×10',sets_s:'3×8',rest_h:45,rest_s:60,            ytId:'ASdvN_XEl_c'},
+  {id:'pil_single_leg',  name:'Single Leg Circle',        muscles:['core','glutes'],                     eq:[],              impact:'low',  goals:['pilates','tone','mobility'],       sets_h:'3×10/side',sets_s:'3×8',rest_h:30,rest_s:30,       ytId:'ASdvN_XEl_c'},
+  {id:'pil_rolling',     name:'Rolling Like a Ball',      muscles:['core','back-lower'],                 eq:[],              impact:'low',  goals:['pilates','mobility','posture'],    sets_h:'3×10',sets_s:'3×8',rest_h:30,rest_s:30,            ytId:'ASdvN_XEl_c'},
+  {id:'pil_series_5',    name:'Series of Five (Pilates)', muscles:['core'],                              eq:[],              impact:'low',  goals:['pilates','tone','strength'],       sets_h:'3 full rounds',sets_s:'2 rounds',rest_h:60,rest_s:60,ytId:'ASdvN_XEl_c'},
+  {id:'pil_spine_stretch',name:'Spine Stretch Forward',   muscles:['back-lower','hamstrings','core'],    eq:[],              impact:'low',  goals:['pilates','mobility','posture'],    sets_h:'3×8',sets_s:'3×6',rest_h:30,rest_s:30,            ytId:'eqVMAPM00GM'},
+  {id:'pil_saw',         name:'The Saw',                  muscles:['core','back-upper','hamstrings'],    eq:[],              impact:'low',  goals:['pilates','mobility','posture'],    sets_h:'3×8/side',sets_s:'3×6',rest_h:30,rest_s:30,        ytId:'eqVMAPM00GM'},
+  {id:'pil_swan',        name:'Swan Dive Prep',           muscles:['back-lower','back-upper','glutes'],  eq:[],              impact:'low',  goals:['pilates','posture','strength'],    sets_h:'3×10',sets_s:'3×8',rest_h:30,rest_s:30,            ytId:'Mfbv5XEGZJI'},
+  {id:'pil_side_kick',   name:'Side Kick Series',         muscles:['glutes','hamstrings','core'],        eq:[],              impact:'low',  goals:['pilates','tone','lowimpact'],      sets_h:'3×12/side',sets_s:'3×10',rest_h:30,rest_s:30,      ytId:'SJ1iR_0Srew'},
+  {id:'pil_teaser',      name:'The Teaser',               muscles:['core'],                              eq:[],              impact:'low',  goals:['pilates','strength','tone'],       sets_h:'3×8',sets_s:'3×6',rest_h:45,rest_s:60,            ytId:'ASdvN_XEl_c'},
+  {id:'pil_plank',       name:'Pilates Plank Variations', muscles:['core','shoulders'],                  eq:[],              impact:'low',  goals:['pilates','strength','tone'],       sets_h:'3×30–45s',sets_s:'3×30s',rest_h:45,rest_s:45,     ytId:'ASdvN_XEl_c'},
+  {id:'pil_bridge',      name:'Pilates Bridge',           muscles:['glutes','hamstrings','core'],        eq:[],              impact:'low',  goals:['pilates','tone','lowimpact'],      sets_h:'3×12',sets_s:'3×10',rest_h:30,rest_s:30,           ytId:'wPM8icPu6H8'},
+  {id:'pil_legpull',     name:'Leg Pull Front/Back',      muscles:['core','glutes','shoulders'],         eq:[],              impact:'low',  goals:['pilates','strength','tone'],       sets_h:'3×8/side',sets_s:'3×6',rest_h:45,rest_s:45,        ytId:'ASdvN_XEl_c'},
 ];
 
 // ── Warm-ups & cool-downs (no equipment needed) ──────────
-const WARMUP_DB = {
+// ── Per-session-type: PREVIOUS DAY soreness stretches ───
+// Static holds, 30–45 sec max (science: <45s has minimal strength impact)
+const PREV_DAY_STRETCH_DB = {
   push:[
-    {id:'wu_arm_circles',   name:'ARM CIRCLES',            detail:'30 reps each direction. Primes shoulder joint.',              ytId:'1u9-YNjFm0g', type:'activate'},
-    {id:'wu_pp_thoracic',   name:'SHOULDER PASS-THROUGHS', detail:'15 reps with towel. Opens thoracic + shoulder mobility.',     ytId:'hZnE2IlPLEM', type:'stretch'},
-    {id:'wu_pushup_plus',   name:'PUSH-UP PLUS',           detail:'10 reps. At top, push extra through shoulder blades.',        ytId:'B5OhsRuaD30', type:'activate'},
-    {id:'wu_scap_push',     name:'SCAPULAR PUSH-UPS',      detail:'10 reps. Pinch and spread shoulder blades.',                  ytId:'akgQbxhrhOc', type:'activate'},
+    {id:'pd_chest_static',  name:'STATIC CHEST STRETCH',        detail:'30 sec each side. Arm on doorframe, lean forward. Releases pec soreness from yesterday\'s pressing.',   ytId:'eTlnJYWv9Y4', type:'stretch'},
+    {id:'pd_shoulder_cross',name:'CROSS-BODY SHOULDER HOLD',    detail:'30 sec each side. Gently pull arm across chest. Eases anterior deltoid tightness.',                     ytId:'KFlSIhgZXOQ', type:'stretch'},
+    {id:'pd_tricep_hold',   name:'TRICEP OVERHEAD HOLD',        detail:'30 sec each side. Arm overhead, gentle pressure from other hand. Releases elbow and long head tightness.',ytId:'YwTbYJhLBY4', type:'stretch'},
   ],
   pull:[
-    {id:'wu_band_pull',     name:'BAND PULL-APARTS',       detail:'20 reps. Activates rear delts and rhomboids.',                ytId:'0kgSBxbG6zo', type:'activate'},
-    {id:'wu_prone_cobra',   name:'PRONE COBRA',            detail:'10 reps, 2-sec hold. Activates mid-back.',                   ytId:'Mfbv5XEGZJI', type:'activate'},
-    {id:'wu_dead_hang',     name:'DEAD HANG',              detail:'20–30 sec. Decompresses spine, primes grip.',                 ytId:'VJTZ7cGmkEo', type:'stretch'},
-    {id:'wu_ham_curl_light',name:'LIGHT CURL WARM-UP',     detail:'15 reps, very light. Warms brachialis.',                     ytId:'0xyZbNqL_U0', type:'activate'},
+    {id:'pd_lat_static',    name:'DOORWAY LAT HOLD',            detail:'30 sec each side. Hold doorframe, lean away. Releases lat soreness after rows.',                         ytId:'lPOOpNe6JM4', type:'stretch'},
+    {id:'pd_bicep_door',    name:'BICEP DOORFRAME STRETCH',     detail:'30 sec each arm. Palm flat on wall behind you, rotate away. Eases bicep tendon soreness.',               ytId:'bJ1JxDL89P0', type:'stretch'},
+    {id:'pd_childs_pose',   name:"CHILD'S POSE",                detail:'45 sec. Kneel, arms forward, sink hips back. Decompresses entire posterior chain from pull work.',        ytId:'eqVMAPM00GM', type:'stretch'},
   ],
   legs:[
-    {id:'wu_hip_circles',   name:'HIP CIRCLES',            detail:'20 reps each direction. Warms hip joint capsule.',           ytId:'bVnBdaYn0hY', type:'stretch'},
-    {id:'wu_leg_swings',    name:'LEG SWINGS',             detail:'15 swings each leg. Hamstring and hip flexor mobility.',     ytId:'KFZ5hLJbR9o', type:'stretch'},
-    {id:'wu_glute_bridge',  name:'GLUTE BRIDGE',           detail:'15 reps, 2-sec hold. #1 glute activation before squats.',   ytId:'wPM8icPu6H8', type:'activate'},
-    {id:'wu_bw_squat',      name:'BODYWEIGHT SQUAT',       detail:'15 reps, slow. Primes quad/glute movement pattern.',        ytId:'aclHkVaku9U', type:'activate'},
+    {id:'pd_pigeon',        name:'PIGEON STRETCH',              detail:'45 sec each side. Front shin at 90°, sink hips. Releases glute and hip soreness from squats and lunges.', ytId:'O11Md_bJCfk', type:'stretch'},
+    {id:'pd_quad_static',   name:'STANDING QUAD HOLD',          detail:'30 sec each leg. Pull heel to glutes. Eases quad tightness from leg day.',                               ytId:'1f9sDHSIMFc', type:'stretch'},
+    {id:'pd_ham_static',    name:'SEATED HAMSTRING HOLD',       detail:'40 sec each leg. Leg extended, reach toward foot. Releases post-leg-day hamstring tightness.',           ytId:'Tio35lx0bic', type:'stretch'},
+    {id:'pd_hip_flexor',    name:'HIP FLEXOR LUNGE HOLD',       detail:'40 sec each side. Rear knee down, push hips forward. Reverses hip compression from heavy squats.',       ytId:'YQmpR9OO7Zk', type:'stretch'},
   ],
   upper:[
-    {id:'wu_arm_circles',   name:'ARM CIRCLES',            detail:'30 reps each direction.',                                    ytId:'1u9-YNjFm0g', type:'activate'},
-    {id:'wu_band_pull',     name:'BAND PULL-APARTS',       detail:'20 reps. Activates rear delts.',                             ytId:'0kgSBxbG6zo', type:'activate'},
-    {id:'wu_scap_push',     name:'SCAPULAR PUSH-UPS',      detail:'10 reps. Primes back for pressing.',                         ytId:'akgQbxhrhOc', type:'activate'},
-    {id:'wu_prone_cobra',   name:'PRONE COBRA',            detail:'10 reps, 2-sec hold.',                                       ytId:'Mfbv5XEGZJI', type:'activate'},
+    {id:'pd_chest_static',  name:'STATIC CHEST STRETCH',        detail:'30 sec each side.',  ytId:'eTlnJYWv9Y4', type:'stretch'},
+    {id:'pd_lat_static',    name:'DOORWAY LAT HOLD',            detail:'30 sec each side.',  ytId:'lPOOpNe6JM4', type:'stretch'},
+    {id:'pd_shoulder_cross',name:'CROSS-BODY SHOULDER HOLD',    detail:'30 sec each side.',  ytId:'KFlSIhgZXOQ', type:'stretch'},
   ],
   fullbody:[
-    {id:'wu_arm_circles',   name:'ARM CIRCLES',            detail:'30 reps each direction.',                                    ytId:'1u9-YNjFm0g', type:'activate'},
-    {id:'wu_hip_circles',   name:'HIP CIRCLES',            detail:'20 reps each direction.',                                    ytId:'bVnBdaYn0hY', type:'stretch'},
-    {id:'wu_glute_bridge',  name:'GLUTE BRIDGE',           detail:'15 reps, 2-sec hold.',                                       ytId:'wPM8icPu6H8', type:'activate'},
-    {id:'wu_bw_squat',      name:'BODYWEIGHT SQUAT',       detail:'10 reps, slow eccentric.',                                   ytId:'aclHkVaku9U', type:'activate'},
+    {id:'pd_childs_pose',   name:"CHILD'S POSE",                detail:'45 sec. Full back release.',                                                                               ytId:'eqVMAPM00GM', type:'stretch'},
+    {id:'pd_pigeon',        name:'PIGEON STRETCH',              detail:'40 sec each side. Hips and glutes.',                                                                       ytId:'O11Md_bJCfk', type:'stretch'},
+    {id:'pd_chest_static',  name:'STATIC CHEST STRETCH',        detail:'30 sec each side.',                                                                                        ytId:'eTlnJYWv9Y4', type:'stretch'},
+  ],
+  yoga:  [{id:'pd_full_body_flow',name:"GENTLE FULL-BODY FLOW", detail:'5 min. Cat-cow, thread needle, supine twist — full passive release before practice.', ytId:'eqVMAPM00GM', type:'stretch'}],
+  pilates:[{id:'pd_pil_roll',name:'SPINAL ROLL-DOWN',           detail:'5 reps slowly. Articulate each vertebra, hands toward floor. Wakes the spine gently.',  ytId:'eqVMAPM00GM', type:'stretch'}],
+};
+
+// ── TODAY'S PRE-STRETCH — dynamic, <45 sec per movement ─
+// Science: dynamic > static pre-workout for performance
+const PRE_STRETCH_DB = {
+  push:[
+    {id:'ps_arm_swings',    name:'ARM SWINGS (front/back)',      detail:'20 reps each. Arms swing freely across chest and behind. Dynamic pec and shoulder mobility.',             ytId:'1u9-YNjFm0g', type:'stretch'},
+    {id:'ps_shoulder_circ', name:'SHOULDER CIRCLES',             detail:'15 large circles forward, 15 backward. Lubricates the shoulder joint capsule before pressing.',           ytId:'1u9-YNjFm0g', type:'stretch'},
+    {id:'ps_thoracic_open', name:'THORACIC OPENER (dynamic)',    detail:'10 reps. Hands behind head, rotate and open chest side to side. Opens mid-back for overhead work.',       ytId:'NVFfJlBNJsI', type:'stretch'},
+    {id:'ps_chest_open',    name:'DOORWAY DYNAMIC STRETCH',      detail:'10 slow lean-throughs each side. <20 sec hold. Opens chest without impairing pressing strength.',         ytId:'eTlnJYWv9Y4', type:'stretch'},
+  ],
+  pull:[
+    {id:'ps_lat_reach',     name:'REACHING LAT MOBILIZATION',   detail:'10 reps each side. Reach arm overhead, side-bend, feel lat lengthen. Dynamic, no hold.',                  ytId:'lPOOpNe6JM4', type:'stretch'},
+    {id:'ps_cat_cow',       name:'CAT-COW (dynamic)',            detail:'10 reps. Spine flexion/extension on all fours. Primes back for rowing patterns.',                         ytId:'eqVMAPM00GM', type:'stretch'},
+    {id:'ps_shoulder_circ', name:'SHOULDER CIRCLES',             detail:'15 forward, 15 backward.',                                                                                ytId:'1u9-YNjFm0g', type:'stretch'},
+  ],
+  legs:[
+    {id:'ps_hip_circ',      name:'HIP CIRCLES (dynamic)',        detail:'20 reps each direction. Large circles, slow. Warms the hip joint capsule.',                              ytId:'bVnBdaYn0hY', type:'stretch'},
+    {id:'ps_leg_swings_fb', name:'LEG SWINGS (front/back)',      detail:'15 each leg. Hold wall, swing leg front to back. Dynamic hamstring + hip flexor stretch.',               ytId:'KFZ5hLJbR9o', type:'stretch'},
+    {id:'ps_leg_swings_lat',name:'LEG SWINGS (side to side)',    detail:'15 each leg. Lateral swing across body. Opens adductors and glute medius.',                              ytId:'KFZ5hLJbR9o', type:'stretch'},
+    {id:'ps_ankle_circles', name:'ANKLE CIRCLES',                detail:'10 each direction per ankle. Often skipped — crucial for squat depth and ankle dorsiflexion.',           ytId:'bVnBdaYn0hY', type:'stretch'},
+  ],
+  upper:[
+    {id:'ps_arm_swings',    name:'ARM SWINGS (front/back)',      detail:'20 reps. Dynamic pec and shoulder mobility.',                                                             ytId:'1u9-YNjFm0g', type:'stretch'},
+    {id:'ps_cat_cow',       name:'CAT-COW (dynamic)',            detail:'10 reps. Full spinal mobilization.',                                                                      ytId:'eqVMAPM00GM', type:'stretch'},
+    {id:'ps_thoracic_open', name:'THORACIC OPENER (dynamic)',    detail:'10 reps. Open chest for pressing and pulling.',                                                           ytId:'NVFfJlBNJsI', type:'stretch'},
+    {id:'ps_lat_reach',     name:'REACHING LAT MOBILIZATION',   detail:'10 reps each side.',                                                                                      ytId:'lPOOpNe6JM4', type:'stretch'},
+  ],
+  fullbody:[
+    {id:'ps_arm_swings',    name:'ARM SWINGS (front/back)',      detail:'20 reps.',                                                                                               ytId:'1u9-YNjFm0g', type:'stretch'},
+    {id:'ps_hip_circ',      name:'HIP CIRCLES (dynamic)',        detail:'20 reps each direction.',                                                                                 ytId:'bVnBdaYn0hY', type:'stretch'},
+    {id:'ps_cat_cow',       name:'CAT-COW (dynamic)',            detail:'10 reps.',                                                                                                ytId:'eqVMAPM00GM', type:'stretch'},
+    {id:'ps_leg_swings_fb', name:'LEG SWINGS (front/back)',      detail:'15 each leg.',                                                                                           ytId:'KFZ5hLJbR9o', type:'stretch'},
+  ],
+  yoga:[
+    {id:'ps_sun_sal_a',     name:'SUN SALUTATION A (3 rounds)', detail:'3 slow rounds of Mountain→Forward Fold→Plank→Cobra→Downward Dog. Warms the entire body for practice.',  ytId:'eqVMAPM00GM', type:'stretch'},
+  ],
+  pilates:[
+    {id:'ps_pil_bridge',    name:'PILATES BRIDGE ROLLS',         detail:'8 reps. Slowly peel spine off floor one vertebra at a time. Activates posterior chain and spine.',      ytId:'wPM8icPu6H8', type:'stretch'},
+    {id:'ps_pil_hundred_p', name:'MODIFIED HUNDRED PREP',        detail:'5 reps. Legs tabletop, pump arms 10×, exhale. Warms core and breath connection.',                       ytId:'ASdvN_XEl_c', type:'activate'},
   ],
 };
 
-const COOLDOWN_DB = {
+// ── MUSCLE ACTIVATION ────────────────────────────────────
+const WARMUP_DB = {
   push:[
-    {id:'cd_chest_stretch', name:'DOORWAY CHEST STRETCH',  detail:'60 sec each side. Full chest + anterior shoulder release.',  ytId:'eTlnJYWv9Y4', type:'stretch'},
-    {id:'cd_cb_shoulder',   name:'CROSS-BODY SHOULDER',    detail:'30 sec each side. Releases rear deltoid.',                   ytId:'KFlSIhgZXOQ', type:'stretch'},
-    {id:'cd_tricep_stretch',name:'TRICEP OVERHEAD STRETCH',detail:'30 sec each side.',                                          ytId:'YwTbYJhLBY4', type:'stretch'},
-    {id:'cd_thoracic_ext',  name:'THORACIC EXTENSION',     detail:'60 sec. Extend over bench edge. Undoes desk posture.',       ytId:'NVFfJlBNJsI', type:'stretch'},
+    {id:'wu_pushup_plus',   name:'PUSH-UP PLUS',           detail:'10 reps. At top of push-up, push extra through shoulder blades — activates serratus anterior.',        ytId:'B5OhsRuaD30', type:'activate'},
+    {id:'wu_scap_push',     name:'SCAPULAR PUSH-UPS',      detail:'10 reps. Arms locked, pinch and spread shoulder blades. Primes back for pressing stability.',          ytId:'akgQbxhrhOc', type:'activate'},
+    {id:'wu_band_pull',     name:'BAND PULL-APARTS',       detail:'20 reps. Band at chest height, pull apart to T. Activates rear delts — prevents impingement.',         ytId:'0kgSBxbG6zo', type:'activate'},
   ],
   pull:[
-    {id:'cd_lat_stretch',   name:'DOORWAY LAT STRETCH',    detail:'60 sec each side. Full lat release.',                        ytId:'lPOOpNe6JM4', type:'stretch'},
-    {id:'cd_childs_pose',   name:"CHILD'S POSE",           detail:'60 sec. Decompresses entire back after rows.',               ytId:'eqVMAPM00GM', type:'stretch'},
-    {id:'cd_bicep_door',    name:'BICEP DOORFRAME STRETCH',detail:'30 sec each arm. Releases bicep and elbow.',                 ytId:'bJ1JxDL89P0', type:'stretch'},
-    {id:'cd_thoracic_rot',  name:'THORACIC ROTATION',      detail:'45 sec each side. Reverses forward-rounded posture.',       ytId:'NVFfJlBNJsI', type:'stretch'},
+    {id:'wu_band_pull',     name:'BAND PULL-APARTS',       detail:'20 reps. Activates rear delts and rhomboids.',                                                         ytId:'0kgSBxbG6zo', type:'activate'},
+    {id:'wu_prone_cobra',   name:'PRONE COBRA',            detail:'10 reps, 2-sec hold. Activates mid-back and erectors.',                                                ytId:'Mfbv5XEGZJI', type:'activate'},
+    {id:'wu_scap_retract',  name:'SCAPULAR RETRACTIONS',   detail:'15 reps. Squeeze shoulder blades hard toward spine. Establishes scapular control before rows.',        ytId:'akgQbxhrhOc', type:'activate'},
+    {id:'wu_ham_curl_light',name:'LIGHT CURL WARM-UP',     detail:'15 reps, very light. Warms brachialis before supinated curls.',                                        ytId:'0xyZbNqL_U0', type:'activate'},
   ],
   legs:[
-    {id:'cd_pigeon',        name:'PIGEON STRETCH',         detail:'90 sec each side. Deep glute and hip opener.',               ytId:'O11Md_bJCfk', type:'stretch'},
-    {id:'cd_quad_stretch',  name:'STANDING QUAD STRETCH',  detail:'30 sec each leg. Fully releases quad.',                     ytId:'1f9sDHSIMFc', type:'stretch'},
-    {id:'cd_hamstring',     name:'SEATED HAMSTRING STRETCH',detail:'60 sec each leg. Releases hamstring tension.',              ytId:'Tio35lx0bic', type:'stretch'},
-    {id:'cd_hip_flexor',    name:'HIP FLEXOR LUNGE STRETCH',detail:'60 sec each side. Reverses hip flexor tightening.',        ytId:'YQmpR9OO7Zk', type:'stretch'},
+    {id:'wu_glute_bridge',  name:'GLUTE BRIDGE',           detail:'15 reps, 2-sec hold at top. The #1 glute activation before squats. Prevents quad dominance.',          ytId:'wPM8icPu6H8', type:'activate'},
+    {id:'wu_clamshell',     name:'CLAMSHELL',              detail:'20 reps each side. Band optional. Activates glute medius — prevents knee cave on squats.',             ytId:'5bNq7KKGV4E', type:'activate'},
+    {id:'wu_bw_squat',      name:'BODYWEIGHT SQUAT',       detail:'15 reps, slow eccentric (3-sec down). Primes movement pattern under zero load.',                       ytId:'aclHkVaku9U', type:'activate'},
   ],
   upper:[
-    {id:'cd_chest_stretch', name:'DOORWAY CHEST STRETCH',  detail:'60 sec each side.',                                         ytId:'eTlnJYWv9Y4', type:'stretch'},
-    {id:'cd_lat_stretch',   name:'DOORWAY LAT STRETCH',    detail:'60 sec each side.',                                         ytId:'lPOOpNe6JM4', type:'stretch'},
-    {id:'cd_childs_pose',   name:"CHILD'S POSE",           detail:'60 sec.',                                                    ytId:'eqVMAPM00GM', type:'stretch'},
-    {id:'cd_thoracic_rot',  name:'THORACIC ROTATION',      detail:'45 sec each side.',                                         ytId:'NVFfJlBNJsI', type:'stretch'},
+    {id:'wu_arm_circles',   name:'ARM CIRCLES',            detail:'30 reps each direction — small to large.',                                                             ytId:'1u9-YNjFm0g', type:'activate'},
+    {id:'wu_band_pull',     name:'BAND PULL-APARTS',       detail:'20 reps. Activates rear delts.',                                                                      ytId:'0kgSBxbG6zo', type:'activate'},
+    {id:'wu_scap_push',     name:'SCAPULAR PUSH-UPS',      detail:'10 reps. Primes back for pressing.',                                                                  ytId:'akgQbxhrhOc', type:'activate'},
+    {id:'wu_prone_cobra',   name:'PRONE COBRA',            detail:'10 reps, 2-sec hold.',                                                                                ytId:'Mfbv5XEGZJI', type:'activate'},
   ],
   fullbody:[
-    {id:'cd_childs_pose',   name:"CHILD'S POSE",           detail:'60 sec. Full back decompression.',                          ytId:'eqVMAPM00GM', type:'stretch'},
-    {id:'cd_pigeon',        name:'PIGEON STRETCH',         detail:'60 sec each side.',                                         ytId:'O11Md_bJCfk', type:'stretch'},
-    {id:'cd_chest_stretch', name:'DOORWAY CHEST STRETCH',  detail:'60 sec each side.',                                         ytId:'eTlnJYWv9Y4', type:'stretch'},
-    {id:'cd_thoracic_ext',  name:'THORACIC EXTENSION',     detail:'60 sec.',                                                   ytId:'NVFfJlBNJsI', type:'stretch'},
+    {id:'wu_arm_circles',   name:'ARM CIRCLES',            detail:'30 reps each direction.',                                                                             ytId:'1u9-YNjFm0g', type:'activate'},
+    {id:'wu_glute_bridge',  name:'GLUTE BRIDGE',           detail:'15 reps, 2-sec hold.',                                                                               ytId:'wPM8icPu6H8', type:'activate'},
+    {id:'wu_band_pull',     name:'BAND PULL-APARTS',       detail:'20 reps.',                                                                                           ytId:'0kgSBxbG6zo', type:'activate'},
+    {id:'wu_bw_squat',      name:'BODYWEIGHT SQUAT',       detail:'10 reps, slow eccentric.',                                                                           ytId:'aclHkVaku9U', type:'activate'},
+  ],
+  yoga:[
+    {id:'wu_yoga_breath',   name:'PRANAYAMA BREATH WORK',  detail:'3 min. 4-count inhale, 4-count hold, 8-count exhale. Activates parasympathetic system, focuses mind.', ytId:'ASdvN_XEl_c', type:'activate'},
+  ],
+  pilates:[
+    {id:'wu_pil_toe_tap',   name:'TOE TAPS (tabletop)',    detail:'10 reps each leg. Legs at 90°, lower one foot to tap floor, return. Core stays flat. Neutral spine awareness.', ytId:'ASdvN_XEl_c', type:'activate'},
+    {id:'wu_pil_arm_circ',  name:'PILATES ARM CIRCLES',    detail:'8 each direction. Arms straight, draw small circles at shoulder height. Scapular stabilization.',     ytId:'1u9-YNjFm0g', type:'activate'},
+  ],
+};
+
+// ── COOL-DOWN — static stretches, 60–90 sec (post-workout = correct timing per science) ──
+const COOLDOWN_DB = {
+  push:[
+    {id:'cd_chest_stretch', name:'DOORWAY CHEST STRETCH',  detail:'60 sec each side. Arm at 90°, lean into doorframe. Full pec + anterior shoulder release.',            ytId:'eTlnJYWv9Y4', type:'stretch'},
+    {id:'cd_cb_shoulder',   name:'CROSS-BODY SHOULDER',    detail:'45 sec each side. Pull arm across body at elbow. Releases rear deltoid.',                             ytId:'KFlSIhgZXOQ', type:'stretch'},
+    {id:'cd_tricep_stretch',name:'TRICEP OVERHEAD STRETCH',detail:'45 sec each side. Arm overhead, bend elbow, pull gently with other hand.',                            ytId:'YwTbYJhLBY4', type:'stretch'},
+    {id:'cd_thoracic_ext',  name:'THORACIC EXTENSION',     detail:'60 sec. Sit against bench edge at mid-back. Extend over it, arms behind head. Undoes desk posture.',  ytId:'NVFfJlBNJsI', type:'stretch'},
+  ],
+  pull:[
+    {id:'cd_lat_stretch',   name:'DOORWAY LAT STRETCH',    detail:'60 sec each side. Hold doorframe, lean away from arm. Full lat and teres major release.',             ytId:'lPOOpNe6JM4', type:'stretch'},
+    {id:'cd_childs_pose',   name:"CHILD'S POSE",           detail:'90 sec. Kneel, arms extended forward, forehead to floor. Full spinal decompression.',                ytId:'eqVMAPM00GM', type:'stretch'},
+    {id:'cd_bicep_door',    name:'BICEP DOORFRAME STRETCH',detail:'45 sec each arm. Arm straight, palm on wall behind you, rotate away.',                                ytId:'bJ1JxDL89P0', type:'stretch'},
+    {id:'cd_thoracic_rot',  name:'THORACIC ROTATION',      detail:'45 sec each side. Seated, hands behind head, rotate from mid-back.',                                 ytId:'NVFfJlBNJsI', type:'stretch'},
+  ],
+  legs:[
+    {id:'cd_pigeon',        name:'PIGEON STRETCH',         detail:'90 sec each side. Front leg at 90°, sink hips toward floor. Deepest glute and hip opener.',           ytId:'O11Md_bJCfk', type:'stretch'},
+    {id:'cd_quad_stretch',  name:'STANDING QUAD STRETCH',  detail:'45 sec each leg. Pull foot to glutes, knees together. Fully releases quad tension.',                  ytId:'1f9sDHSIMFc', type:'stretch'},
+    {id:'cd_hamstring',     name:'SEATED HAMSTRING STRETCH',detail:'60 sec each leg. Extend leg, reach toward foot, hold. Releases post-RDL hamstring tension.',         ytId:'Tio35lx0bic', type:'stretch'},
+    {id:'cd_hip_flexor',    name:'HIP FLEXOR LUNGE STRETCH',detail:'60 sec each side. Rear knee down, push hips forward. Reverses hip flexor compression.',             ytId:'YQmpR9OO7Zk', type:'stretch'},
+  ],
+  upper:[
+    {id:'cd_chest_stretch', name:'DOORWAY CHEST STRETCH',  detail:'60 sec each side.',                                                                                   ytId:'eTlnJYWv9Y4', type:'stretch'},
+    {id:'cd_lat_stretch',   name:'DOORWAY LAT STRETCH',    detail:'60 sec each side.',                                                                                   ytId:'lPOOpNe6JM4', type:'stretch'},
+    {id:'cd_childs_pose',   name:"CHILD'S POSE",           detail:'60 sec.',                                                                                              ytId:'eqVMAPM00GM', type:'stretch'},
+    {id:'cd_thoracic_rot',  name:'THORACIC ROTATION',      detail:'45 sec each side.',                                                                                   ytId:'NVFfJlBNJsI', type:'stretch'},
+  ],
+  fullbody:[
+    {id:'cd_childs_pose',   name:"CHILD'S POSE",           detail:'60 sec. Full back decompression.',                                                                    ytId:'eqVMAPM00GM', type:'stretch'},
+    {id:'cd_pigeon',        name:'PIGEON STRETCH',         detail:'60 sec each side. Hips and glutes.',                                                                  ytId:'O11Md_bJCfk', type:'stretch'},
+    {id:'cd_chest_stretch', name:'DOORWAY CHEST STRETCH',  detail:'60 sec each side.',                                                                                   ytId:'eTlnJYWv9Y4', type:'stretch'},
+    {id:'cd_thoracic_ext',  name:'THORACIC EXTENSION',     detail:'60 sec.',                                                                                             ytId:'NVFfJlBNJsI', type:'stretch'},
+  ],
+  yoga:[
+    {id:'cd_savasana',      name:'SAVASANA (CORPSE POSE)', detail:'5 min. Lie flat, arms at sides, eyes closed. Full nervous system integration after practice.',        ytId:'eqVMAPM00GM', type:'stretch'},
+    {id:'cd_supta_twist',   name:'SUPINE SPINAL TWIST',   detail:'60 sec each side. Lie on back, draw knee across body. Full spinal and hip release.',                   ytId:'O11Md_bJCfk', type:'stretch'},
+  ],
+  pilates:[
+    {id:'cd_pil_swan',      name:'SWAN STRETCH',           detail:'45 sec. Lie prone, press up on forearms, look forward. Releases rectus abdominis after core work.',   ytId:'Mfbv5XEGZJI', type:'stretch'},
+    {id:'cd_pil_stretch',   name:'STANDING SIDE STRETCH',  detail:'30 sec each side. Arm overhead, reach to opposite side. Full lateral chain release after Pilates.',   ytId:'lPOOpNe6JM4', type:'stretch'},
   ],
 };
 
@@ -6704,6 +6833,8 @@ function generateProgram() {
   const isTone       = focus.includes('focus-tone');
   const isEndurance  = focus.includes('focus-endurance');
   const isHIIT       = flags.includes('flag-hiit');
+  const isYoga       = focus.includes('focus-yoga');
+  const isPilates    = focus.includes('focus-pilates');
 
   // Derive goal ids for exercise filtering
   const goalIds = [];
@@ -6714,17 +6845,40 @@ function generateProgram() {
   if (isEndurance)   goalIds.push('endurance');
   if (isBeginner)    goalIds.push('beginner','general');
   if (isLowImpact)   goalIds.push('lowimpact');
+  if (isYoga)        goalIds.push('yoga','mobility');
+  if (isPilates)     goalIds.push('pilates','tone');
   if (flags.includes('flag-posture')) goalIds.push('posture');
   if (goalIds.length === 0) goalIds.push('general','tone','size');
 
   // Exercises per day based on duration (roughly 5–8 min per exercise)
   const exCount = Math.max(4, Math.min(8, Math.floor(dur / 8)));
 
-  // Pick split based on frequency
+  // Pick split based on frequency — yoga/pilates override normal splits
   let splitType, splitLabel, daySchedule;
   const activeDays = days.slice(0, freq).filter(d => d !== 'sun');
 
-  if (freq <= 2) {
+  if (isYoga && isPilates) {
+    // Alternating yoga + pilates days
+    splitType  = 'yoga_pilates';
+    splitLabel = 'Yoga & Pilates Program';
+    daySchedule = activeDays.map((d,i) => i % 2 === 0
+      ? { day:d, type:'yoga',    label:'YOGA SESSION',    sub:'Flow · Strength · Mobility' }
+      : { day:d, type:'pilates', label:'PILATES SESSION', sub:'Core · Precision · Posture' });
+  } else if (isYoga) {
+    splitType  = 'yoga';
+    splitLabel = 'Yoga Program';
+    const yogaStyles = ['Vinyasa Flow','Power Yoga','Yin / Restorative','Hatha Fundamentals','Ashtanga','Yoga & Core'];
+    daySchedule = activeDays.map((d,i) => ({
+      day:d, type:'yoga', label:'YOGA SESSION', sub: yogaStyles[i % yogaStyles.length]
+    }));
+  } else if (isPilates) {
+    splitType  = 'pilates';
+    splitLabel = 'Pilates Program';
+    const pilStyles = ['Mat Pilates — Core Focus','Pilates — Glutes & Legs','Pilates — Upper Body','Full Body Pilates','Pilates — Spine & Posture'];
+    daySchedule = activeDays.map((d,i) => ({
+      day:d, type:'pilates', label:'PILATES SESSION', sub: pilStyles[i % pilStyles.length]
+    }));
+  } else if (freq <= 2) {
     splitType  = 'fullbody';
     splitLabel = 'Full Body Split';
     daySchedule = activeDays.map((d,i) => ({ day:d, type:'fullbody', label:`FULL BODY ${i+1}`, sub:'Complete training stimulus' }));
@@ -6762,6 +6916,8 @@ function generateProgram() {
     upper:    ['chest','back-upper','lats','shoulders','biceps','triceps'],
     lower:    ['quads','hamstrings','glutes','calves','core'],
     fullbody: ['chest','back-upper','lats','shoulders','quads','hamstrings','glutes','biceps','triceps','core'],
+    yoga:     ['core','glutes','hamstrings','shoulders','back-upper'],
+    pilates:  ['core','back-lower','glutes','shoulders'],
   };
 
   // Build cardio finisher if fat loss / endurance goal
@@ -6792,7 +6948,8 @@ function generateProgram() {
       exercises.push(cardioFinisher[0]);
     }
 
-    const wuType = ['push','pull','legs'].includes(ds.type) ? ds.type : ds.type === 'lower' ? 'legs' : ds.type === 'upper' ? 'upper' : 'fullbody';
+    const wuType = ['push','pull','legs','yoga','pilates'].includes(ds.type) ? ds.type
+      : ds.type === 'lower' ? 'legs' : ds.type === 'upper' ? 'upper' : 'fullbody';
     const cdType = wuType;
 
     programDays[ds.day] = {
@@ -6800,9 +6957,11 @@ function generateProgram() {
       sub: ds.sub,
       sessionType: ds.type,
       rest: false,
-      warmup: (WARMUP_DB[wuType] || WARMUP_DB.fullbody).map(w => ({ ...w })),
-      exercises: exercises.map((ex, i) => exerciseToWorkoutItem(ex, ds.day + '_' + idx, i, isStrength)),
-      cooldown: (COOLDOWN_DB[cdType] || COOLDOWN_DB.fullbody).map(c => ({ ...c })),
+      prevDayStretch: (PREV_DAY_STRETCH_DB[wuType] || PREV_DAY_STRETCH_DB.fullbody).map(w => ({ ...w })),
+      preStretch:     (PRE_STRETCH_DB[wuType]       || PRE_STRETCH_DB.fullbody).map(w => ({ ...w })),
+      warmup:         (WARMUP_DB[wuType]             || WARMUP_DB.fullbody).map(w => ({ ...w })),
+      exercises:      exercises.map((ex, i) => exerciseToWorkoutItem(ex, ds.day + '_' + idx, i, isStrength)),
+      cooldown:       (COOLDOWN_DB[cdType]           || COOLDOWN_DB.fullbody).map(c => ({ ...c })),
     };
   });
 
@@ -6810,12 +6969,13 @@ function generateProgram() {
   const ALL_DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
   ALL_DAYS.forEach(d => {
     if (!programDays[d]) {
-      programDays[d] = { title:'REST DAY', sub:'Recovery & Mobility', rest:true, warmup:[], exercises:[], cooldown:[] };
+      programDays[d] = { title:'REST DAY', sub:'Recovery & Mobility', rest:true,
+        prevDayStretch:[], preStretch:[], warmup:[], exercises:[], cooldown:[] };
     }
   });
 
   // Build science summary
-  const summary = buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, exCount, goals, bpg, eq });
+  const summary = buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, isYoga, isPilates, exCount, goals, bpg, eq });
 
   return {
     generatedAt: new Date().toISOString(),
@@ -6826,7 +6986,7 @@ function generateProgram() {
   };
 }
 
-function buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, exCount, goals, bpg, eq }) {
+function buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, isYoga, isPilates, exCount, goals, bpg, eq }) {
   const lines = [];
 
   // Split rationale
@@ -6865,6 +7025,8 @@ function buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStren
   // Beginner/advanced
   if (isBeginner) lines.push({ icon:'🌱', head:'Beginner Protocol Active', body:`Lower volume and simpler movement patterns. Beginners gain muscle at any intensity — consistency and progressive overload matter more than optimization at this stage.` });
   if (isAdvanced) lines.push({ icon:'🎖️', head:'Advanced Lifter Protocol', body:`Higher volume, greater exercise variation, and periodization cues applied. Deload every 4–6 weeks is strongly recommended to prevent accumulated fatigue and stimulate super-compensation.` });
+  if (isYoga)    lines.push({ icon:'🧘', head:'Yoga Program Selected', body:`Your program uses yoga sessions. Research shows yoga improves flexibility, balance, and core strength — and reduces cortisol more effectively than most other forms of exercise. Sun Salutations also count as cardiovascular conditioning.` });
+  if (isPilates) lines.push({ icon:'🌀', head:'Pilates Program Selected', body:`Pilates builds deep core stabiliser strength (transverse abdominis, multifidus) that standard gym training largely ignores. Clinical research shows it corrects posture, reduces lower back pain, and improves movement quality for all other training.` });
 
   return lines;
 }
@@ -7235,9 +7397,10 @@ async function showWorkoutDay(dayId) {
 
   exerciseWeights = {};
 
-  const totalItems  = w.warmup.length + w.exercises.length + w.cooldown.length;
-  const checkedCount = [...w.warmup, ...w.exercises, ...w.cooldown].filter(i => workoutChecks[i.id]).length;
-  const pct = Math.round(checkedCount / totalItems * 100);
+  const totalItems  = (w.prevDayStretch||[]).length + (w.preStretch||[]).length + (w.warmup||[]).length + (w.exercises||[]).length + (w.cooldown||[]).length;
+  const allItems    = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
+  const checkedCount = allItems.filter(i => workoutChecks[i.id]).length;
+  const pct = totalItems > 0 ? Math.round(checkedCount / totalItems * 100) : 0;
 
   // Format date label
   const dObj = new Date(workDate + 'T12:00:00');
@@ -7267,9 +7430,13 @@ async function showWorkoutDay(dayId) {
     </div>
 
     ${renderCalorieBurnCard(dayId, w)}
-    ${renderWorkoutSection('WARM-UP', '🔥', 'Stretching & Muscle Activation', w.warmup, dayId)}
-    ${renderWorkoutSection('CORE WORKOUT', '💪', 'Main Training Block', w.exercises, dayId)}
-    ${renderWorkoutSection('COOL-DOWN', '❄️', 'Stretching & Recovery', w.cooldown, dayId)}
+    ${(w.prevDayStretch||[]).length ? renderWorkoutSection(
+      'PREVIOUS DAY STRETCH', '😌', 'Static release for yesterday\'s sore muscles — SKIP if not sore',
+      w.prevDayStretch, dayId, true) : ''}
+    ${renderWorkoutSection('PRE-WORKOUT STRETCH', '🤸', 'Dynamic mobility for today\'s target muscles — <45 sec holds', w.preStretch||[], dayId)}
+    ${renderWorkoutSection('MUSCLE ACTIVATION', '⚡', 'Prime the right muscles before loading them', w.warmup||[], dayId)}
+    ${renderWorkoutSection('CORE WORKOUT', '💪', 'Main Training Block', w.exercises||[], dayId)}
+    ${renderWorkoutSection('COOL-DOWN STRETCH', '❄️', 'Static stretches for today\'s muscles — 60–90 sec holds (best post-workout timing)', w.cooldown||[], dayId)}
 
     <div class="card" style="margin-top:16px;border-left:4px solid var(--border2);">
       <div class="card-label">MANDATORY SESSION END</div>
@@ -7283,15 +7450,25 @@ async function showWorkoutDay(dayId) {
     </div>`;
 }
 
-function renderWorkoutSection(title, icon, subtitle, items, dayId) {
+function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = false) {
+  if (!items || items.length === 0) return '';
   const typeColor = {stretch:'#64b5f6', activate:'#ffb74d'};
   const typeLabel = {stretch:'STRETCH', activate:'ACTIVATE'};
+  const skipBadge = skippable
+    ? `<span style="font-family:var(--font-mono);font-size:0.55rem;color:#ff9800;
+        background:rgba(255,152,0,0.1);border:1px solid #ff9800;padding:2px 8px;margin-left:8px;">
+        SKIPPABLE — only do if sore</span>`
+    : '';
 
   return `<div style="margin-bottom:16px;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:10px 14px;background:var(--bg2);border-left:3px solid var(--accent);">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;padding:10px 14px;
+      background:var(--bg2);border-left:3px solid ${skippable?'#ff9800':'var(--accent)'};">
       <span style="font-size:1.3rem;">${icon}</span>
-      <div>
-        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);letter-spacing:.08em;">${title}</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);letter-spacing:.08em;">${title}</div>
+          ${skipBadge}
+        </div>
         <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.15em;">${subtitle}</div>
       </div>
       <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">
@@ -7599,7 +7776,7 @@ function syncWeightInput(itemId, fromUnit) {
 function findExerciseById(itemId) {
   const W = getActiveWorkouts();
   for (const day of Object.values(W)) {
-    for (const list of [day.warmup, day.exercises, day.cooldown]) {
+    for (const list of [day.prevDayStretch, day.preStretch, day.warmup, day.exercises, day.cooldown]) {
       const found = list?.find(i => i.id === itemId);
       if (found) return found;
     }
@@ -7612,7 +7789,7 @@ function updateSectionProgress(dayId) {
   const W = getActiveWorkouts();
   const w = W[dayId];
   if (!w) return;
-  const allItems = [...w.warmup, ...w.exercises, ...w.cooldown];
+  const allItems = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
   const checkedCount = allItems.filter(i => workoutChecks[i.id]).length;
   const pct = Math.round(checkedCount / allItems.length * 100);
   // Update progress bar
@@ -7809,7 +7986,7 @@ async function markWorkoutComplete(dayId) {
   const w = W[dayId];
 
   // Check all items
-  [...w.warmup, ...w.exercises, ...w.cooldown].forEach(item => {
+  [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])].forEach(item => {
     workoutChecks[item.id] = true;
   });
 
@@ -7826,7 +8003,7 @@ async function markWorkoutComplete(dayId) {
 
   // Build rich exercise summary — warmup, core, cooldown all included
   const weightLbs = SESSION.weight || 0;
-  const allItems = [...w.warmup, ...w.exercises, ...w.cooldown];
+  const allItems = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
   let totalCalsBurned = 0;
 
   const exerciseLines = allItems.map(item => {
