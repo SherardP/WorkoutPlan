@@ -919,6 +919,19 @@ body.theme-female .goal-chip{border-radius:20px;}
       <div id="durationGoalResult"></div>
     </div>
 
+    <!-- Default sets goal -->
+    <div class="card mb16">
+      <div class="card-label">DEFAULT SETS PER EXERCISE</div>
+      <div class="card-title">HOW MANY SETS DO YOU WANT PER EXERCISE?</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:14px;">
+        This is used by the program generator. You can always override individual exercises.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;" id="setsGoalCards"></div>
+      <div id="setsGoalDetail" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);
+        line-height:1.7;padding:10px 12px;background:var(--bg3);border-left:3px solid var(--accent2);
+        display:none;"></div>
+    </div>
+
     <!-- Recommended split -->
     <div id="recommendedSplit" style="display:none;"></div>
 
@@ -3592,8 +3605,10 @@ const EQ_GROUPS = [
   { label:'DIP BARS',            ids:['acc-dipbar'],                              icon:'🔩' },
   { label:'PREACHER BENCH',      ids:['rack-preacher'],                           icon:'🪑' },
   { label:'CARDIO EQUIPMENT',    ids:['cardio-treadmill','cardio-bike-up','cardio-bike-rec','cardio-airbike','cardio-rower','cardio-elliptical','cardio-stairmill','acc-jumprope'], icon:'🫀' },
-  { label:'YOGA (bodyweight)',   ids:['__yoga__'],                                          icon:'🧘' },
-  { label:'PILATES (mat)',       ids:['__pilates__'],                                       icon:'🌀' },
+  { label:'YOGA (bodyweight)',        ids:['__yoga__'],           icon:'🧘' },
+  { label:'PILATES (mat)',            ids:['__pilates__'],         icon:'🌀' },
+  { label:'CALISTHENICS',            ids:['__calisthenics__'],    icon:'💯' },
+  { label:'MILITARY / TACTICAL',     ids:['__military__'],        icon:'🎖️' },
 ];
 
 const GOAL_BADGE_COLOR = {
@@ -3603,9 +3618,13 @@ const GOAL_BADGE_COLOR = {
 };
 
 function exMatchesGroup(ex, group) {
-  if (group.ids.includes('__yoga__'))    return ex.goals.includes('yoga');
-  if (group.ids.includes('__pilates__')) return ex.goals.includes('pilates');
-  if (group.ids.length === 0) return ex.eq.length === 0 && !ex.goals.includes('yoga') && !ex.goals.includes('pilates');
+  if (group.ids.includes('__yoga__'))         return ex.goals.includes('yoga');
+  if (group.ids.includes('__pilates__'))      return ex.goals.includes('pilates');
+  if (group.ids.includes('__calisthenics__')) return ex.goals.includes('calisthenics');
+  if (group.ids.includes('__military__'))     return ex.goals.includes('military');
+  if (group.ids.length === 0) return ex.eq.length === 0
+    && !ex.goals.includes('yoga') && !ex.goals.includes('pilates')
+    && !ex.goals.includes('calisthenics') && !ex.goals.includes('military');
   return ex.eq.some(r => group.ids.includes(r));
 }
 
@@ -3640,7 +3659,9 @@ function renderExLib() {
   })).filter(grp => grp.exercises.length > 0);
 
   el.innerHTML = groups.map(grp => {
-    const userHas = grp.ids.includes('__yoga__') || grp.ids.includes('__pilates__') || grp.ids.length === 0
+    const userHas = grp.ids.includes('__yoga__') || grp.ids.includes('__pilates__')
+      || grp.ids.includes('__calisthenics__') || grp.ids.includes('__military__')
+      || grp.ids.length === 0
       ? true
       : grp.ids.some(id => userEq[id] || (id === 'db' && (userEq.dumbbells||[]).length > 0));
     const hasTag = userHas
@@ -5755,6 +5776,8 @@ const TRAINING_FOCUS_OPTIONS = [
   { id:'focus-recomp',     icon:'⚡', label:'Body Recomposition', desc:'Lose fat AND gain muscle simultaneously — best for beginners or those returning after a break' },
   { id:'focus-endurance',  icon:'🫀', label:'Cardiovascular Endurance', desc:'Improve heart health, stamina, and sustained energy over long durations' },
   { id:'focus-general',    icon:'🏃', label:'General Fitness',  desc:'Balanced mix of strength, cardio, and flexibility — overall health improvement' },
+  { id:'focus-calisthenics',icon:'💯', label:'Calisthenics',    desc:'Progressive bodyweight mastery — push-up → archer → pseudo-planche, pull-up → muscle-up, squat → pistol. Builds functional strength and body control with zero equipment.' },
+  { id:'focus-military',   icon:'🎖️', label:'Military / Tactical Fitness', desc:'AFT-style high-rep circuits, sprints, carries, and ruck prep. Built for performance under fatigue. Short cool-downs. Trains push-ups, pull-ups, plank, sprint-drag-carry, and 2-mile run.' },
   { id:'focus-mobility',   icon:'🧘', label:'Mobility & Flexibility', desc:'Improve range of motion, reduce stiffness, support injury prevention and posture' },
   { id:'focus-yoga',       icon:'🧘', label:'Yoga Practice',          desc:'Structured yoga sessions — choose your style: Hatha (foundations), Vinyasa (flow), Power (strength), Yin (deep stretch), Restorative (recovery), Ashtanga (athletic)' },
   { id:'focus-pilates',    icon:'🌀', label:'Pilates',                 desc:'Core-centred, low-impact precision training — builds deep stabiliser strength, posture, and body awareness. Mat-based.' },
@@ -5914,6 +5937,91 @@ function setBpGoal(bpId, goalId) {
   });
 }
 
+// ═══════════════════════════════════════════════════════════
+// DEFAULT SETS GOAL — science-backed explanations
+// ═══════════════════════════════════════════════════════════
+const SETS_GOAL_OPTIONS = [
+  {
+    sets: 3,
+    label: '3 SETS',
+    icon: '🟢',
+    headline: 'Efficient & Proven',
+    badge: 'BEST FOR: Beginners · Time-limited · Maintenance',
+    science: [
+      'Produces the majority of the hypertrophy and strength stimulus — studies show 3 sets outperform 1 set significantly.',
+      'Ideal if training each muscle 2–3×/week, since total weekly sets (9–12 per muscle) stays in the effective range.',
+      'Best choice when session time is under 45 minutes or you are new to training.',
+      'Research shows going from 1→3 sets yields the biggest return on investment of any volume increase.',
+    ],
+  },
+  {
+    sets: 4,
+    label: '4 SETS',
+    icon: '🟡',
+    headline: 'Optimal Balance',
+    badge: 'BEST FOR: Intermediates · Hypertrophy · Standard training',
+    science: [
+      '4 sets per exercise provide a ~33% volume increase over 3 sets — research shows this meaningfully improves hypertrophy outcomes.',
+      'Brings weekly per-muscle volume to 12–16 sets when training 3–4×/week, squarely inside the optimal 10–20 set range.',
+      'The sweet spot for most intermediate lifters: enough volume to drive growth without pushing into recovery debt.',
+      'A 2024 meta-analysis found 4–6 sets produced significantly greater strength gains than 3 sets in trained individuals.',
+    ],
+  },
+  {
+    sets: 5,
+    label: '5 SETS',
+    icon: '🔴',
+    headline: 'High Volume',
+    badge: 'BEST FOR: Advanced lifters · Max hypertrophy · Specialisation',
+    science: [
+      'A controlled 6-month trial found 5-set groups produced significantly greater muscle thickness than 3-set groups in all measured sites.',
+      'Also showed greater 5RM and 20RM strength improvements — the dose-response relationship is real.',
+      'Best used for lagging muscle groups or advanced lifters who have already adapted to lower volumes.',
+      'Requires attention to recovery: sleep, nutrition, and deload weeks every 4–6 weeks become non-negotiable.',
+      'Beyond 5–6 sets per muscle group per session, diminishing returns set in — do not exceed without structured periodization.',
+    ],
+  },
+];
+
+function renderSetsGoalCards() {
+  const el = document.getElementById('setsGoalCards');
+  if (!el) return;
+  const current = userGoals.defaultSets || 3;
+  el.innerHTML = SETS_GOAL_OPTIONS.map(opt => {
+    const active = current === opt.sets;
+    return `<div onclick="selectSetsGoal(${opt.sets})"
+      style="flex:1;min-width:80px;padding:14px 10px;text-align:center;cursor:pointer;
+      border:2px solid ${active?'var(--accent2)':'var(--border)'};
+      background:${active?'var(--accent-dim)':'var(--bg3)'};transition:all .15s;">
+      <div style="font-size:1.4rem;margin-bottom:4px;">${opt.icon}</div>
+      <div style="font-family:var(--font-display);font-size:1.2rem;color:${active?'var(--accent2)':'var(--text)'};">${opt.label}</div>
+      <div style="font-family:var(--font-mono);font-size:0.58rem;color:${active?'var(--accent2)':'var(--text-dim)'};">${opt.headline}</div>
+    </div>`;
+  }).join('');
+  renderSetsGoalDetail(current);
+}
+
+function selectSetsGoal(n) {
+  userGoals.defaultSets = n;
+  renderSetsGoalCards();
+}
+
+function renderSetsGoalDetail(n) {
+  const el = document.getElementById('setsGoalDetail');
+  if (!el) return;
+  const opt = SETS_GOAL_OPTIONS.find(o => o.sets === n);
+  if (!opt) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--accent2);letter-spacing:.08em;margin-bottom:6px;">
+      ${opt.icon} ${opt.label} — ${opt.headline}
+    </div>
+    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);margin-bottom:8px;letter-spacing:.06em;">
+      ${opt.badge}
+    </div>
+    ${opt.science.map(s => `<div style="margin-bottom:4px;">▸ ${s}</div>`).join('')}`;
+}
+
 // ── Generate program button handler ─────────────────────
 async function confirmGenerateProgram() {
   const existing = await getOrLoadProgram();
@@ -6014,6 +6122,7 @@ async function loadGoalsPage() {
   renderTrainingFocus();
   renderSpecialFlags();
   renderBodyPartGoals();
+  renderSetsGoalCards();
   renderProgramSummaryCard();
 }
 
@@ -6602,6 +6711,43 @@ const EX_DB = [
   {id:'pil_plank',       name:'Pilates Plank Variations', muscles:['core','shoulders'],                  eq:[],              impact:'low',  goals:['pilates','strength','tone'],       sets_h:'3×30–45s',sets_s:'3×30s',rest_h:45,rest_s:45,     ytId:'ASdvN_XEl_c'},
   {id:'pil_bridge',      name:'Pilates Bridge',           muscles:['glutes','hamstrings','core'],        eq:[],              impact:'low',  goals:['pilates','tone','lowimpact'],      sets_h:'3×12',sets_s:'3×10',rest_h:30,rest_s:30,           ytId:'wPM8icPu6H8'},
   {id:'pil_legpull',     name:'Leg Pull Front/Back',      muscles:['core','glutes','shoulders'],         eq:[],              impact:'low',  goals:['pilates','strength','tone'],       sets_h:'3×8/side',sets_s:'3×6',rest_h:45,rest_s:45,        ytId:'ASdvN_XEl_c'},
+
+  // ── CALISTHENICS — progressive bodyweight ───────────────
+  {id:'cal_pushup',      name:'Push-Up (Standard)',        muscles:['chest','triceps','shoulders','core'], eq:[],              impact:'low',  goals:['calisthenics','tone','strength'],   sets_h:'4×max',   sets_s:'5×max',  rest_h:90, rest_s:120, ytId:'IODxDxX7oi4'},
+  {id:'cal_diamond_pu',  name:'Diamond Push-Up',           muscles:['triceps','chest'],                   eq:[],              impact:'low',  goals:['calisthenics','tone','strength'],   sets_h:'4×max',   sets_s:'4×max',  rest_h:90, rest_s:120, ytId:'J0DXcc8W4h8'},
+  {id:'cal_archer_pu',   name:'Archer Push-Up',            muscles:['chest','triceps','shoulders'],        eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×6/side',sets_s:'4×6',   rest_h:120,rest_s:150, ytId:'IODxDxX7oi4'},
+  {id:'cal_pseudo_planch',name:'Pseudo Planche Push-Up',   muscles:['chest','shoulders','core'],           eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×5–8',   sets_s:'4×5',    rest_h:120,rest_s:180, ytId:'IODxDxX7oi4'},
+  {id:'cal_pullup',      name:'Pull-Up',                   muscles:['lats','biceps','back-upper'],         eq:['rack-pullup','acc-pullbar'], impact:'low', goals:['calisthenics','strength','size'],sets_h:'4×max',   sets_s:'5×max',  rest_h:120,rest_s:150, ytId:'eGo4IYlbE5g'},
+  {id:'cal_chinup',      name:'Chin-Up',                   muscles:['biceps','lats'],                     eq:['rack-pullup','acc-pullbar'], impact:'low', goals:['calisthenics','strength','size'],sets_h:'4×max',   sets_s:'4×max',  rest_h:120,rest_s:150, ytId:'eGo4IYlbE5g'},
+  {id:'cal_archer_pu2',  name:'Archer Pull-Up',            muscles:['lats','biceps'],                     eq:['rack-pullup'],  impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×4/side',sets_s:'4×4',   rest_h:150,rest_s:180, ytId:'eGo4IYlbE5g'},
+  {id:'cal_dip',         name:'Dip (Bodyweight)',           muscles:['triceps','chest','shoulders'],        eq:['rack-dip','acc-dipbar'], impact:'low',  goals:['calisthenics','strength','size'],sets_h:'4×max',   sets_s:'4×max',  rest_h:120,rest_s:150, ytId:'0326dy_-CzM'},
+  {id:'cal_bw_squat',    name:'Bodyweight Squat',          muscles:['quads','glutes'],                    eq:[],              impact:'low',  goals:['calisthenics','tone','lowimpact'],  sets_h:'4×20–30', sets_s:'5×20',   rest_h:60, rest_s:90,  ytId:'aclHkVaku9U'},
+  {id:'cal_pistol',      name:'Pistol Squat',              muscles:['quads','glutes','core'],             eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×5/side',sets_s:'4×5',   rest_h:120,rest_s:150, ytId:'qDcniqddTeE'},
+  {id:'cal_shrimp_squat',name:'Shrimp Squat',              muscles:['quads','glutes','hamstrings'],        eq:[],              impact:'low',  goals:['calisthenics','strength','tone'],   sets_h:'3×6/side',sets_s:'4×6',   rest_h:90, rest_s:120, ytId:'qDcniqddTeE'},
+  {id:'cal_lunge',       name:'Walking Lunge',             muscles:['quads','glutes','hamstrings'],        eq:[],              impact:'low',  goals:['calisthenics','tone','lowimpact'],  sets_h:'3×15/leg',sets_s:'4×12', rest_h:60, rest_s:90,  ytId:'D7KaRcUTQeE'},
+  {id:'cal_nordic',      name:'Nordic Curl',               muscles:['hamstrings'],                        eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×5–8',   sets_s:'4×5',    rest_h:120,rest_s:180, ytId:'L7raxhEh73Y'},
+  {id:'cal_l_sit',       name:'L-Sit Hold',                muscles:['core','triceps'],                    eq:[],              impact:'low',  goals:['calisthenics','strength','tone'],   sets_h:'4×10–20s',sets_s:'5×15s', rest_h:60, rest_s:90,  ytId:'ASdvN_XEl_c'},
+  {id:'cal_hollow',      name:'Hollow Body Hold',          muscles:['core'],                              eq:[],              impact:'low',  goals:['calisthenics','strength','tone'],   sets_h:'4×20–30s',sets_s:'5×25s', rest_h:45, rest_s:60,  ytId:'LlDNef_Lcbd'},
+  {id:'cal_muscle_up',   name:'Muscle-Up (advanced)',      muscles:['lats','chest','triceps','shoulders'], eq:['rack-pullup'], impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×3–5',   sets_s:'4×3',    rest_h:180,rest_s:240, ytId:'eGo4IYlbE5g'},
+  {id:'cal_handstand',   name:'Handstand / Wall Handstand',muscles:['shoulders','core','triceps'],         eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'4×20–30s',sets_s:'4×20s', rest_h:90, rest_s:120, ytId:'qEwKCR5JCog'},
+  {id:'cal_burpee',      name:'Burpee',                    muscles:['chest','quads','core','shoulders'],   eq:[],              impact:'high', goals:['calisthenics','fat','endurance'],   sets_h:'5×10',    sets_s:'5×15',   rest_h:60, rest_s:60,  ytId:'IODxDxX7oi4'},
+
+  // ── MILITARY / TACTICAL ─────────────────────────────────
+  {id:'mil_pushup_max',  name:'Push-Up Max Set (AFT)',     muscles:['chest','triceps','shoulders','core'], eq:[],              impact:'low',  goals:['military','endurance','strength'],  sets_h:'5×max',   sets_s:'5×max',  rest_h:60, rest_s:90,  ytId:'IODxDxX7oi4'},
+  {id:'mil_pullup_max',  name:'Pull-Up Max Set',           muscles:['lats','biceps','back-upper'],         eq:['rack-pullup','acc-pullbar'], impact:'low', goals:['military','strength','endurance'],sets_h:'5×max', sets_s:'5×max', rest_h:90,rest_s:120, ytId:'eGo4IYlbE5g'},
+  {id:'mil_plank_hold',  name:'Plank Hold (max time)',     muscles:['core'],                              eq:[],              impact:'low',  goals:['military','strength','endurance'],  sets_h:'4×max',   sets_s:'4×max',  rest_h:60, rest_s:60,  ytId:'ASdvN_XEl_c'},
+  {id:'mil_situp_max',   name:'Sit-Up Max Set',            muscles:['core'],                              eq:[],              impact:'low',  goals:['military','endurance'],             sets_h:'4×max',   sets_s:'5×max',  rest_h:60, rest_s:60,  ytId:'MKmrqckCjpI'},
+  {id:'mil_flutter',     name:'Flutter Kicks',             muscles:['core'],                              eq:[],              impact:'low',  goals:['military','endurance','tone'],      sets_h:'4×40',    sets_s:'5×40',   rest_h:30, rest_s:45,  ytId:'ASdvN_XEl_c'},
+  {id:'mil_mtn_climber', name:'Mountain Climbers',         muscles:['core','quads','shoulders'],           eq:[],              impact:'high', goals:['military','fat','endurance'],       sets_h:'5×30s',   sets_s:'5×45s',  rest_h:30, rest_s:30,  ytId:'IODxDxX7oi4'},
+  {id:'mil_sprint_25',   name:'Sprint Intervals (25–50m)', muscles:[],                                    eq:[],              impact:'high', goals:['military','fat','endurance'],       sets_h:'8×25m',   sets_s:'10×25m', rest_h:60, rest_s:60,  ytId:''},
+  {id:'mil_sprint_400',  name:'400m Repeats',              muscles:[],                                    eq:[],              impact:'high', goals:['military','endurance'],             sets_h:'4×400m',  sets_s:'6×400m', rest_h:120,rest_s:120, ytId:''},
+  {id:'mil_run_2mi',     name:'2-Mile Run (timed)',        muscles:[],                                    eq:[],              impact:'high', goals:['military','endurance'],             sets_h:'1×2mi',   sets_s:'1×2mi',  rest_h:0,  rest_s:0,   ytId:''},
+  {id:'mil_burpee_circ', name:'Burpee Circuit (5 rounds)', muscles:['chest','quads','core','shoulders'],   eq:[],              impact:'high', goals:['military','fat','endurance'],       sets_h:'5×10',    sets_s:'5×15',   rest_h:60, rest_s:45,  ytId:'IODxDxX7oi4'},
+  {id:'mil_kb_carry',    name:'Kettlebell Farmer Carry',   muscles:['forearms','core','traps'],            eq:['acc-kb'],      impact:'low',  goals:['military','strength','endurance'],  sets_h:'4×40m',   sets_s:'5×40m',  rest_h:60, rest_s:60,  ytId:'mKDJeqHcTEk'},
+  {id:'mil_ruck_march',  name:'Ruck March (30–45 lb pack)',muscles:[],                                    eq:[],              impact:'low',  goals:['military','endurance','fat'],        sets_h:'1×3–5 mi',sets_s:'1×3mi', rest_h:0,  rest_s:0,   ytId:''},
+  {id:'mil_sandbag_squat',name:'Sandbag Squat',            muscles:['quads','glutes','core'],             eq:[],              impact:'low',  goals:['military','strength','endurance'],  sets_h:'4×15',    sets_s:'5×12',   rest_h:60, rest_s:90,  ytId:'aclHkVaku9U'},
+  {id:'mil_broad_jump',  name:'Broad Jump / Standing Jump',muscles:['quads','glutes'],                    eq:[],              impact:'high', goals:['military','strength'],              sets_h:'4×5',     sets_s:'5×5',    rest_h:90, rest_s:120, ytId:'aclHkVaku9U'},
+  {id:'mil_pt_circuit',  name:'PT Circuit (AMRAP)',        muscles:['chest','core','quads','back-upper'],  eq:[],              impact:'high', goals:['military','endurance','fat'],       sets_h:'3×10min', sets_s:'5×10min',rest_h:120,rest_s:90,  ytId:'IODxDxX7oi4'},
 ];
 
 // ── Warm-ups & cool-downs (no equipment needed) ──────────
@@ -6636,6 +6782,14 @@ const PREV_DAY_STRETCH_DB = {
   ],
   yoga:  [{id:'pd_full_body_flow',name:"GENTLE FULL-BODY FLOW", detail:'5 min. Cat-cow, thread needle, supine twist — full passive release before practice.', ytId:'eqVMAPM00GM', type:'stretch'}],
   pilates:[{id:'pd_pil_roll',name:'SPINAL ROLL-DOWN',           detail:'5 reps slowly. Articulate each vertebra, hands toward floor. Wakes the spine gently.',  ytId:'eqVMAPM00GM', type:'stretch'}],
+  calisthenics:[
+    {id:'pd_cal_chest',  name:'STATIC CHEST STRETCH',    detail:'30 sec each side. Releases pec and shoulder soreness from push progressions.',              ytId:'eTlnJYWv9Y4', type:'stretch'},
+    {id:'pd_cal_lat',    name:'DOORWAY LAT HOLD',         detail:'30 sec each side. Releases lat soreness from pull work.',                                   ytId:'lPOOpNe6JM4', type:'stretch'},
+    {id:'pd_cal_quad',   name:'STANDING QUAD HOLD',       detail:'30 sec each leg. Releases quad tightness from squat progressions.',                         ytId:'1f9sDHSIMFc', type:'stretch'},
+  ],
+  military:[
+    {id:'pd_mil_light',  name:'GENTLE FULL-BODY SCAN',    detail:'2 min. Note sore spots. Light torso rotation, ankle circles, wrist circles. Military cool-downs are brief — just identify what needs attention today.', ytId:'eqVMAPM00GM', type:'stretch'},
+  ],
 };
 
 // ── TODAY'S PRE-STRETCH — dynamic, <45 sec per movement ─
@@ -6677,6 +6831,17 @@ const PRE_STRETCH_DB = {
     {id:'ps_pil_bridge',    name:'PILATES BRIDGE ROLLS',         detail:'8 reps. Slowly peel spine off floor one vertebra at a time. Activates posterior chain and spine.',      ytId:'wPM8icPu6H8', type:'stretch'},
     {id:'ps_pil_hundred_p', name:'MODIFIED HUNDRED PREP',        detail:'5 reps. Legs tabletop, pump arms 10×, exhale. Warms core and breath connection.',                       ytId:'ASdvN_XEl_c', type:'activate'},
   ],
+  calisthenics:[
+    {id:'ps_cal_wrist',     name:'WRIST CIRCLES & PREP',          detail:'30 sec each direction. Calisthenics athletes neglect wrists — prep them before push work or risk injury.',  ytId:'1u9-YNjFm0g', type:'stretch'},
+    {id:'ps_cal_shoulder',  name:'SHOULDER CIRCLES (large)',       detail:'15 forward, 15 backward. Lubricates shoulder capsule before weighted bodyweight movements.',               ytId:'1u9-YNjFm0g', type:'stretch'},
+    {id:'ps_cal_hip_circ',  name:'HIP CIRCLES (dynamic)',          detail:'20 reps each direction. Essential for squat progressions.',                                                ytId:'bVnBdaYn0hY', type:'stretch'},
+    {id:'ps_cal_cat_cow',   name:'CAT-COW (dynamic)',              detail:'10 reps. Full spinal mobilization before core and plank work.',                                           ytId:'eqVMAPM00GM', type:'stretch'},
+  ],
+  military:[
+    {id:'ps_mil_arm_swing',  name:'ARM SWINGS (front/back)',       detail:'20 reps each. Dynamic chest and shoulder opener.',                                                        ytId:'1u9-YNjFm0g', type:'stretch'},
+    {id:'ps_mil_high_knees', name:'HIGH KNEES (dynamic)',          detail:'30 sec. Running in place, driving knees high. Elevates heart rate and warms hips.',                      ytId:'KFZ5hLJbR9o', type:'stretch'},
+    {id:'ps_mil_leg_swings', name:'LEG SWINGS (front/back)',       detail:'15 each leg. Dynamic hamstring and hip flexor prep before sprints.',                                     ytId:'KFZ5hLJbR9o', type:'stretch'},
+  ],
 };
 
 // ── MUSCLE ACTIVATION ────────────────────────────────────
@@ -6715,6 +6880,17 @@ const WARMUP_DB = {
   pilates:[
     {id:'wu_pil_toe_tap',   name:'TOE TAPS (tabletop)',    detail:'10 reps each leg. Legs at 90°, lower one foot to tap floor, return. Core stays flat. Neutral spine awareness.', ytId:'ASdvN_XEl_c', type:'activate'},
     {id:'wu_pil_arm_circ',  name:'PILATES ARM CIRCLES',    detail:'8 each direction. Arms straight, draw small circles at shoulder height. Scapular stabilization.',     ytId:'1u9-YNjFm0g', type:'activate'},
+  ],
+  calisthenics:[
+    {id:'wu_cal_scap',      name:'SCAPULAR PUSH-UPS',      detail:'10 reps. Arms locked, protract/retract shoulder blades. Essential pre-activation for push progressions.', ytId:'akgQbxhrhOc', type:'activate'},
+    {id:'wu_cal_dead_hang', name:'DEAD HANG',              detail:'20–30 sec. Decompresses spine, activates grip, primes lats for pull work.',                              ytId:'VJTZ7cGmkEo', type:'activate'},
+    {id:'wu_cal_glute_br',  name:'GLUTE BRIDGE',           detail:'15 reps, 2-sec hold. Activates glutes before squat progressions.',                                      ytId:'wPM8icPu6H8', type:'activate'},
+    {id:'wu_cal_hollow_p',  name:'HOLLOW BODY HOLD (short)',detail:'3×10 sec. Establishes tension position foundational to all calisthenics skills.',                      ytId:'LlDNef_Lcbd', type:'activate'},
+  ],
+  military:[
+    {id:'wu_mil_pushup_p',  name:'PUSH-UP PYRAMID (1→5)',  detail:'1,2,3,4,5 reps — fast. Low-volume priming set. Classic military activation before max effort.',         ytId:'IODxDxX7oi4', type:'activate'},
+    {id:'wu_mil_squat_p',   name:'BODYWEIGHT SQUAT ×15',   detail:'Fast, explosive. Primes quads and glutes before sprint and carry work.',                                ytId:'aclHkVaku9U', type:'activate'},
+    {id:'wu_mil_core_brace',name:'CORE BRACING DRILL',     detail:'5×5 sec hard brace. Stand tall, breathe in, brace abdomen as if about to take a punch. Activates TVA.', ytId:'ASdvN_XEl_c', type:'activate'},
   ],
 };
 
@@ -6758,6 +6934,19 @@ const COOLDOWN_DB = {
     {id:'cd_pil_swan',      name:'SWAN STRETCH',           detail:'45 sec. Lie prone, press up on forearms, look forward. Releases rectus abdominis after core work.',   ytId:'Mfbv5XEGZJI', type:'stretch'},
     {id:'cd_pil_stretch',   name:'STANDING SIDE STRETCH',  detail:'30 sec each side. Arm overhead, reach to opposite side. Full lateral chain release after Pilates.',   ytId:'lPOOpNe6JM4', type:'stretch'},
   ],
+  calisthenics:[
+    {id:'cd_cal_chest',     name:'DOORWAY CHEST STRETCH',  detail:'60 sec each side. Releases pec tightness accumulated from push progressions.',                        ytId:'eTlnJYWv9Y4', type:'stretch'},
+    {id:'cd_cal_lat',       name:'DOORWAY LAT STRETCH',    detail:'60 sec each side. Full lat release after pull work.',                                                 ytId:'lPOOpNe6JM4', type:'stretch'},
+    {id:'cd_cal_wrist_ext', name:'WRIST EXTENSION STRETCH',detail:'45 sec each hand. Palm facing forward, fingers down, gently press back. Calisthenics-specific — reverses wrist load from push work.', ytId:'bJ1JxDL89P0', type:'stretch'},
+    {id:'cd_cal_pigeon',    name:'PIGEON STRETCH',         detail:'60 sec each side. Releases hip tightness from squat progressions.',                                   ytId:'O11Md_bJCfk', type:'stretch'},
+    {id:'cd_cal_childs',    name:"CHILD'S POSE",           detail:'60 sec. Full spinal decompression after hollow holds and L-sits.',                                    ytId:'eqVMAPM00GM', type:'stretch'},
+  ],
+  military:[
+    // Military: intentionally short — 3-5 min max, minimal holds, breathing priority
+    {id:'cd_mil_breath',    name:'DIAPHRAGMATIC BREATHING',detail:'2 min. Hands on belly. Slow 4-count inhale, 6-count exhale. Drives cortisol down after high-intensity work. #1 military recovery tool.', ytId:'ASdvN_XEl_c', type:'stretch'},
+    {id:'cd_mil_quad',      name:'STANDING QUAD STRETCH',  detail:'20 sec each leg. Brief static hold. Minimum dose for quad recovery after sprints and carries.',       ytId:'1f9sDHSIMFc', type:'stretch'},
+    {id:'cd_mil_chest',     name:'CHEST OPENER HOLD',      detail:'20 sec. Clasp hands behind back, open chest. Quick posterior chain reset after push-up volume.',      ytId:'eTlnJYWv9Y4', type:'stretch'},
+  ],
 };
 
 // ── Helpers ──────────────────────────────────────────────
@@ -6797,11 +6986,19 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
   return chosen;
 }
 
-function exerciseToWorkoutItem(ex, dayKey, idx, isStrength) {
-  const sets = isStrength ? ex.sets_s : ex.sets_h;
-  const rest = isStrength ? ex.rest_s : ex.rest_h;
+function exerciseToWorkoutItem(ex, dayKey, idx, isStrength, defaultSets) {
+  const rawSets = isStrength ? ex.sets_s : ex.sets_h;
+  const rest    = isStrength ? ex.rest_s : ex.rest_h;
   const restStr = rest >= 120 ? `${Math.round(rest/60)} min` : rest > 0 ? `${rest} sec` : '';
-  const badge = isStrength ? 'STRENGTH' : ex.goals.includes('size') ? 'HYPERTROPHY' : ex.goals.includes('tone') ? 'TONE' : 'CONDITIONING';
+  const badge   = isStrength ? 'STRENGTH' : ex.goals.includes('size') ? 'HYPERTROPHY' : ex.goals.includes('tone') ? 'TONE' : 'CONDITIONING';
+
+  // Apply defaultSets override — replace the sets number but keep the reps notation
+  // e.g. "3×10–12" → "4×10–12" if defaultSets=4
+  let sets = rawSets;
+  if (defaultSets && typeof rawSets === 'string') {
+    sets = rawSets.replace(/^\d+/, String(defaultSets));
+  }
+
   return {
     id: `gen_${dayKey}_${idx}_${ex.id}`,
     name: ex.name.toUpperCase(),
@@ -6809,7 +7006,7 @@ function exerciseToWorkoutItem(ex, dayKey, idx, isStrength) {
     sets,
     rest: restStr,
     ytId: ex.ytId || '',
-    desc: `Targets: ${ex.muscles.join(', ')}. ${sets} sets · ${restStr ? restStr + ' rest' : 'minimal rest'}.`,
+    desc: `Targets: ${ex.muscles.join(', ')}. ${sets} · ${restStr ? restStr + ' rest' : 'minimal rest'}.`,
     generated: true,
   };
 }
@@ -6835,18 +7032,22 @@ function generateProgram() {
   const isHIIT       = flags.includes('flag-hiit');
   const isYoga       = focus.includes('focus-yoga');
   const isPilates    = focus.includes('focus-pilates');
+  const isCalisthenics = focus.includes('focus-calisthenics');
+  const isMilitary   = focus.includes('focus-military');
 
   // Derive goal ids for exercise filtering
   const goalIds = [];
-  if (isStrength)    goalIds.push('strength');
-  if (isHypertrophy) goalIds.push('size');
-  if (isFatLoss)     goalIds.push('fat','recomp');
-  if (isTone)        goalIds.push('tone');
-  if (isEndurance)   goalIds.push('endurance');
-  if (isBeginner)    goalIds.push('beginner','general');
-  if (isLowImpact)   goalIds.push('lowimpact');
-  if (isYoga)        goalIds.push('yoga','mobility');
-  if (isPilates)     goalIds.push('pilates','tone');
+  if (isStrength)      goalIds.push('strength');
+  if (isHypertrophy)   goalIds.push('size');
+  if (isFatLoss)       goalIds.push('fat','recomp');
+  if (isTone)          goalIds.push('tone');
+  if (isEndurance)     goalIds.push('endurance');
+  if (isBeginner)      goalIds.push('beginner','general');
+  if (isLowImpact)     goalIds.push('lowimpact');
+  if (isYoga)          goalIds.push('yoga','mobility');
+  if (isPilates)       goalIds.push('pilates','tone');
+  if (isCalisthenics)  goalIds.push('calisthenics','strength','tone');
+  if (isMilitary)      goalIds.push('military','endurance','fat');
   if (flags.includes('flag-posture')) goalIds.push('posture');
   if (goalIds.length === 0) goalIds.push('general','tone','size');
 
@@ -6857,7 +7058,23 @@ function generateProgram() {
   let splitType, splitLabel, daySchedule;
   const activeDays = days.slice(0, freq).filter(d => d !== 'sun');
 
-  if (isYoga && isPilates) {
+  if (isMilitary && isCalisthenics) {
+    splitType  = 'military_cal';
+    splitLabel = 'Military & Calisthenics';
+    const types = ['military','calisthenics','military','calisthenics','military'];
+    const subs  = ['PT Circuit — Push/Run/Carry','Bodyweight Strength Progressions','Conditioning & Sprint Work','Pull & Core Progressions','Full Military PT Test Prep'];
+    daySchedule = activeDays.map((d,i) => ({ day:d, type:types[i%5], label:types[i%5]==='military'?'MILITARY PT':'CALISTHENICS', sub:subs[i%5] }));
+  } else if (isMilitary) {
+    splitType  = 'military';
+    splitLabel = 'Military / Tactical Fitness';
+    const milSubs = ['Push Circuit & Endurance','Sprint-Drag-Carry','Pull & Core Strength','Conditioning — AMRAP','Full PT Test Simulation'];
+    daySchedule = activeDays.map((d,i) => ({ day:d, type:'military', label:'MILITARY PT', sub:milSubs[i%milSubs.length] }));
+  } else if (isCalisthenics) {
+    splitType  = 'calisthenics';
+    splitLabel = 'Calisthenics Program';
+    const calSubs = ['Push Progressions','Pull Progressions','Legs & Core','Skill Work — Handstand / L-Sit','Full Body Circuit'];
+    daySchedule = activeDays.map((d,i) => ({ day:d, type:'calisthenics', label:'CALISTHENICS', sub:calSubs[i%calSubs.length] }));
+  } else if (isYoga && isPilates) {
     // Alternating yoga + pilates days
     splitType  = 'yoga_pilates';
     splitLabel = 'Yoga & Pilates Program';
@@ -6918,6 +7135,8 @@ function generateProgram() {
     fullbody: ['chest','back-upper','lats','shoulders','quads','hamstrings','glutes','biceps','triceps','core'],
     yoga:     ['core','glutes','hamstrings','shoulders','back-upper'],
     pilates:  ['core','back-lower','glutes','shoulders'],
+    calisthenics: ['chest','back-upper','lats','core','quads','glutes','triceps','biceps'],
+    military: ['chest','core','quads','back-upper','shoulders'],
   };
 
   // Build cardio finisher if fat loss / endurance goal
@@ -6948,7 +7167,7 @@ function generateProgram() {
       exercises.push(cardioFinisher[0]);
     }
 
-    const wuType = ['push','pull','legs','yoga','pilates'].includes(ds.type) ? ds.type
+    const wuType = ['push','pull','legs','yoga','pilates','calisthenics','military'].includes(ds.type) ? ds.type
       : ds.type === 'lower' ? 'legs' : ds.type === 'upper' ? 'upper' : 'fullbody';
     const cdType = wuType;
 
@@ -6960,7 +7179,7 @@ function generateProgram() {
       prevDayStretch: (PREV_DAY_STRETCH_DB[wuType] || PREV_DAY_STRETCH_DB.fullbody).map(w => ({ ...w })),
       preStretch:     (PRE_STRETCH_DB[wuType]       || PRE_STRETCH_DB.fullbody).map(w => ({ ...w })),
       warmup:         (WARMUP_DB[wuType]             || WARMUP_DB.fullbody).map(w => ({ ...w })),
-      exercises:      exercises.map((ex, i) => exerciseToWorkoutItem(ex, ds.day + '_' + idx, i, isStrength)),
+      exercises:      exercises.map((ex, i) => exerciseToWorkoutItem(ex, ds.day + '_' + idx, i, isStrength, goals.defaultSets)),
       cooldown:       (COOLDOWN_DB[cdType]           || COOLDOWN_DB.fullbody).map(c => ({ ...c })),
     };
   });
@@ -6975,7 +7194,7 @@ function generateProgram() {
   });
 
   // Build science summary
-  const summary = buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, isYoga, isPilates, exCount, goals, bpg, eq });
+  const summary = buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, isYoga, isPilates, isCalisthenics, isMilitary, defaultSets: goals.defaultSets, exCount, goals, bpg, eq });
 
   return {
     generatedAt: new Date().toISOString(),
@@ -6986,8 +7205,12 @@ function generateProgram() {
   };
 }
 
-function buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, isYoga, isPilates, exCount, goals, bpg, eq }) {
+function buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, isYoga, isPilates, isCalisthenics, isMilitary, defaultSets, exCount, goals, bpg, eq }) {
   const lines = [];
+
+  // Sets goal note — always show
+  const setsOpt = SETS_GOAL_OPTIONS.find(o => o.sets === (defaultSets || 3));
+  if (setsOpt) lines.push({ icon: setsOpt.icon, head: `${setsOpt.label} Per Exercise — ${setsOpt.headline}`, body: setsOpt.science[0] + ' ' + setsOpt.science[1] });
 
   // Split rationale
   if (freq <= 3)      lines.push({ icon:'🗓️', head:'Full Body Training', body:`Training ${freq}×/week. Science shows full-body sessions maximize muscle protein synthesis frequency for lower weekly volumes. Ideal for building consistency and foundational strength.` });
@@ -7026,7 +7249,9 @@ function buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStren
   if (isBeginner) lines.push({ icon:'🌱', head:'Beginner Protocol Active', body:`Lower volume and simpler movement patterns. Beginners gain muscle at any intensity — consistency and progressive overload matter more than optimization at this stage.` });
   if (isAdvanced) lines.push({ icon:'🎖️', head:'Advanced Lifter Protocol', body:`Higher volume, greater exercise variation, and periodization cues applied. Deload every 4–6 weeks is strongly recommended to prevent accumulated fatigue and stimulate super-compensation.` });
   if (isYoga)    lines.push({ icon:'🧘', head:'Yoga Program Selected', body:`Your program uses yoga sessions. Research shows yoga improves flexibility, balance, and core strength — and reduces cortisol more effectively than most other forms of exercise. Sun Salutations also count as cardiovascular conditioning.` });
-  if (isPilates) lines.push({ icon:'🌀', head:'Pilates Program Selected', body:`Pilates builds deep core stabiliser strength (transverse abdominis, multifidus) that standard gym training largely ignores. Clinical research shows it corrects posture, reduces lower back pain, and improves movement quality for all other training.` });
+  if (isPilates)       lines.push({ icon:'🌀', head:'Pilates Program Selected', body:`Pilates builds deep core stabiliser strength (transverse abdominis, multifidus) that standard gym training largely ignores. Clinical research shows it corrects posture, reduces lower back pain, and improves movement quality for all other training.` });
+  if (isCalisthenics)  lines.push({ icon:'💯', head:'Calisthenics Program Selected', body:`Progressive bodyweight training follows a skill ladder — standard push-up → diamond → archer → pseudo-planche, pull-up → archer → muscle-up. Research shows this builds functional strength, body control, and relative strength superior to machine-based training.` });
+  if (isMilitary)      lines.push({ icon:'🎖️', head:'Military / Tactical Fitness', body:`AFT-style circuits train push-ups, pull-ups, plank, sprints, and carries. Cool-downs are intentionally short (3–5 min) — focus on diaphragmatic breathing to drive cortisol down fast. High-intensity work demands complete recovery nutrition within 30–45 min post-session.` });
 
   return lines;
 }
