@@ -5825,28 +5825,86 @@ const BP_GOAL_TYPES = [
 function renderTrainingFocus() {
   const el = document.getElementById('trainingFocusCards');
   if (!el) return;
-  el.innerHTML = TRAINING_FOCUS_OPTIONS.map(opt => {
-    const active = (userGoals.trainingFocus || []).includes(opt.id);
-    return `<div onclick="toggleTrainingFocus('${opt.id}')" id="tfcard-${opt.id}"
-      style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;cursor:pointer;
-      border:1px solid ${active?'var(--accent2)':'var(--border)'};
-      background:${active?'var(--accent-dim)':'var(--bg3)'};
-      transition:all .15s;">
-      <span style="font-size:1.2rem;flex-shrink:0;margin-top:2px;">${opt.icon}</span>
-      <div>
-        <div style="font-family:var(--font-mono);font-size:0.7rem;color:${active?'var(--accent2)':'var(--text)'};letter-spacing:.08em;font-weight:bold;">${opt.label}</div>
-        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-top:2px;line-height:1.5;">${opt.desc}</div>
-      </div>
-      <div style="margin-left:auto;font-size:1rem;color:${active?'var(--accent2)':'var(--border)'};flex-shrink:0;">${active?'✓':'○'}</div>
-    </div>`;
-  }).join('');
+  const selected = userGoals.trainingFocus || [];
+  const priority = userGoals.focusPriority || [...selected]; // ordered list
+
+  // Sync priority list with selected — remove deselected, add new ones at end
+  const syncedPriority = [
+    ...priority.filter(id => selected.includes(id)),
+    ...selected.filter(id => !priority.includes(id)),
+  ];
+  userGoals.focusPriority = syncedPriority;
+
+  el.innerHTML = `
+    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:8px;line-height:1.6;">
+      ✓ Select your goals · Use ↑ ↓ to set priority (top = most important)
+    </div>` +
+    TRAINING_FOCUS_OPTIONS.map(opt => {
+      const active   = selected.includes(opt.id);
+      const rankIdx  = syncedPriority.indexOf(opt.id); // -1 if not selected
+      const rank     = active ? rankIdx + 1 : null;
+      const isFirst  = rankIdx === 0;
+      const isLast   = rankIdx === syncedPriority.length - 1;
+      const rankBadge = active
+        ? `<span style="font-family:var(--font-display);font-size:1rem;
+            color:${rank===1?'var(--accent2)':'var(--text-dim)'};
+            background:var(--bg);border:1px solid ${rank===1?'var(--accent2)':'var(--border)'};
+            width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;
+            flex-shrink:0;">#${rank}</span>`
+        : '';
+      const moveButtons = active
+        ? `<div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
+            <button onclick="moveFocusPriority('${opt.id}',-1);event.stopPropagation();"
+              ${isFirst?'disabled':''}
+              style="font-size:0.7rem;background:none;border:1px solid var(--border);
+              color:${isFirst?'var(--border)':'var(--accent2)'};cursor:pointer;padding:1px 5px;line-height:1;">▲</button>
+            <button onclick="moveFocusPriority('${opt.id}',1);event.stopPropagation();"
+              ${isLast?'disabled':''}
+              style="font-size:0.7rem;background:none;border:1px solid var(--border);
+              color:${isLast?'var(--border)':'var(--accent2)'};cursor:pointer;padding:1px 5px;line-height:1;">▼</button>
+          </div>`
+        : '<div style="width:24px;"></div>';
+
+      return `<div onclick="toggleTrainingFocus('${opt.id}')"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;
+        border:1px solid ${active?'var(--accent2)':'var(--border)'};
+        background:${active?'var(--accent-dim)':'var(--bg3)'};transition:all .15s;">
+        ${rankBadge || '<div style="width:24px;height:24px;"></div>'}
+        <span style="font-size:1.1rem;flex-shrink:0;">${opt.icon}</span>
+        <div style="flex:1;">
+          <div style="font-family:var(--font-mono);font-size:0.7rem;color:${active?'var(--accent2)':'var(--text)'};
+            letter-spacing:.08em;font-weight:bold;">${opt.label}</div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-top:2px;line-height:1.5;">${opt.desc}</div>
+        </div>
+        ${moveButtons}
+        <div style="font-size:1rem;color:${active?'var(--accent2)':'var(--border)'};flex-shrink:0;">${active?'✓':'○'}</div>
+      </div>`;
+    }).join('');
 }
 
 function toggleTrainingFocus(id) {
-  if (!userGoals.trainingFocus) userGoals.trainingFocus = [];
+  if (!userGoals.trainingFocus)  userGoals.trainingFocus = [];
+  if (!userGoals.focusPriority)  userGoals.focusPriority = [];
   const idx = userGoals.trainingFocus.indexOf(id);
-  if (idx >= 0) userGoals.trainingFocus.splice(idx, 1);
-  else userGoals.trainingFocus.push(id);
+  if (idx >= 0) {
+    userGoals.trainingFocus.splice(idx, 1);
+    const pidx = userGoals.focusPriority.indexOf(id);
+    if (pidx >= 0) userGoals.focusPriority.splice(pidx, 1);
+  } else {
+    userGoals.trainingFocus.push(id);
+    userGoals.focusPriority.push(id); // added at lowest priority by default
+  }
+  renderTrainingFocus();
+}
+
+function moveFocusPriority(id, direction) {
+  if (!userGoals.focusPriority) userGoals.focusPriority = [];
+  const arr = userGoals.focusPriority;
+  const idx = arr.indexOf(id);
+  if (idx < 0) return;
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
   renderTrainingFocus();
 }
 
@@ -6955,19 +7013,41 @@ function userHasEquipment(req, eq) {
   return req.every(r => eq[r]);
 }
 
-function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, count) {
+function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, count, sessionType, goalPriority) {
+  // Mode-exclusive filtering: yoga/pilates/calisthenics/military sessions
+  // must ONLY draw from their own exercise pool, never from weighted exercises
+  const exclusiveModes = ['yoga','pilates','calisthenics','military'];
+  const isExclusiveMode = exclusiveModes.includes(sessionType);
+
   const scored = EX_DB
     .filter(e => {
       if (!userHasEquipment(e.eq, eq)) return false;
       if (isLowImpact && e.impact === 'high') return false;
+
+      if (isExclusiveMode) {
+        // Only include exercises that belong to this session type
+        return e.goals.includes(sessionType);
+      }
+
+      // Standard mode: match by muscle OR goal
       const muscleMatch = e.muscles.some(m => musclePriority.includes(m));
       const goalMatch   = e.goals.some(g => goalIds.includes(g));
+      // Exclude mode-exclusive exercises from standard sessions
+      const isExclusiveEx = exclusiveModes.some(m => e.goals.includes(m) && !goalIds.includes(m));
+      if (isExclusiveEx) return false;
       return muscleMatch || goalMatch;
     })
     .map(e => {
       let score = 0;
+      // Muscle priority scoring
       score += e.muscles.filter(m => musclePriority.includes(m)).length * 3;
-      score += e.goals.filter(g => goalIds.includes(g)).length * 2;
+      // Goal matching — weighted by priority if provided
+      e.goals.forEach(g => {
+        if (goalIds.includes(g)) {
+          const priorityBoost = goalPriority ? (goalPriority[g] || 1) : 1;
+          score += 2 * priorityBoost;
+        }
+      });
       if (isStrength && e.goals.includes('strength')) score += 4;
       return { ...e, score };
     })
@@ -6978,7 +7058,7 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
   const usedPrimary = new Set();
   for (const ex of scored) {
     if (chosen.length >= count) break;
-    const primary = ex.muscles[0];
+    const primary = ex.muscles[0] || '_none';
     if (usedPrimary.has(primary) && chosen.length >= Math.ceil(count * 0.7)) continue;
     chosen.push(ex);
     usedPrimary.add(primary);
@@ -7034,6 +7114,36 @@ function generateProgram() {
   const isPilates    = focus.includes('focus-pilates');
   const isCalisthenics = focus.includes('focus-calisthenics');
   const isMilitary   = focus.includes('focus-military');
+
+  // Build goal priority map from ranked focus list
+  // focusPriority is an ordered array — first = highest priority
+  const focusPriority = goals.focusPriority || focus;
+  const totalFocus    = focusPriority.length || 1;
+  const goalPriorityMap = {};
+  const focusToGoalIds = {
+    'focus-strength':      ['strength'],
+    'focus-muscle':        ['size'],
+    'focus-fatloss':       ['fat','recomp'],
+    'focus-visceral':      ['fat','recomp'],
+    'focus-weightloss':    ['fat','recomp'],
+    'focus-tone':          ['tone'],
+    'focus-endurance':     ['endurance'],
+    'focus-general':       ['general'],
+    'focus-mobility':      ['mobility'],
+    'focus-yoga':          ['yoga','mobility'],
+    'focus-pilates':       ['pilates','tone'],
+    'focus-calisthenics':  ['calisthenics','strength','tone'],
+    'focus-military':      ['military','endurance','fat'],
+    'focus-recomp':        ['recomp','size','fat'],
+  };
+  focusPriority.forEach((focusId, rank) => {
+    // Higher priority = bigger multiplier. Rank 0 = highest.
+    const multiplier = Math.max(1, totalFocus - rank);
+    const gids = focusToGoalIds[focusId] || [];
+    gids.forEach(gid => {
+      goalPriorityMap[gid] = Math.max(goalPriorityMap[gid] || 0, multiplier);
+    });
+  });
 
   // Derive goal ids for exercise filtering
   const goalIds = [];
@@ -7160,7 +7270,7 @@ function generateProgram() {
       }
     });
 
-    const exercises = pickExercises(boostedMuscles, goalIds, eq, isLowImpact, isStrength, exCount);
+    const exercises = pickExercises(boostedMuscles, goalIds, eq, isLowImpact, isStrength, exCount, ds.type, goalPriorityMap);
 
     // Add cardio finisher on some days for fat loss
     if ((isFatLoss || isEndurance) && cardioFinisher.length > 0 && idx % 2 === 0) {
