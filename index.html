@@ -805,6 +805,22 @@ body.theme-female .goal-chip{border-radius:20px;}
       </div>
     </div>
 
+    <!-- Step goal recommendation — from user's goals -->
+    <div id="stepsTabRecommendation" class="card mb16" style="display:none;border-left:4px solid var(--accent2);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        <div>
+          <div class="card-label">RECOMMENDED FOR YOUR GOALS</div>
+          <div id="stepsRecUrgency" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);margin-top:2px;"></div>
+        </div>
+        <div id="stepsRecTarget" style="font-family:var(--font-display);font-size:1.8rem;color:var(--accent2);"></div>
+      </div>
+      <div id="stepsRecWhy" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);line-height:1.7;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="stepsRecApplyBtn" class="btn btn-p" onclick="" style="font-size:0.62rem;">⭐ APPLY THIS GOAL</button>
+        <button class="btn btn-s" onclick="nav('goals')" style="font-size:0.62rem;">→ CHANGE GOALS</button>
+      </div>
+    </div>
+
     <!-- Walk sections -->
     <div id="stepSections"></div>
 
@@ -837,7 +853,21 @@ body.theme-female .goal-chip{border-radius:20px;}
     <div class="page-title">MY<br><span>GOALS</span></div>
     <div class="page-sub">// SET YOUR TARGETS — APP ADAPTS TO YOUR SCHEDULE //</div>
 
-    <!-- Science Summary Card -->
+    <!-- ── GOAL COACH — priority-ranked action plan ── -->
+    <div class="card mb16" style="border-left:4px solid var(--accent2);">
+      <div class="card-label">YOUR PERSONAL COACH</div>
+      <div class="card-title">PRIORITY ACTION PLAN</div>
+      <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:12px;">
+        Based on your ranked goals — most important first. Set your Training Focus priorities below to update this.
+      </div>
+      <div id="goalCoachCard">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);padding:10px;">
+          Select and rank your Training Focus goals below to see your personalised action plan.
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRAM INTELLIGENCE -->
     <div class="card mb16" style="border-left:4px solid var(--accent2);">
       <div class="card-label">PROGRAM INTELLIGENCE</div>
       <div class="card-title">WHAT THE SCIENCE RECOMMENDS FOR YOU</div>
@@ -871,6 +901,16 @@ body.theme-female .goal-chip{border-radius:20px;}
         <button class="btn btn-s" onclick="applyCustomStepGoal()" style="white-space:nowrap;">SET</button>
       </div>
       <div id="stepGoalBreakdown" style="margin-top:12px;"></div>
+      <!-- Step recommendation by goals -->
+      <div id="stepGoalRecommendation" style="margin-top:12px;display:none;
+        padding:10px 14px;background:var(--bg3);border-left:3px solid var(--accent2);">
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);
+          letter-spacing:.1em;margin-bottom:6px;">⭐ RECOMMENDED FOR YOUR GOALS</div>
+        <div id="stepGoalRecText" style="font-family:var(--font-mono);font-size:0.62rem;
+          color:var(--text);line-height:1.7;"></div>
+        <button id="stepGoalRecBtn" onclick="" class="btn btn-s"
+          style="margin-top:8px;font-size:0.6rem;padding:4px 12px;"></button>
+      </div>
     </div>
 
     <!-- Workout frequency goal -->
@@ -932,14 +972,21 @@ body.theme-female .goal-chip{border-radius:20px;}
         display:none;"></div>
     </div>
 
+    <!-- Rep recommendation card -->
+    <div class="card mb16" id="repRecommendationCard" style="display:none;">
+      <div class="card-label">REP RANGE RECOMMENDATION</div>
+      <div class="card-title">OPTIMAL REPS FOR YOUR GOALS</div>
+      <div id="repRecommendationContent"></div>
+    </div>
+
     <!-- Recommended split -->
     <div id="recommendedSplit" style="display:none;"></div>
 
     <!-- ── OVERALL TRAINING FOCUS ── -->
     <div class="card mb16">
-      <div class="card-label">TRAINING FOCUS</div>
-      <div class="card-title">WHAT IS YOUR PRIMARY GOAL?</div>
-      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:12px;">Select all that apply — the app will weight these in future workout suggestions.</div>
+      <div class="card-label">TRAINING FOCUS & PRIORITY</div>
+      <div class="card-title">WHAT ARE YOUR GOALS? (RANKED BY IMPORTANCE)</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:12px;">Select your goals and use ▲ ▼ to rank them — #1 = most important. The app prioritises exercise selection and recommendations around your top goal.</div>
       <div style="display:flex;flex-direction:column;gap:8px;" id="trainingFocusCards"></div>
     </div>
 
@@ -1142,10 +1189,11 @@ body.theme-female .goal-chip{border-radius:20px;}
 
       <!-- Nutrition sub-tabs -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
-        <button class="btn btn-p" id="ntab-meals"   onclick="nutTab('meals')"   style="font-size:0.62rem;">🍽 MEALS</button>
+        <button class="btn btn-p" id="ntab-meals"      onclick="nutTab('meals')"      style="font-size:0.62rem;">🍽 MEALS</button>
+        <button class="btn btn-s" id="ntab-fasting"    onclick="nutTab('fasting')"    style="font-size:0.62rem;">⏱ FASTING</button>
         <button class="btn btn-s" id="ntab-restaurant" onclick="nutTab('restaurant')" style="font-size:0.62rem;">🏪 RESTAURANT</button>
-        <button class="btn btn-s" id="ntab-recipe"  onclick="nutTab('recipe')"  style="font-size:0.62rem;">👨‍🍳 RECIPE MAKER</button>
-        <button class="btn btn-s" id="ntab-foods"   onclick="nutTab('foods')"   style="font-size:0.62rem;">🥦 FOOD DATABASE</button>
+        <button class="btn btn-s" id="ntab-recipe"     onclick="nutTab('recipe')"     style="font-size:0.62rem;">👨‍🍳 RECIPE MAKER</button>
+        <button class="btn btn-s" id="ntab-foods"      onclick="nutTab('foods')"      style="font-size:0.62rem;">🥦 FOOD DATABASE</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
           <input type="date" id="n-date" onchange="reloadLogForDate('nutrition')"
             style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
@@ -1250,6 +1298,94 @@ body.theme-female .goal-chip{border-radius:20px;}
 
           <button class="btn btn-p" onclick="saveNutrition()" style="width:100%;">SAVE NUTRITION</button>
         </div>
+      </div>
+
+      <!-- ══ FASTING TAB ══ -->
+      <div id="npanel-fasting" style="display:none;">
+
+        <!-- Active fast / start fast -->
+        <div class="card mb16" style="border-left:4px solid var(--accent2);">
+          <div class="card-label">FASTING TIMER</div>
+
+          <!-- Protocol selector -->
+          <div style="margin-bottom:14px;">
+            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:8px;">SELECT PROTOCOL</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;" id="fastProtocolBtns"></div>
+          </div>
+
+          <!-- Custom duration -->
+          <div id="fastCustomRow" style="display:none;margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <label style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);">CUSTOM FAST (hours):</label>
+            <input type="number" id="fastCustomHours" min="1" max="72" step="0.5" value="16"
+              style="width:80px;background:var(--bg3);border:1px solid var(--border);
+              color:var(--text);font-family:var(--font-mono);font-size:0.8rem;padding:6px 8px;outline:none;">
+          </div>
+
+          <!-- Eating window display -->
+          <div id="fastEatingWindow" style="font-family:var(--font-mono);font-size:0.62rem;
+            color:var(--text-dim);margin-bottom:14px;"></div>
+
+          <!-- Timer display -->
+          <div style="text-align:center;padding:16px 0;">
+            <div id="fastStatusLabel" style="font-family:var(--font-mono);font-size:0.6rem;
+              color:var(--border2);letter-spacing:.15em;margin-bottom:8px;">NOT FASTING</div>
+            <!-- Progress ring -->
+            <div style="position:relative;width:160px;height:160px;margin:0 auto 12px;">
+              <svg width="160" height="160" style="transform:rotate(-90deg);">
+                <circle cx="80" cy="80" r="68" fill="none" stroke="var(--bg3)" stroke-width="10"/>
+                <circle id="fastRingFill" cx="80" cy="80" r="68" fill="none"
+                  stroke="var(--accent2)" stroke-width="10" stroke-linecap="round"
+                  stroke-dasharray="427.3" stroke-dashoffset="427.3"
+                  style="transition:stroke-dashoffset 1s ease;"/>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+                align-items:center;justify-content:center;">
+                <div id="fastTimerDisplay" style="font-family:var(--font-display);
+                  font-size:2rem;color:var(--accent2);line-height:1;">0:00:00</div>
+                <div id="fastTimerSub" style="font-family:var(--font-mono);
+                  font-size:0.55rem;color:var(--text-dim);letter-spacing:.1em;margin-top:4px;">ELAPSED</div>
+              </div>
+            </div>
+            <div id="fastPctDisplay" style="font-family:var(--font-mono);font-size:0.65rem;
+              color:var(--text-dim);margin-bottom:16px;"></div>
+          </div>
+
+          <!-- Start / stop buttons -->
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button id="fastStartBtn" class="btn btn-p" onclick="startFast()"
+              style="font-size:0.7rem;padding:10px 24px;">⏱ START FAST</button>
+            <button id="fastStopBtn" class="btn btn-s" onclick="stopFast()"
+              style="display:none;font-size:0.7rem;padding:10px 24px;border-color:var(--danger);color:var(--danger);">
+              ■ END FAST
+            </button>
+          </div>
+          <div id="fastMsg" style="font-family:var(--font-mono);font-size:0.65rem;
+            text-align:center;min-height:18px;margin-top:10px;"></div>
+        </div>
+
+        <!-- Fasting history -->
+        <div class="card mb16">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div class="card-label">FASTING HISTORY</div>
+              <div class="card-title" style="margin:0;" id="fastStreakLabel">YOUR FASTING LOG</div>
+            </div>
+            <div id="fastStreakBadge" style="display:none;text-align:center;">
+              <div style="font-family:var(--font-display);font-size:2rem;color:var(--accent2);" id="fastStreakNum">0</div>
+              <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">DAY STREAK</div>
+            </div>
+          </div>
+          <div id="fastHistoryList" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">
+            No fasts logged yet.
+          </div>
+        </div>
+
+        <!-- Science card -->
+        <div class="card mb16">
+          <div class="card-label">THE SCIENCE OF FASTING</div>
+          <div id="fastScienceCard"></div>
+        </div>
+
       </div>
 
       <!-- ══ RESTAURANT MEALS TAB ══ -->
@@ -3725,6 +3861,372 @@ function renderExLib() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// STEPS TAB — goal-aware recommendation
+// ═══════════════════════════════════════════════════════════
+function renderStepsTabRecommendation() {
+  const card    = document.getElementById('stepsTabRecommendation');
+  const urgEl   = document.getElementById('stepsRecUrgency');
+  const targetEl= document.getElementById('stepsRecTarget');
+  const whyEl   = document.getElementById('stepsRecWhy');
+  const applyBtn= document.getElementById('stepsRecApplyBtn');
+  if (!card) return;
+
+  const priority = userGoals?.focusPriority || userGoals?.trainingFocus || [];
+  let rec = null;
+  for (const fid of priority) {
+    if (STEP_RECS && STEP_RECS[fid]) { rec = { ...STEP_RECS[fid], focusId: fid }; break; }
+  }
+
+  if (!rec) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  urgEl.textContent   = rec.urgency + '  ' + (GOAL_ACTIONS?.[rec.focusId]?.label || '');
+  targetEl.textContent= rec.label;
+  whyEl.textContent   = rec.why;
+  applyBtn.textContent= `⭐ SET GOAL TO ${rec.steps.toLocaleString()} STEPS`;
+  applyBtn.onclick = () => {
+    setStepPreset(rec.steps);
+    // Also update the Goals step input if it exists
+    const ci = document.getElementById('goalStepCustom');
+    if (ci) ci.value = rec.steps;
+    applyBtn.textContent = '✓ GOAL UPDATED';
+    applyBtn.style.background = 'var(--success)';
+    setTimeout(() => {
+      applyBtn.textContent = `⭐ SET GOAL TO ${rec.steps.toLocaleString()} STEPS`;
+      applyBtn.style.background = '';
+    }, 2500);
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// FASTING SYSTEM
+// ═══════════════════════════════════════════════════════════
+const FAST_PROTOCOLS = [
+  { id:'16-8',    label:'16:8',   hours:16, eatHours:8,  name:'Leangains',
+    desc:'16 hours fasted, 8-hour eating window. The most researched and sustainable protocol. Backed by dozens of RCTs.' },
+  { id:'18-6',    label:'18:6',   hours:18, eatHours:6,  name:'18:6',
+    desc:'18 hours fasted, 6-hour eating window. Stronger autophagy signal than 16:8. Good for fat loss and metabolic health.' },
+  { id:'20-4',    label:'20:4',   hours:20, eatHours:4,  name:'Warrior Diet',
+    desc:'20 hours fasted, 4-hour eating window. Significant metabolic benefit. Difficult to hit protein targets — plan meals carefully.' },
+  { id:'omad',    label:'OMAD',   hours:23, eatHours:1,  name:'One Meal A Day',
+    desc:'One meal per day. Maximum autophagy stimulus. Very challenging to meet caloric and protein needs. Not recommended for muscle-building goals.' },
+  { id:'5-2',     label:'5:2',    hours:0,  eatHours:0,  name:'5:2 Method',
+    desc:'Eat normally 5 days/week. Restrict to 500–600 cal on 2 non-consecutive days. Research shows equivalent fat loss to daily restriction with better adherence.' },
+  { id:'custom',  label:'CUSTOM', hours:0,  eatHours:0,  name:'Custom',
+    desc:'Set your own fasting window duration.' },
+];
+
+const FAST_SCIENCE = {
+  'focus-fatloss':  { best:'16:8 or 18:6', why:'Daily time-restricted eating (TRE) produces fat loss equivalent to caloric restriction with better adherence. A 2020 NEJM review found TRE reduces body weight 1–8% over 2–3 months.' },
+  'focus-visceral': { best:'18:6 or 20:4', why:'Longer fasting windows increase insulin sensitivity and reduce liver glycogen more completely — forcing the body to oxidise visceral fat. A 2023 study found 18+ hour fasts specifically reduce VFA (visceral fat area).' },
+  'focus-muscle':   { best:'16:8',         why:'16:8 preserves muscle mass while fasting IF protein targets are met within the eating window. Longer fasts increase muscle protein breakdown. Eat 0.8–1g protein/lb within your window.' },
+  'focus-general':  { best:'16:8',         why:'16:8 fasting improves blood pressure, insulin sensitivity, and inflammatory markers in healthy adults. Meta-analyses show consistent improvements in cardiometabolic markers.' },
+  'focus-recomp':   { best:'16:8',         why:'Body recomposition is possible in a 16:8 window when protein is high. The overnight fast allows growth hormone to peak, supporting muscle repair while fasting aids fat oxidation.' },
+};
+
+let fastInterval = null;
+let fastState = { active: false, startTime: null, targetHours: 16, protocol: '16-8' };
+let fastHistory = [];
+let selectedProtocol = '16-8';
+
+async function loadFastHistory() {
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('fasting').doc('log').get();
+    fastHistory = doc.exists ? (doc.data().entries || []) : [];
+    const stateDoc = await db.collection('userdata').doc(SESSION.username)
+      .collection('fasting').doc('state').get();
+    if (stateDoc.exists) {
+      const s = stateDoc.data();
+      if (s.active && s.startTime) {
+        fastState = { active: true, startTime: new Date(s.startTime), targetHours: s.targetHours || 16, protocol: s.protocol || '16-8' };
+        selectedProtocol = fastState.protocol;
+      }
+    }
+  } catch(e) { fastHistory = []; }
+}
+
+async function saveFastState() {
+  await db.collection('userdata').doc(SESSION.username)
+    .collection('fasting').doc('state').set({
+      active: fastState.active,
+      startTime: fastState.startTime ? fastState.startTime.toISOString() : null,
+      targetHours: fastState.targetHours,
+      protocol: fastState.protocol,
+    });
+}
+
+async function saveFastHistory() {
+  await db.collection('userdata').doc(SESSION.username)
+    .collection('fasting').doc('log').set({ entries: fastHistory, updated: new Date().toISOString() });
+}
+
+function initFastingTab() {
+  loadFastHistory().then(() => {
+    renderFastProtocolBtns();
+    renderFastScienceCard();
+    renderFastHistory();
+    updateFastTimer();
+    if (fastState.active) startFastInterval();
+  });
+}
+
+function renderFastProtocolBtns() {
+  const el = document.getElementById('fastProtocolBtns');
+  if (!el) return;
+  el.innerHTML = FAST_PROTOCOLS.map(p => {
+    const active = selectedProtocol === p.id;
+    return `<button onclick="selectProtocol('${p.id}')" type="button"
+      style="font-family:var(--font-mono);font-size:0.65rem;padding:6px 12px;cursor:pointer;
+      background:${active?'var(--accent-dim)':'var(--bg3)'};
+      border:1px solid ${active?'var(--accent2)':'var(--border)'};
+      color:${active?'var(--accent2)':'var(--text-dim)'};">${p.label}</button>`;
+  }).join('');
+
+  const proto = FAST_PROTOCOLS.find(p => p.id === selectedProtocol) || FAST_PROTOCOLS[0];
+  const eatEl = document.getElementById('fastEatingWindow');
+  const customRow = document.getElementById('fastCustomRow');
+  if (eatEl) {
+    if (proto.id === 'custom') {
+      eatEl.innerHTML = '';
+      if (customRow) customRow.style.display = 'flex';
+    } else if (proto.id === '5-2') {
+      if (customRow) customRow.style.display = 'none';
+      eatEl.innerHTML = `<span style="color:var(--accent2);">${proto.name}:</span> ${proto.desc}`;
+    } else {
+      if (customRow) customRow.style.display = 'none';
+      const now = new Date();
+      const eatStart = new Date(now);
+      const fastHrs = fastState.active ? fastState.targetHours : proto.hours;
+      eatStart.setHours(eatStart.getHours() - (fastState.active ? Math.min(fastHrs, new Date() - fastState.startTime)/3600000 : 0));
+      // Calculate eating window from a 12pm start assumption
+      const winStart = 12; // noon default
+      const winEnd   = winStart + proto.eatHours;
+      eatEl.innerHTML = `<span style="color:var(--accent2);">${proto.name}:</span> ${proto.desc}<br>
+        <span style="color:var(--text);">Suggested eating window: <strong style="color:var(--accent2);">${winStart}:00 – ${winEnd > 12 ? winEnd - 12 : winEnd}:00 ${winEnd >= 12 ? 'PM' : 'AM'}</strong></span>`;
+    }
+  }
+}
+
+function selectProtocol(id) {
+  selectedProtocol = id;
+  renderFastProtocolBtns();
+}
+
+function getProtocolHours() {
+  const p = FAST_PROTOCOLS.find(p => p.id === selectedProtocol);
+  if (selectedProtocol === 'custom') {
+    return parseFloat(document.getElementById('fastCustomHours')?.value) || 16;
+  }
+  return p?.hours || 16;
+}
+
+async function startFast() {
+  if (fastState.active) return;
+  const hours = getProtocolHours();
+  fastState = { active: true, startTime: new Date(), targetHours: hours, protocol: selectedProtocol };
+  await saveFastState();
+  updateFastTimer();
+  startFastInterval();
+  document.getElementById('fastMsg').style.color = '#4caf50';
+  document.getElementById('fastMsg').textContent = `✓ Fast started — ${hours}h target. Stay strong!`;
+  setTimeout(() => { const m = document.getElementById('fastMsg'); if(m) m.textContent = ''; }, 4000);
+}
+
+async function stopFast() {
+  if (!fastState.active) return;
+  const now = new Date();
+  const elapsedMs = now - fastState.startTime;
+  const elapsedH  = elapsedMs / 3600000;
+  const completed  = elapsedH >= fastState.targetHours;
+
+  const entry = {
+    id: 'fast_' + Date.now(),
+    protocol: fastState.protocol,
+    startTime: fastState.startTime.toISOString(),
+    endTime: now.toISOString(),
+    targetHours: fastState.targetHours,
+    actualHours: parseFloat(elapsedH.toFixed(2)),
+    completed,
+    date: localDateStr(fastState.startTime),
+  };
+  fastHistory.unshift(entry);
+  if (fastHistory.length > 90) fastHistory = fastHistory.slice(0, 90);
+
+  fastState = { active: false, startTime: null, targetHours: 16, protocol: selectedProtocol };
+  clearInterval(fastInterval); fastInterval = null;
+
+  await saveFastState();
+  await saveFastHistory();
+  updateFastTimer();
+  renderFastHistory();
+
+  const msg = document.getElementById('fastMsg');
+  if (msg) {
+    msg.style.color = completed ? '#4caf50' : '#ff9800';
+    msg.textContent = completed
+      ? `✓ Fast complete — ${elapsedH.toFixed(1)}h. Well done!`
+      : `Fast ended at ${elapsedH.toFixed(1)}h of ${fastState.targetHours || entry.targetHours}h target.`;
+    setTimeout(() => { msg.textContent = ''; }, 5000);
+  }
+}
+
+function startFastInterval() {
+  clearInterval(fastInterval);
+  fastInterval = setInterval(updateFastTimer, 1000);
+}
+
+function updateFastTimer() {
+  const timerEl  = document.getElementById('fastTimerDisplay');
+  const subEl    = document.getElementById('fastTimerSub');
+  const statusEl = document.getElementById('fastStatusLabel');
+  const pctEl    = document.getElementById('fastPctDisplay');
+  const ring     = document.getElementById('fastRingFill');
+  const startBtn = document.getElementById('fastStartBtn');
+  const stopBtn  = document.getElementById('fastStopBtn');
+  if (!timerEl) return;
+
+  if (!fastState.active) {
+    timerEl.textContent  = '0:00:00';
+    timerEl.style.color  = 'var(--text-dim)';
+    if (subEl)    subEl.textContent    = 'NOT FASTING';
+    if (statusEl) statusEl.textContent = 'NOT FASTING';
+    if (pctEl)    pctEl.textContent    = '';
+    if (ring)     ring.style.strokeDashoffset = '427.3';
+    if (ring)     ring.style.stroke    = 'var(--border2)';
+    if (startBtn) startBtn.style.display = '';
+    if (stopBtn)  stopBtn.style.display  = 'none';
+    return;
+  }
+
+  if (startBtn) startBtn.style.display = 'none';
+  if (stopBtn)  stopBtn.style.display  = '';
+
+  const now       = new Date();
+  const elapsedMs = now - new Date(fastState.startTime);
+  const elapsedH  = elapsedMs / 3600000;
+  const targetH   = fastState.targetHours;
+  const pct       = Math.min(1, elapsedH / targetH);
+  const remaining = Math.max(0, targetH - elapsedH);
+
+  // Format elapsed
+  const totalSec = Math.floor(elapsedMs / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  timerEl.textContent = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  timerEl.style.color = pct >= 1 ? '#4caf50' : 'var(--accent2)';
+
+  if (subEl)    subEl.textContent    = pct >= 1 ? 'GOAL REACHED ✓' : 'ELAPSED';
+  if (statusEl) statusEl.textContent = pct >= 1 ? '✓ FAST COMPLETE — GREAT WORK' : `FASTING — ${(remaining).toFixed(1)}h REMAINING`;
+
+  if (pctEl) {
+    const remH = Math.floor(remaining);
+    const remM = Math.floor((remaining - remH) * 60);
+    pctEl.textContent = pct >= 1
+      ? `${(elapsedH).toFixed(1)}h complete — you hit your goal!`
+      : `${Math.round(pct*100)}% — ${remH}h ${remM}m remaining`;
+  }
+
+  if (ring) {
+    const circumference = 427.3;
+    ring.style.strokeDashoffset = String(circumference * (1 - pct));
+    ring.style.stroke = pct >= 1 ? '#4caf50' : 'var(--accent2)';
+  }
+}
+
+function renderFastHistory() {
+  const el = document.getElementById('fastHistoryList');
+  const streakBadge = document.getElementById('fastStreakBadge');
+  const streakNum   = document.getElementById('fastStreakNum');
+  if (!el) return;
+
+  if (!fastHistory.length) {
+    el.innerHTML = '<div style="color:var(--text-dim);padding:8px 0;">No fasts logged yet. Start your first fast above.</div>';
+    if (streakBadge) streakBadge.style.display = 'none';
+    return;
+  }
+
+  // Calculate streak — consecutive calendar days with a completed fast
+  const completedDates = [...new Set(fastHistory.filter(f=>f.completed).map(f=>f.date))].sort().reverse();
+  let streak = 0;
+  const today = localDateStr();
+  const yest  = localDateStr(new Date(Date.now() - 86400000));
+  if (completedDates[0] === today || completedDates[0] === yest) {
+    streak = 1;
+    for (let i = 1; i < completedDates.length; i++) {
+      const prev = localDateStr(new Date(new Date(completedDates[i-1]).getTime() - 86400000));
+      if (completedDates[i] === prev) streak++;
+      else break;
+    }
+  }
+  if (streakBadge && streak > 0) {
+    streakBadge.style.display = 'block';
+    if (streakNum) streakNum.textContent = streak;
+  } else if (streakBadge) streakBadge.style.display = 'none';
+
+  el.innerHTML = fastHistory.slice(0, 30).map(f => {
+    const proto = FAST_PROTOCOLS.find(p => p.id === f.protocol);
+    const startD = new Date(f.startTime);
+    const endD   = new Date(f.endTime);
+    const startStr = startD.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+    const endStr   = endD.toLocaleString('en-US',{hour:'numeric',minute:'2-digit'});
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;
+      border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;
+          color:${f.completed?'var(--accent2)':'var(--text-dim)'};">
+          ${f.completed?'✓':'○'} ${proto?.name || f.protocol} — ${f.actualHours.toFixed(1)}h
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">
+          ${startStr} → ${endStr}
+        </div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;
+        color:${f.completed?'#4caf50':'#ff9800'};white-space:nowrap;">
+        ${f.completed?'COMPLETED':`${f.actualHours.toFixed(1)}/${f.targetHours}h`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderFastScienceCard() {
+  const el = document.getElementById('fastScienceCard');
+  if (!el) return;
+  const priority = userGoals?.focusPriority || [];
+  let scienceEntry = null;
+  for (const fid of priority) {
+    if (FAST_SCIENCE[fid]) { scienceEntry = { ...FAST_SCIENCE[fid], goal: GOAL_ACTIONS[fid]?.label || fid }; break; }
+  }
+
+  const rows = [
+    { proto:'16:8 (Leangains)', best:'Fat loss, general health, muscle retention, beginners', science:'Most studied TRF protocol. Meta-analyses show consistent improvements in BMI, blood pressure, and insulin sensitivity.' },
+    { proto:'18:6',             best:'Fat loss, visceral fat, metabolic health',               science:'Stronger autophagy signal than 16:8. Associated with greater insulin sensitivity improvements and visceral fat reduction.' },
+    { proto:'20:4 (Warrior)',   best:'Aggressive fat loss, mental clarity',                    science:'Significant metabolic effect but difficult to meet protein targets. Best for short-term fat loss phases.' },
+    { proto:'OMAD',             best:'Maximum autophagy, advanced practitioners',               science:'Not recommended for muscle-building goals. Risk of nutrient deficiency. Very effective for fat loss when managed.' },
+    { proto:'5:2',              best:'Those who struggle with daily restriction',               science:'Research shows equivalent fat loss to daily restriction with significantly better long-term adherence in many populations.' },
+  ];
+
+  el.innerHTML = `
+    ${scienceEntry ? `<div style="padding:10px 12px;background:var(--accent-dim);border:1px solid var(--accent2);
+      font-family:var(--font-mono);font-size:0.62rem;color:var(--text);line-height:1.7;margin-bottom:12px;">
+      <div style="color:var(--accent2);font-weight:bold;margin-bottom:4px;">⭐ FOR YOUR GOAL: ${scienceEntry.goal.toUpperCase()}</div>
+      <div><strong style="color:var(--accent2);">Best protocol:</strong> ${scienceEntry.best}</div>
+      <div style="margin-top:4px;color:var(--text-dim);">${scienceEntry.why}</div>
+    </div>` : ''}
+    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.1em;
+      margin-bottom:8px;">PROTOCOL COMPARISON</div>
+    ${rows.map(r => `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);margin-bottom:2px;">${r.proto}</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text);margin-bottom:2px;">Best for: ${r.best}</div>
+      <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);line-height:1.5;">${r.science}</div>
+    </div>`).join('')}`;
+}
+
+// ═══════════════════════════════════════════════════════════
 // RESTAURANT MEALS
 // ═══════════════════════════════════════════════════════════
 let restaurantDb = []; // [{restaurant, meal, calories, protein, carbs, fat, fiber, sodium, addedAt}]
@@ -4765,7 +5267,7 @@ async function deleteSavedRecipe(idx) {
 }
 
 function nutTab(tab) {
-  ['meals','restaurant','recipe','foods'].forEach(t => {
+  ['meals','fasting','restaurant','recipe','foods'].forEach(t => {
     const panel = document.getElementById(`npanel-${t}`);
     const btn   = document.getElementById(`ntab-${t}`);
     if (panel) panel.style.display = t === tab ? 'block' : 'none';
@@ -4774,6 +5276,7 @@ function nutTab(tab) {
   if (tab === 'foods' && !foodDatabase.length) loadFoodDatabase();
   if (tab === 'recipe' && !foodDatabase.length) loadFoodDatabase();
   if (tab === 'restaurant') { loadRestaurantDb(); renderRestaurantDb(); }
+  if (tab === 'fasting') initFastingTab();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -5822,6 +6325,446 @@ const BP_GOAL_TYPES = [
   { id:'maintain',label:'MAINTAIN', color:'var(--border2)',   desc:'Keep current state — no major change needed' },
 ];
 
+// ═══════════════════════════════════════════════════════════
+// GOAL COACHING DATA — step recs, rep recs, action plans
+// ═══════════════════════════════════════════════════════════
+
+// Step recommendations per goal (science-backed)
+// Sources: PMC6724241 (12,000 steps + intensity for visceral fat),
+//   Hopkins Medicine (30–60 min moderate-vigorous daily),
+//   Johns Hopkins (exercise reduces circulating insulin → liver uses visceral fat)
+const STEP_RECS = {
+  'focus-visceral': {
+    steps: 15000,
+    label: '12,000–15,000 steps/day',
+    why: 'Visceral fat responds to VOLUME + INTENSITY. Research shows 12,000+ steps/day reduces visceral fat area significantly over 8 weeks — but only when combined with brisk walking (not slow strolling). Split your steps into 4–5 shorter walks to avoid cortisol spikes from single long sessions.',
+    urgency: '🔴 CRITICAL',
+  },
+  'focus-fatloss': {
+    steps: 12000,
+    label: '10,000–12,000 steps/day',
+    why: 'Studies show people who walk 10,000–12,000 steps/day have lower BMI, body fat %, and waist circumference. Pair with caloric deficit for compounding effect. Post-workout walks are the highest-ROI window.',
+    urgency: '🟠 HIGH',
+  },
+  'focus-weightloss': {
+    steps: 12000,
+    label: '10,000–12,000 steps/day',
+    why: 'NEAT (non-exercise activity thermogenesis) from daily steps accounts for a large portion of total daily energy expenditure. 10,000–12,000 steps adds ~400–600 cal/day above sedentary baseline.',
+    urgency: '🟠 HIGH',
+  },
+  'focus-endurance': {
+    steps: 12000,
+    label: '12,000–15,000 steps/day',
+    why: 'Endurance athletes benefit from high daily activity volume. Consistent walking builds aerobic base, improves capillary density, and reduces resting heart rate over 8–12 weeks.',
+    urgency: '🟡 RECOMMENDED',
+  },
+  'focus-muscle': {
+    steps: 8000,
+    label: '8,000–10,000 steps/day',
+    why: 'Hypertrophy training requires recovery. Excessive cardio can impair muscle protein synthesis. 8,000–10,000 steps maintains cardiovascular health without competing with muscle-building stimulus.',
+    urgency: '🟢 MODERATE',
+  },
+  'focus-strength': {
+    steps: 7000,
+    label: '7,000–8,000 steps/day',
+    why: 'Strength athletes prioritise recovery between heavy sessions. Light daily walking reduces inflammation and improves sleep quality without adding significant fatigue.',
+    urgency: '🟢 MODERATE',
+  },
+  'focus-general': {
+    steps: 10000,
+    label: '10,000 steps/day',
+    why: '10,000 steps is the gold-standard recommendation for general health — it reduces all-cause mortality, cardiovascular risk, and metabolic disease markers.',
+    urgency: '🟢 STANDARD',
+  },
+  'focus-tone': {
+    steps: 10000,
+    label: '10,000–12,000 steps/day',
+    why: 'Toning requires a slight caloric deficit alongside resistance training. 10,000–12,000 steps creates the daily energy deficit needed without impairing muscle retention.',
+    urgency: '🟡 RECOMMENDED',
+  },
+  'focus-recomp': {
+    steps: 10000,
+    label: '10,000 steps/day',
+    why: 'Body recomposition (lose fat, build muscle simultaneously) needs consistent daily energy expenditure. 10,000 steps helps maintain the slight deficit needed without sacrificing recovery.',
+    urgency: '🟡 RECOMMENDED',
+  },
+  'focus-mobility': { steps: 8000,  label: '8,000 steps/day', why: 'Daily walking maintains joint mobility and hip flexor length. Keep a comfortable, slightly brisk pace.', urgency: '🟢 MODERATE' },
+  'focus-yoga':     { steps: 8000,  label: '8,000 steps/day', why: 'Yoga practitioners benefit from light daily walking for cardiovascular health. Prioritise recovery on practice days.', urgency: '🟢 MODERATE' },
+  'focus-pilates':  { steps: 8000,  label: '8,000 steps/day', why: 'Complement Pilates sessions with daily walking for cardiovascular health.', urgency: '🟢 MODERATE' },
+  'focus-calisthenics': { steps: 9000, label: '8,000–10,000 steps/day', why: 'Calisthenics athletes need active recovery. Aim for 8,000–10,000 steps on rest days, fewer on heavy training days.', urgency: '🟢 MODERATE' },
+  'focus-military': { steps: 15000, label: '15,000+ steps/day', why: 'Military fitness standards require sustained high activity. Ruck marching, PT circuits, and daily walks compound to high step counts. Target 15,000+ on training days.', urgency: '🔴 HIGH PRIORITY' },
+};
+
+// Rep range recommendations per goal
+const REP_RECS = {
+  'focus-strength': {
+    range: '1–5 reps',
+    load: '85–100% 1RM',
+    rest: '2–5 minutes',
+    rationale: 'Heavy load, low reps drive maximal neurological adaptations — motor unit recruitment, rate coding, and inter-muscular coordination. This is the primary driver of maximal strength.',
+    secondary: 'Schoenfeld (2021): strength gains are greatest with low-rep, heavy training. Higher reps can build strength but heavy loads are still superior.',
+    color: '#4caf50',
+  },
+  'focus-muscle': {
+    range: '6–12 reps',
+    load: '67–85% 1RM',
+    rest: '60–90 seconds',
+    rationale: 'The hypertrophy sweet spot — maximises mechanical tension AND metabolic stress simultaneously. NASM recommends 6–12 reps at 75–85% 1RM for most hypertrophy goals.',
+    secondary: 'Schoenfeld (2021) confirmed hypertrophy occurs across all rep ranges IF taken close to failure — but 6–12 is most time-efficient and produces consistent results.',
+    color: '#ff7a1a',
+  },
+  'focus-tone': {
+    range: '12–20 reps',
+    load: '50–70% 1RM',
+    rest: '30–60 seconds',
+    rationale: 'Higher reps with moderate load builds muscle density and the "defined" appearance without significant size increase. Shorter rest periods increase metabolic demand.',
+    secondary: 'Research shows 20–30 rep sets can produce comparable hypertrophy to 8–12 rep sets when taken to near-failure — particularly effective for Type I muscle fibre development.',
+    color: '#4a9eff',
+  },
+  'focus-fatloss': {
+    range: '12–20 reps',
+    load: '50–65% 1RM',
+    rest: '30–45 seconds',
+    rationale: 'Circuit-style training with shorter rest periods maintains elevated heart rate, increases EPOC (excess post-exercise oxygen consumption), and burns more calories per session than low-rep strength work.',
+    secondary: 'The goal is preserving muscle while in a caloric deficit. Moderate reps with near-failure effort preserves the maximum muscle mass during fat loss.',
+    color: '#cc44aa',
+  },
+  'focus-visceral': {
+    range: '12–20 reps + HIIT',
+    load: '50–70% 1RM',
+    rest: '30–45 seconds',
+    rationale: 'A 2024 meta-analysis of 84 RCTs found vigorous-intensity aerobic exercise and HIIT have the highest probability of reducing visceral fat. Resistance training helps but aerobic vigorous work is the #1 driver.',
+    secondary: 'Combine: 12–20 rep circuits (resistance) + 20-min vigorous cardio + split step walks. This three-pronged approach produces the greatest VFA reduction.',
+    color: '#cc44aa',
+  },
+  'focus-endurance': {
+    range: '20–30+ reps',
+    load: '30–50% 1RM',
+    rest: '15–30 seconds',
+    rationale: 'High rep, low load training develops Type I (slow-twitch) muscle fibres, improves lactate threshold, and builds the muscular endurance needed for sustained performance.',
+    secondary: 'NSCA guidelines: >12 reps for muscular endurance. Campos et al. (2002) confirmed high-rep protocols selectively increase Type I fibre hypertrophy.',
+    color: '#64b5f6',
+  },
+  'focus-recomp': {
+    range: '8–15 reps',
+    load: '60–75% 1RM',
+    rest: '60 seconds',
+    rationale: 'Body recomposition requires sufficient load for muscle retention and enough volume for metabolic effect. The 8–15 rep range covers both — enough mechanical tension to retain/build muscle while creating caloric demand.',
+    secondary: 'Daily undulating periodization (DUP) — varying rep ranges across sessions — is particularly effective for recomp as it simultaneously trains strength, hypertrophy, and endurance pathways.',
+    color: '#ff9800',
+  },
+  'focus-general': {
+    range: '8–15 reps',
+    load: '60–75% 1RM',
+    rest: '60 seconds',
+    rationale: 'A balanced rep range covers multiple adaptation pathways. Sufficient for general health improvements, functional strength, and body composition maintenance.',
+    secondary: 'ACSM recommends 8–12 reps for general health. This range is sustainable, enjoyable, and produces consistent results for non-competitive trainees.',
+    color: 'var(--border2)',
+  },
+  'focus-calisthenics': {
+    range: 'Max reps / skill holds',
+    load: 'Bodyweight + leverage',
+    rest: '90–120 seconds',
+    rationale: 'Calisthenics uses progressive difficulty rather than load — the "reps" goal is to perform max-quality reps of your current progression level, then advance to a harder variant.',
+    secondary: 'Research on military trainees shows max-rep bodyweight circuits build strength-endurance, core stability, and relative strength superior to machine-based training.',
+    color: '#9c27b0',
+  },
+  'focus-military': {
+    range: 'Max reps (timed sets)',
+    load: 'Bodyweight / functional',
+    rest: '60 seconds',
+    rationale: 'Military fitness focuses on max performance under time constraints — push-up and pull-up max tests require training to absolute failure in timed windows.',
+    secondary: 'AFT standards reward high-rep performance. Train 3–5 sets to near-failure on push-ups, sit-ups, pull-ups, and runs at goal pace.',
+    color: '#795548',
+  },
+  'focus-yoga':    { range: 'Holds: 30–90 sec', load: 'Bodyweight', rest: '10–15 sec', rationale: 'Yoga works through time under tension (pose holds) rather than repetitions. Target 30–90 second holds per pose for flexibility and neuromuscular adaptation.', secondary: '', color: '#9c27b0' },
+  'focus-pilates': { range: '8–12 controlled reps', load: 'Bodyweight / springs', rest: '20–30 sec', rationale: 'Pilates uses slow, controlled movements with full focus on form. 8–12 reps with a 2–3 second tempo per rep maximises deep stabiliser activation.', secondary: '', color: '#e91e63' },
+  'focus-mobility': { range: '30–90 sec holds', load: 'Bodyweight', rest: 'Minimal', rationale: 'Flexibility improvements require sustained stretch duration. Research shows 30–90 second static holds produce the greatest range-of-motion gains.', secondary: '', color: '#4caf50' },
+};
+
+// Per-goal action plan — what to actually DO, ranked by evidence strength
+const GOAL_ACTIONS = {
+  'focus-visceral': {
+    icon: '🎯',
+    label: 'Reduce Visceral Fat',
+    headline: 'Visceral fat is metabolically active and responds to a specific combination of interventions.',
+    actions: [
+      { rank:1, emoji:'🏃', text:'Walk 12,000–15,000 steps/day split into 4–5 shorter sessions — NOT one long march. Sustained cortisol from long sessions stores visceral fat.' },
+      { rank:2, emoji:'⚡', text:'Add 20 min vigorous cardio 3×/week (HIIT, air bike, sprint intervals). A 2024 meta-analysis of 84 RCTs found vigorous intensity is the #1 exercise intervention for visceral fat reduction.' },
+      { rank:3, emoji:'🏋️', text:'Resistance train 3–4×/week. Muscle mass increases insulin sensitivity — the key hormonal driver of visceral fat storage.' },
+      { rank:4, emoji:'😴', text:'Prioritise 7–9 hours of sleep. Sleep deprivation increases cortisol and ghrelin — directly storing visceral fat and triggering hunger.' },
+      { rank:5, emoji:'🥗', text:'Reduce refined carbohydrates and sugar. Hopkins researchers found low-carb diets caused 10 lbs MORE loss than low-fat diets at equal calories, with visceral fat loss being the primary difference.' },
+    ],
+  },
+  'focus-fatloss': {
+    icon: '🔥',
+    label: 'Fat Loss',
+    headline: 'Fat loss requires a caloric deficit. Exercise preserves muscle and accelerates the deficit.',
+    actions: [
+      { rank:1, emoji:'📉', text:'Create a 300–500 calorie daily deficit through diet — track your food intake at least for the first 4 weeks to calibrate.' },
+      { rank:2, emoji:'🏃', text:'Walk 10,000–12,000 steps/day. NEAT (non-exercise activity thermogenesis) accounts for 15–30% of total daily energy — more than most gym sessions.' },
+      { rank:3, emoji:'💪', text:'Resistance train 3×/week minimum to preserve muscle during deficit. Muscle is metabolically expensive — it burns calories at rest.' },
+      { rank:4, emoji:'🥩', text:'Target 0.7–1g of protein per lb of body weight. High protein intake preserves lean mass and increases satiety during fat loss.' },
+      { rank:5, emoji:'⚡', text:'Add 1–2 HIIT sessions per week. Increases EPOC (excess post-exercise oxygen consumption) — you burn more calories for 24–48 hours post-session.' },
+    ],
+  },
+  'focus-muscle': {
+    icon: '💪',
+    label: 'Build Muscle (Hypertrophy)',
+    headline: 'Hypertrophy requires mechanical tension, metabolic stress, and enough calories to build.',
+    actions: [
+      { rank:1, emoji:'📈', text:'Progressive overload — add weight, reps, or sets every 1–2 weeks. This is the single most important variable for hypertrophy.' },
+      { rank:2, emoji:'🍗', text:'Eat in a caloric surplus of 200–300 cal/day. Target 0.8–1g protein per lb of bodyweight. Without enough fuel, muscle growth stalls.' },
+      { rank:3, emoji:'🏋️', text:'Train each muscle 2×/week. Meta-analyses consistently show twice-weekly frequency outperforms once-weekly for hypertrophy.' },
+      { rank:4, emoji:'😴', text:'Sleep 8–9 hours. Growth hormone peaks during deep sleep — this is when muscle is actually built.' },
+      { rank:5, emoji:'⏸️', text:'Allow 48–72 hours recovery between sessions for the same muscle group. Training a sore muscle before it recovers is counterproductive.' },
+    ],
+  },
+  'focus-strength': {
+    icon: '🏋️',
+    label: 'Increase Strength',
+    headline: 'Strength is primarily a neurological adaptation — train the nervous system to recruit more muscle.',
+    actions: [
+      { rank:1, emoji:'🔺', text:'Lift heavy. 85%+ of 1RM for 1–5 reps drives maximal motor unit recruitment — the primary driver of strength gains.' },
+      { rank:2, emoji:'📊', text:'Periodise your training. Linear or wave periodisation (gradually increasing load over 4–8 week cycles with deload weeks) prevents plateau.' },
+      { rank:3, emoji:'🎯', text:'Focus on compound movements: squat, deadlift, bench, row, press. These train the most muscle simultaneously and produce the greatest strength transfer.' },
+      { rank:4, emoji:'⏱️', text:'Rest 2–5 minutes between heavy sets. Insufficient rest means the next set uses a fatigued nervous system — you train weakness, not strength.' },
+      { rank:5, emoji:'😴', text:'Deload every 4–6 weeks. A planned week of reduced volume allows supercompensation — you come back stronger.' },
+    ],
+  },
+  'focus-tone': {
+    icon: '✦',
+    label: 'Tone & Define',
+    headline: '"Toning" means building muscle density while at or near caloric maintenance.',
+    actions: [
+      { rank:1, emoji:'⚖️', text:'Eat at caloric maintenance or a very slight deficit (–100 to –200 cal). Too large a deficit loses the muscle that creates the "toned" look.' },
+      { rank:2, emoji:'🔄', text:'Train with higher reps (12–20), shorter rest (30–60 sec), near failure. This creates the dense, defined muscle appearance.' },
+      { rank:3, emoji:'🏃', text:'Add 2–3 cardio sessions per week of 20–30 min. Enough to create a metabolic effect without excessive muscle loss.' },
+      { rank:4, emoji:'💪', text:'Prioritise compound lifts first, isolation work second. You cannot "spot reduce" fat — but you can build muscle in specific areas to change their appearance.' },
+      { rank:5, emoji:'🥗', text:'High protein intake (0.8g/lb) is critical. It preserves muscle during the slight deficit needed to reveal definition.' },
+    ],
+  },
+  'focus-endurance': {
+    icon: '🫀',
+    label: 'Cardiovascular Endurance',
+    headline: 'Endurance improves through progressive cardiovascular overload and Zone 2 base building.',
+    actions: [
+      { rank:1, emoji:'🏃', text:'Build your Zone 2 base — 150+ min/week of moderate cardio where you can hold a conversation. This builds mitochondrial density and fat-burning efficiency.' },
+      { rank:2, emoji:'⚡', text:'Add 1–2 VO2 max sessions per week (sprint intervals, tempo runs). These raise your ceiling and improve lactate threshold.' },
+      { rank:3, emoji:'💪', text:'Strength train 2×/week. Stronger muscles improve running economy, cycling power, and reduce injury risk.' },
+      { rank:4, emoji:'📈', text:'Increase training volume by no more than 10%/week to avoid overtraining and injury.' },
+      { rank:5, emoji:'🥗', text:'Carbohydrates are your primary fuel for endurance. Do not restrict carbs below 40–50% of calories during heavy training blocks.' },
+    ],
+  },
+  'focus-recomp': {
+    icon: '⚡',
+    label: 'Body Recomposition',
+    headline: 'Recomp is possible — lose fat and gain muscle simultaneously — primarily in beginners or those returning after a break.',
+    actions: [
+      { rank:1, emoji:'⚖️', text:'Eat at maintenance calories (TDEE). Recomp happens at caloric balance — you need enough to build muscle but not enough to store fat.' },
+      { rank:2, emoji:'🥩', text:'Maximise protein — 1g per lb of bodyweight. Protein drives muscle protein synthesis and prevents muscle breakdown simultaneously.' },
+      { rank:3, emoji:'🏋️', text:'Resistance train 4×/week. The muscle-building stimulus needs to be high enough to offset fat loss. Recomp requires more volume than either pure fat loss or pure muscle gain.' },
+      { rank:4, emoji:'📊', text:'Use daily undulating periodization (DUP) — alternate between strength (3–5 reps), hypertrophy (8–12), and endurance (15–20) sessions to train all muscle fibre types.' },
+      { rank:5, emoji:'⏰', text:'Be patient. Recomp is the slowest approach. Expect 3–6 months before significant body composition changes are visible.' },
+    ],
+  },
+  'focus-calisthenics': {
+    icon: '💯',
+    label: 'Calisthenics Mastery',
+    headline: 'Calisthenics is about skill acquisition and relative strength — your weight is the load, leverage is the variable.',
+    actions: [
+      { rank:1, emoji:'📈', text:'Follow the skill progression ladder. Master each level before advancing: push-up → diamond → archer → pseudo-planche. Attempting advanced skills too early causes injury.' },
+      { rank:2, emoji:'💪', text:'Train to near-failure on each set. Research shows bodyweight exercises require high effort (near-failure) to match the hypertrophy of weighted exercises.' },
+      { rank:3, emoji:'🎯', text:'Prioritise pull work — pull-ups, rows, and horizontal pulling. Most people overtrain push patterns and develop shoulder imbalances.' },
+      { rank:4, emoji:'🧘', text:'Invest in mobility — especially shoulder external rotation, thoracic extension, and hip flexor length. These limit advanced skill achievement.' },
+      { rank:5, emoji:'⏱️', text:'Rest 90–120 seconds between skill sets. Skill acquisition degrades under fatigue — you engrain poor movement patterns when you train tired.' },
+    ],
+  },
+  'focus-military': {
+    icon: '🎖️',
+    label: 'Military / Tactical Fitness',
+    headline: 'Military fitness is about performance under cumulative fatigue and stress — train for the test, not just the gym.',
+    actions: [
+      { rank:1, emoji:'🎯', text:'Train your specific test events: max push-ups (2 min), max sit-ups (2 min), plank hold, and 2-mile run. Practice the exact conditions of the test regularly.' },
+      { rank:2, emoji:'🏃', text:'Run at your goal 2-mile pace. Interval training at and above goal pace is the fastest way to improve timed run performance.' },
+      { rank:3, emoji:'💪', text:'Max-rep push-up sets 3–5×/week. Train beyond failure using mechanical drop sets: full → incline → knee push-ups in one continuous set.' },
+      { rank:4, emoji:'🎒', text:'Ruck 1–2×/week with 30–45 lb pack. Ruck marching builds posterior chain, work capacity, and mental toughness simultaneously.' },
+      { rank:5, emoji:'😴', text:'Prioritise sleep. Military trainees consistently underestimate sleep\'s impact on performance. 7–9 hours improves reaction time, cognitive performance, and injury resistance.' },
+    ],
+  },
+  'focus-general':  { icon:'🏃', label:'General Fitness', headline:'Balanced fitness improves all health markers simultaneously.', actions:[
+    { rank:1, emoji:'🔄', text:'Consistency > intensity. Training 3–4×/week for a year beats 7×/week for 3 months then burning out.' },
+    { rank:2, emoji:'💪', text:'Include strength training 2–3×/week. Muscle mass is the single best predictor of longevity and metabolic health.' },
+    { rank:3, emoji:'🏃', text:'Hit 8,000–10,000 steps daily. Walking is the most sustainable form of cardiovascular exercise.' },
+    { rank:4, emoji:'😴', text:'Sleep 7–9 hours. Poor sleep undermines every other healthy behaviour.' },
+    { rank:5, emoji:'🥗', text:'Focus on whole foods and adequate protein. You cannot out-train a bad diet.' },
+  ]},
+  'focus-yoga':     { icon:'🧘', label:'Yoga Practice', headline:'Yoga builds flexibility, balance, and parasympathetic tone — the antidote to stress-driven fat storage.', actions:[
+    { rank:1, emoji:'📅', text:'Practice 4–6×/week. Consistency is more important than session length for flexibility gains.' },
+    { rank:2, emoji:'⏱️', text:'Hold poses for 30–90 seconds. Research shows this duration produces the greatest range-of-motion gains.' },
+    { rank:3, emoji:'😮‍💨', text:'Prioritise breath work. Pranayama reduces cortisol more effectively than most other interventions — directly anti-inflammatory.' },
+    { rank:4, emoji:'🔄', text:'Combine Vinyasa (active) and Yin (passive) sessions. Active sessions build strength; passive sessions improve flexibility.' },
+    { rank:5, emoji:'💪', text:'Add resistance training 1–2×/week. Yoga alone does not produce sufficient mechanical load for bone density or muscle mass maintenance.' },
+  ]},
+  'focus-pilates':  { icon:'🌀', label:'Pilates', headline:'Pilates builds deep core stabilisers that standard training ignores — transforming posture and movement quality.', actions:[
+    { rank:1, emoji:'🎯', text:'Focus on neutral spine and deep core engagement (transverse abdominis) in every exercise. This is the foundation of the entire method.' },
+    { rank:2, emoji:'🐢', text:'Slow down. Pilates uses slow, controlled tempos (2–3 sec per movement). Speed defeats the purpose.' },
+    { rank:3, emoji:'📅', text:'Practice 3–5×/week for meaningful results. Pilates adaptations require frequency and consistency.' },
+    { rank:4, emoji:'💪', text:'Add resistance training 2×/week. Pilates improves movement quality but does not produce sufficient load for significant muscle growth or bone density.' },
+    { rank:5, emoji:'🏃', text:'Walk 8,000 steps daily for cardiovascular health.' },
+  ]},
+  'focus-mobility': { icon:'🧘', label:'Mobility & Flexibility', headline:'Mobility is the foundation of pain-free movement and injury prevention.', actions:[
+    { rank:1, emoji:'📅', text:'Stretch daily — even 10 minutes. Frequency is more important than session length for flexibility gains.' },
+    { rank:2, emoji:'⏱️', text:'Hold stretches 30–90 seconds. Short holds (<15 sec) produce minimal lasting flexibility change.' },
+    { rank:3, emoji:'🔥', text:'Warm up with dynamic movements first. Static stretching on cold muscles is less effective and slightly higher injury risk.' },
+    { rank:4, emoji:'🎯', text:'Address your specific restrictions: hip flexors (desk workers), thoracic spine (overhead athletes), hamstrings (runners).' },
+    { rank:5, emoji:'💪', text:'Resistance training through full range of motion improves mobility better than stretching alone for many muscle groups.' },
+  ]},
+  'focus-weightloss': { icon:'📉', label:'Weight Loss', headline:'Sustainable weight loss = caloric deficit + muscle preservation + consistency.', actions:[
+    { rank:1, emoji:'📉', text:'Create a 300–500 cal/day deficit. Any more accelerates muscle loss and metabolic adaptation (the body fights back harder).' },
+    { rank:2, emoji:'🥩', text:'Eat 0.8–1g protein/lb bodyweight. The single most important dietary variable for body composition during weight loss.' },
+    { rank:3, emoji:'💪', text:'Lift weights 3×/week. Resistance training is the only reliable way to preserve muscle during a caloric deficit.' },
+    { rank:4, emoji:'🏃', text:'Walk 10,000–12,000 steps/day. NEAT is one of the most underrated fat-loss tools.' },
+    { rank:5, emoji:'😴', text:'Sleep 7–9 hours. Sleep deprivation increases ghrelin (hunger hormone) by 25% and decreases leptin (satiety hormone).' },
+  ]},
+};
+
+function renderGoalCoachCard() {
+  const el = document.getElementById('goalCoachCard');
+  if (!el) return;
+  const priority = userGoals.focusPriority || userGoals.trainingFocus || [];
+  if (!priority.length) {
+    el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);padding:10px;">
+      Select and rank your Training Focus goals below to see your personalised action plan.
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = priority.map((focusId, rank) => {
+    const data = GOAL_ACTIONS[focusId];
+    if (!data) return '';
+    const isTop = rank === 0;
+    return `<div style="margin-bottom:${isTop?'16':'10'}px;padding:${isTop?'14':'10'}px 14px;
+      background:${isTop?'var(--accent-dim)':'var(--bg3)'};
+      border-left:4px solid ${isTop?'var(--accent2)':'var(--border2)'};
+      border:1px solid ${isTop?'var(--accent2)':'var(--border)'};">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:${isTop?'10':'6'}px;">
+        <span style="font-family:var(--font-display);font-size:${isTop?'1.4rem':'1rem'};
+          color:${isTop?'var(--accent2)':'var(--text-dim)'};">#${rank+1}</span>
+        <span style="font-size:${isTop?'1.3rem':'1rem'}">${data.icon}</span>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:${isTop?'0.75rem':'0.65rem'};
+            color:${isTop?'var(--accent2)':'var(--text)'};letter-spacing:.08em;font-weight:bold;">
+            ${data.label.toUpperCase()}
+          </div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">${data.headline}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:${isTop?'7':'4'}px;">
+        ${(isTop ? data.actions : data.actions.slice(0,2)).map(a =>
+          `<div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="flex-shrink:0;font-size:${isTop?'0.9rem':'0.75rem'}">${a.emoji}</span>
+            <div style="font-family:var(--font-mono);font-size:${isTop?'0.62rem':'0.58rem'};
+              color:${isTop?'var(--text)':'var(--text-dim)'};line-height:1.6;">
+              <strong style="color:${isTop?'var(--accent2)':'var(--border2)'};">#${a.rank}</strong> ${a.text}
+            </div>
+          </div>`
+        ).join('')}
+        ${!isTop && data.actions.length > 2 ? `<div style="font-family:var(--font-mono);font-size:0.55rem;
+          color:var(--border2);">+${data.actions.length-2} more actions — move to #1 to see full plan</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStepRecommendation() {
+  const el  = document.getElementById('stepGoalRecommendation');
+  const txt = document.getElementById('stepGoalRecText');
+  const btn = document.getElementById('stepGoalRecBtn');
+  if (!el || !txt || !btn) return;
+
+  const priority = userGoals.focusPriority || userGoals.trainingFocus || [];
+  // Find the first goal that has a step recommendation
+  let rec = null;
+  for (const fid of priority) {
+    if (STEP_RECS[fid]) { rec = { ...STEP_RECS[fid], focusId: fid }; break; }
+  }
+  if (!rec) { el.style.display = 'none'; return; }
+
+  el.style.display = 'block';
+  txt.innerHTML = `
+    <div style="margin-bottom:6px;">
+      <span style="font-family:var(--font-mono);font-size:0.62rem;
+        color:var(--accent2);">${rec.urgency}</span>
+      <span style="font-family:var(--font-display);font-size:1.1rem;
+        color:var(--text-bright);margin-left:8px;">${rec.label}</span>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);line-height:1.7;">${rec.why}</div>`;
+
+  btn.textContent = `→ SET TO ${rec.steps.toLocaleString()} STEPS`;
+  btn.onclick = () => {
+    setStepPreset(rec.steps);
+    document.getElementById('goalStepCustom').value = rec.steps;
+    btn.textContent = '✓ APPLIED';
+    btn.style.color = '#4caf50';
+    setTimeout(() => {
+      btn.textContent = `→ SET TO ${rec.steps.toLocaleString()} STEPS`;
+      btn.style.color = '';
+    }, 2000);
+  };
+}
+
+function renderRepRecommendation() {
+  const card = document.getElementById('repRecommendationCard');
+  const el   = document.getElementById('repRecommendationContent');
+  if (!card || !el) return;
+
+  const priority = userGoals.focusPriority || userGoals.trainingFocus || [];
+  const recs = priority.map(fid => REP_RECS[fid]).filter(Boolean);
+
+  if (!recs.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  el.innerHTML = recs.map((rec, i) => {
+    const focusId = priority[i];
+    const data    = GOAL_ACTIONS[focusId] || {};
+    const isTop   = i === 0;
+    return `<div style="padding:10px 14px;margin-bottom:8px;
+      background:${isTop?'var(--accent-dim)':'var(--bg3)'};
+      border-left:4px solid ${rec.color};
+      border:1px solid ${isTop?'var(--accent2)':'var(--border)'};">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <span style="font-family:var(--font-display);font-size:0.9rem;
+          color:var(--text-dim);">#${i+1}</span>
+        <span style="font-size:1rem;">${data.icon||''}</span>
+        <span style="font-family:var(--font-mono);font-size:0.65rem;
+          color:${rec.color};font-weight:bold;">${data.label||focusId}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
+        ${[
+          {label:'REPS', val:rec.range},
+          {label:'LOAD', val:rec.load},
+          {label:'REST', val:rec.rest},
+        ].map(stat => `<div style="text-align:center;padding:6px;background:var(--bg2);
+          border:1px solid var(--border);">
+          <div style="font-family:var(--font-mono);font-size:0.52rem;
+            color:var(--border2);letter-spacing:.1em;">${stat.label}</div>
+          <div style="font-family:var(--font-display);font-size:0.9rem;
+            color:${rec.color};">${stat.val}</div>
+        </div>`).join('')}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;
+        color:var(--text);line-height:1.6;margin-bottom:${rec.secondary?'6px':'0'};">
+        ${rec.rationale}
+      </div>
+      ${rec.secondary ? `<div style="font-family:var(--font-mono);font-size:0.57rem;
+        color:var(--text-dim);line-height:1.5;font-style:italic;">
+        ▸ ${rec.secondary}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
 function renderTrainingFocus() {
   const el = document.getElementById('trainingFocusCards');
   if (!el) return;
@@ -5895,6 +6838,10 @@ function toggleTrainingFocus(id) {
     userGoals.focusPriority.push(id); // added at lowest priority by default
   }
   renderTrainingFocus();
+  renderGoalCoachCard();
+  renderStepRecommendation();
+  renderStepsTabRecommendation();
+  renderRepRecommendation();
 }
 
 function moveFocusPriority(id, direction) {
@@ -5906,6 +6853,10 @@ function moveFocusPriority(id, direction) {
   if (newIdx < 0 || newIdx >= arr.length) return;
   [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
   renderTrainingFocus();
+  renderGoalCoachCard();
+  renderStepRecommendation();
+  renderStepsTabRecommendation();
+  renderRepRecommendation();
 }
 
 function renderSpecialFlags() {
@@ -6181,6 +7132,9 @@ async function loadGoalsPage() {
   renderSpecialFlags();
   renderBodyPartGoals();
   renderSetsGoalCards();
+  renderGoalCoachCard();
+  renderStepRecommendation();
+  renderRepRecommendation();
   renderProgramSummaryCard();
 }
 
@@ -6290,6 +7244,7 @@ function renderRecommendedSplit() {
 // ═══════════════════════════════════════════════════════════
 async function loadStepsPage() {
   await loadGoals();
+  renderStepsTabRecommendation();
   const today = localDateStr();
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
