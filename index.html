@@ -1303,87 +1303,188 @@ body.theme-female .goal-chip{border-radius:20px;}
       <!-- ══ FASTING TAB ══ -->
       <div id="npanel-fasting" style="display:none;">
 
-        <!-- Active fast / start fast -->
-        <div class="card mb16" style="border-left:4px solid var(--accent2);">
-          <div class="card-label">FASTING TIMER</div>
+        <!-- Sub-nav tabs within fasting -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+          <button class="btn btn-p" id="ftab-timer"    onclick="fastTab('timer')"    style="font-size:0.6rem;">⏱ TIMER</button>
+          <button class="btn btn-s" id="ftab-schedule" onclick="fastTab('schedule')" style="font-size:0.6rem;">📅 SCHEDULE</button>
+          <button class="btn btn-s" id="ftab-log"      onclick="fastTab('log')"      style="font-size:0.6rem;">📊 LOG &amp; STATS</button>
+          <button class="btn btn-s" id="ftab-science"  onclick="fastTab('science')"  style="font-size:0.6rem;">🔬 SCIENCE</button>
+        </div>
+
+        <!-- ── TIMER TAB ── -->
+        <div id="fpanel-timer">
 
           <!-- Protocol selector -->
-          <div style="margin-bottom:14px;">
-            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:8px;">SELECT PROTOCOL</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;" id="fastProtocolBtns"></div>
+          <div class="card mb16">
+            <div class="card-label">PROTOCOL</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="fastProtocolBtns"></div>
+            <div id="fastCustomRow" style="display:none;margin-bottom:10px;">
+              <label style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);">CUSTOM FAST (hours):</label>
+              <input type="number" id="fastCustomHours" min="1" max="120" step="0.5" value="16"
+                style="width:80px;margin-left:8px;background:var(--bg3);border:1px solid var(--border);
+                color:var(--text);font-family:var(--font-mono);font-size:0.8rem;padding:6px 8px;outline:none;">
+            </div>
+            <div id="fastEatingWindow" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);"></div>
           </div>
 
-          <!-- Custom duration -->
-          <div id="fastCustomRow" style="display:none;margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <label style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);">CUSTOM FAST (hours):</label>
-            <input type="number" id="fastCustomHours" min="1" max="72" step="0.5" value="16"
-              style="width:80px;background:var(--bg3);border:1px solid var(--border);
-              color:var(--text);font-family:var(--font-mono);font-size:0.8rem;padding:6px 8px;outline:none;">
-          </div>
-
-          <!-- Eating window display -->
-          <div id="fastEatingWindow" style="font-family:var(--font-mono);font-size:0.62rem;
-            color:var(--text-dim);margin-bottom:14px;"></div>
-
-          <!-- Timer display -->
-          <div style="text-align:center;padding:16px 0;">
-            <div id="fastStatusLabel" style="font-family:var(--font-mono);font-size:0.6rem;
-              color:var(--border2);letter-spacing:.15em;margin-bottom:8px;">NOT FASTING</div>
-            <!-- Progress ring -->
-            <div style="position:relative;width:160px;height:160px;margin:0 auto 12px;">
-              <svg width="160" height="160" style="transform:rotate(-90deg);">
-                <circle cx="80" cy="80" r="68" fill="none" stroke="var(--bg3)" stroke-width="10"/>
-                <circle id="fastRingFill" cx="80" cy="80" r="68" fill="none"
-                  stroke="var(--accent2)" stroke-width="10" stroke-linecap="round"
-                  stroke-dasharray="427.3" stroke-dashoffset="427.3"
-                  style="transition:stroke-dashoffset 1s ease;"/>
-              </svg>
-              <div style="position:absolute;inset:0;display:flex;flex-direction:column;
-                align-items:center;justify-content:center;">
-                <div id="fastTimerDisplay" style="font-family:var(--font-display);
-                  font-size:2rem;color:var(--accent2);line-height:1;">0:00:00</div>
-                <div id="fastTimerSub" style="font-family:var(--font-mono);
-                  font-size:0.55rem;color:var(--text-dim);letter-spacing:.1em;margin-top:4px;">ELAPSED</div>
+          <!-- Start time + date override -->
+          <div class="card mb16">
+            <div class="card-label">FAST START TIME</div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
+              Set the actual time you started your fast — even if it was yesterday or earlier.
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+              <div class="field">
+                <label>START DATE</label>
+                <input type="date" id="fastStartDate"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);
+                  color:var(--text);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;">
+              </div>
+              <div class="field">
+                <label>START TIME</label>
+                <input type="time" id="fastStartTime" value="22:00"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);
+                  color:var(--text);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;">
               </div>
             </div>
-            <div id="fastPctDisplay" style="font-family:var(--font-mono);font-size:0.65rem;
-              color:var(--text-dim);margin-bottom:16px;"></div>
-          </div>
-
-          <!-- Start / stop buttons -->
-          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-            <button id="fastStartBtn" class="btn btn-p" onclick="startFast()"
-              style="font-size:0.7rem;padding:10px 24px;">⏱ START FAST</button>
-            <button id="fastStopBtn" class="btn btn-s" onclick="stopFast()"
-              style="display:none;font-size:0.7rem;padding:10px 24px;border-color:var(--danger);color:var(--danger);">
-              ■ END FAST
-            </button>
-          </div>
-          <div id="fastMsg" style="font-family:var(--font-mono);font-size:0.65rem;
-            text-align:center;min-height:18px;margin-top:10px;"></div>
-        </div>
-
-        <!-- Fasting history -->
-        <div class="card mb16">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <div>
-              <div class="card-label">FASTING HISTORY</div>
-              <div class="card-title" style="margin:0;" id="fastStreakLabel">YOUR FASTING LOG</div>
-            </div>
-            <div id="fastStreakBadge" style="display:none;text-align:center;">
-              <div style="font-family:var(--font-display);font-size:2rem;color:var(--accent2);" id="fastStreakNum">0</div>
-              <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">DAY STREAK</div>
+            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:10px;" id="fastEndCalc"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button onclick="setFastStartNow()" class="btn btn-s" style="font-size:0.6rem;">USE NOW</button>
+              <button onclick="setFastStartYesterday()" class="btn btn-s" style="font-size:0.6rem;">LAST NIGHT 10 PM</button>
             </div>
           </div>
-          <div id="fastHistoryList" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">
-            No fasts logged yet.
+
+          <!-- Live timer -->
+          <div class="card mb16" style="border-left:4px solid var(--accent2);">
+            <div style="text-align:center;padding:8px 0 16px;">
+              <div id="fastStatusLabel" style="font-family:var(--font-mono);font-size:0.6rem;
+                color:var(--border2);letter-spacing:.15em;margin-bottom:8px;">NOT FASTING</div>
+              <div style="position:relative;width:160px;height:160px;margin:0 auto 10px;">
+                <svg width="160" height="160" style="transform:rotate(-90deg);">
+                  <circle cx="80" cy="80" r="68" fill="none" stroke="var(--bg3)" stroke-width="10"/>
+                  <circle id="fastRingFill" cx="80" cy="80" r="68" fill="none"
+                    stroke="var(--accent2)" stroke-width="10" stroke-linecap="round"
+                    stroke-dasharray="427.3" stroke-dashoffset="427.3"
+                    style="transition:stroke-dashoffset 1s ease;"/>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+                  align-items:center;justify-content:center;">
+                  <div id="fastTimerDisplay" style="font-family:var(--font-display);
+                    font-size:2rem;color:var(--accent2);line-height:1;">0:00:00</div>
+                  <div id="fastTimerSub" style="font-family:var(--font-mono);
+                    font-size:0.55rem;color:var(--text-dim);letter-spacing:.1em;margin-top:4px;">ELAPSED</div>
+                </div>
+              </div>
+              <div id="fastPctDisplay" style="font-family:var(--font-mono);font-size:0.65rem;
+                color:var(--text-dim);margin-bottom:8px;"></div>
+              <div id="fastMilestoneDisplay" style="font-family:var(--font-mono);font-size:0.6rem;
+                color:var(--accent2);min-height:18px;"></div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;">
+              <button id="fastStartBtn" class="btn btn-p" onclick="startFast()"
+                style="font-size:0.7rem;padding:10px 24px;">⏱ START FAST</button>
+              <button id="fastStopBtn" class="btn btn-s" onclick="stopFast()"
+                style="display:none;font-size:0.7rem;padding:10px 24px;
+                border-color:var(--danger);color:var(--danger);">■ END FAST</button>
+            </div>
+            <div id="fastMsg" style="font-family:var(--font-mono);font-size:0.65rem;
+              text-align:center;min-height:18px;"></div>
+          </div>
+
+          <!-- Log past fast retroactively -->
+          <div class="card mb16" style="border-style:dashed;border-color:var(--border2);">
+            <div class="card-label">LOG A PAST FAST</div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
+              Forgot to log in the app? Enter it manually here.
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <div class="field"><label>START DATE &amp; TIME</label>
+                <input type="datetime-local" id="pastFastStart"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                  font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;">
+              </div>
+              <div class="field"><label>END DATE &amp; TIME</label>
+                <input type="datetime-local" id="pastFastEnd"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                  font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+              <select id="pastFastProtocol" style="flex:1;background:var(--bg3);border:1px solid var(--border);
+                color:var(--text);font-family:var(--font-mono);font-size:0.65rem;padding:7px 8px;outline:none;">
+                <option value="16-8">16:8</option>
+                <option value="18-6">18:6</option>
+                <option value="20-4">20:4</option>
+                <option value="omad">OMAD (23:1)</option>
+                <option value="5-2">5:2</option>
+                <option value="24h">24 Hours</option>
+                <option value="48h">48 Hours</option>
+                <option value="72h">72 Hours</option>
+                <option value="custom">Custom</option>
+              </select>
+              <button onclick="logPastFast()" class="btn btn-p" style="font-size:0.62rem;">+ LOG THIS FAST</button>
+            </div>
+            <div id="pastFastMsg" style="font-family:var(--font-mono);font-size:0.62rem;min-height:16px;"></div>
           </div>
         </div>
 
-        <!-- Science card -->
-        <div class="card mb16">
-          <div class="card-label">THE SCIENCE OF FASTING</div>
-          <div id="fastScienceCard"></div>
+        <!-- ── SCHEDULE TAB ── -->
+        <div id="fpanel-schedule" style="display:none;">
+          <div class="card mb16">
+            <div class="card-label">WEEKLY FASTING SCHEDULE</div>
+            <div class="card-title">SET YOUR FASTING DAYS</div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">
+              Configure which days you fast and which protocols. Days marked as non-fasting show no fast reminder.
+            </div>
+            <div id="fastScheduleGrid"></div>
+            <div style="margin-top:14px;">
+              <button onclick="saveFastSchedule()" class="btn btn-p" style="width:100%;">SAVE SCHEDULE</button>
+              <div id="fastScheduleMsg" style="font-family:var(--font-mono);font-size:0.62rem;
+                text-align:center;margin-top:8px;min-height:16px;"></div>
+            </div>
+          </div>
+
+          <!-- Extended fast guide -->
+          <div class="card mb16">
+            <div class="card-label">EXTENDED FASTING GUIDE</div>
+            <div class="card-title">WHAT TO EXPECT: 24H, 48H &amp; 72H FASTS</div>
+            <div id="extendedFastGuide"></div>
+          </div>
+        </div>
+
+        <!-- ── LOG & STATS TAB ── -->
+        <div id="fpanel-log" style="display:none;">
+          <!-- Stats summary -->
+          <div class="card mb16">
+            <div class="card-label">FASTING STATISTICS</div>
+            <div id="fastStatsGrid"></div>
+          </div>
+          <!-- Streak -->
+          <div class="card mb16" style="text-align:center;">
+            <div class="card-label">FASTING STREAK</div>
+            <div id="fastStreakNum" style="font-family:var(--font-display);font-size:3rem;color:var(--accent2);">0</div>
+            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);">CONSECUTIVE FASTING DAYS</div>
+            <div id="fastStreakDetail" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-top:6px;"></div>
+          </div>
+          <!-- History list -->
+          <div class="card mb16">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div class="card-label" style="margin:0;">FAST HISTORY</div>
+              <button onclick="clearFastHistory()" class="btn btn-s"
+                style="font-size:0.58rem;padding:3px 8px;color:var(--danger);border-color:var(--danger);">CLEAR ALL</button>
+            </div>
+            <div id="fastHistoryList" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">
+              No fasts logged yet.
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCIENCE TAB ── -->
+        <div id="fpanel-science" style="display:none;">
+          <div class="card mb16">
+            <div class="card-label">THE SCIENCE OF FASTING</div>
+            <div id="fastScienceCard"></div>
+          </div>
         </div>
 
       </div>
@@ -3905,73 +4006,125 @@ function renderStepsTabRecommendation() {
 // FASTING SYSTEM
 // ═══════════════════════════════════════════════════════════
 const FAST_PROTOCOLS = [
-  { id:'16-8',    label:'16:8',   hours:16, eatHours:8,  name:'Leangains',
-    desc:'16 hours fasted, 8-hour eating window. The most researched and sustainable protocol. Backed by dozens of RCTs.' },
-  { id:'18-6',    label:'18:6',   hours:18, eatHours:6,  name:'18:6',
-    desc:'18 hours fasted, 6-hour eating window. Stronger autophagy signal than 16:8. Good for fat loss and metabolic health.' },
-  { id:'20-4',    label:'20:4',   hours:20, eatHours:4,  name:'Warrior Diet',
-    desc:'20 hours fasted, 4-hour eating window. Significant metabolic benefit. Difficult to hit protein targets — plan meals carefully.' },
-  { id:'omad',    label:'OMAD',   hours:23, eatHours:1,  name:'One Meal A Day',
-    desc:'One meal per day. Maximum autophagy stimulus. Very challenging to meet caloric and protein needs. Not recommended for muscle-building goals.' },
-  { id:'5-2',     label:'5:2',    hours:0,  eatHours:0,  name:'5:2 Method',
-    desc:'Eat normally 5 days/week. Restrict to 500–600 cal on 2 non-consecutive days. Research shows equivalent fat loss to daily restriction with better adherence.' },
-  { id:'custom',  label:'CUSTOM', hours:0,  eatHours:0,  name:'Custom',
-    desc:'Set your own fasting window duration.' },
+  { id:'16-8',  label:'16:8',   hours:16, eatHours:8,  name:'Leangains 16:8',  desc:'16h fast · 8h eating window. Most researched protocol.', color:'#4a9eff' },
+  { id:'18-6',  label:'18:6',   hours:18, eatHours:6,  name:'18:6',            desc:'18h fast · 6h eating window. Stronger autophagy than 16:8.', color:'#ff9800' },
+  { id:'20-4',  label:'20:4',   hours:20, eatHours:4,  name:'Warrior Diet',    desc:'20h fast · 4h eating window. Aggressive fat loss phase.', color:'#ff7a1a' },
+  { id:'omad',  label:'OMAD',   hours:23, eatHours:1,  name:'One Meal A Day',  desc:'One meal per day. Maximum autophagy stimulus.', color:'#e53935' },
+  { id:'5-2',   label:'5:2',    hours:0,  eatHours:0,  name:'5:2 Method',      desc:'Normal eating 5 days · 500-600 cal on 2 non-consecutive days.', color:'#9c27b0' },
+  { id:'24h',   label:'24H',    hours:24, eatHours:0,  name:'24-Hour Fast',    desc:'Full 24-hour fast. Strong metabolic reset.', color:'#e91e63' },
+  { id:'48h',   label:'48H',    hours:48, eatHours:0,  name:'48-Hour Fast',    desc:'Two-day fast. Significant autophagy and growth hormone surge.', color:'#c2185b' },
+  { id:'72h',   label:'72H',    hours:72, eatHours:0,  name:'72-Hour Fast',    desc:'Three-day fast. Maximum cellular autophagy and immune reset.', color:'#880e4f' },
+  { id:'custom',label:'CUSTOM', hours:0,  eatHours:0,  name:'Custom',          desc:'Set your own fasting window.', color:'var(--border2)' },
 ];
 
 const FAST_SCIENCE = {
-  'focus-fatloss':  { best:'16:8 or 18:6', why:'Daily time-restricted eating (TRE) produces fat loss equivalent to caloric restriction with better adherence. A 2020 NEJM review found TRE reduces body weight 1–8% over 2–3 months.' },
-  'focus-visceral': { best:'18:6 or 20:4', why:'Longer fasting windows increase insulin sensitivity and reduce liver glycogen more completely — forcing the body to oxidise visceral fat. A 2023 study found 18+ hour fasts specifically reduce VFA (visceral fat area).' },
-  'focus-muscle':   { best:'16:8',         why:'16:8 preserves muscle mass while fasting IF protein targets are met within the eating window. Longer fasts increase muscle protein breakdown. Eat 0.8–1g protein/lb within your window.' },
-  'focus-general':  { best:'16:8',         why:'16:8 fasting improves blood pressure, insulin sensitivity, and inflammatory markers in healthy adults. Meta-analyses show consistent improvements in cardiometabolic markers.' },
-  'focus-recomp':   { best:'16:8',         why:'Body recomposition is possible in a 16:8 window when protein is high. The overnight fast allows growth hormone to peak, supporting muscle repair while fasting aids fat oxidation.' },
+  'focus-fatloss':  { best:'16:8 or 18:6', why:'Daily time-restricted eating reduces body weight 1-8% over 2-3 months (NEJM 2020). Consistent adherence is the key variable.' },
+  'focus-visceral': { best:'18:6 or 20:4', why:'Longer fasting windows (18+ hours) increase insulin sensitivity and deplete liver glycogen more completely, forcing visceral fat oxidation. A 2023 study found 18+ hour fasts specifically reduce VFA.' },
+  'focus-muscle':   { best:'16:8',         why:'16:8 preserves muscle mass IF protein targets (0.8-1g/lb) are met within the eating window. Longer fasts increase muscle protein breakdown. Eat most protein in the post-workout meal.' },
+  'focus-general':  { best:'16:8',         why:'16:8 improves blood pressure, insulin sensitivity, and inflammatory markers in healthy adults even without caloric restriction (JAMA Internal Medicine, 2020).' },
+  'focus-recomp':   { best:'16:8',         why:'Body recomposition works in a 16:8 window: the overnight fast allows growth hormone to peak (muscle repair) while fasted state in the morning aids fat oxidation.' },
 };
 
-let fastInterval = null;
-let fastState = { active: false, startTime: null, targetHours: 16, protocol: '16-8' };
-let fastHistory = [];
-let selectedProtocol = '16-8';
+const FAST_MILESTONES = [
+  { hours:4,  label:'Blood sugar stabilises',    detail:'Insulin drops, glucagon rises. Body begins burning through liver glycogen stores.' },
+  { hours:8,  label:'Glycogen depletion begins', detail:'Liver glycogen running low. Fat oxidation rate increasing.' },
+  { hours:12, label:'Ketosis begins',            detail:'Liver glycogen mostly depleted. Ketone production starts. Brain beginning to shift toward fat-derived fuel.' },
+  { hours:14, label:'Fat burning peaks',         detail:'Peak fat oxidation. Growth hormone beginning to rise. The metabolic sweet spot of 16:8 fasting.' },
+  { hours:16, label:'16:8 target reached',       detail:'Most researched fasting window. Autophagy is active. Insulin at its lowest point in 16 hours.' },
+  { hours:18, label:'Autophagy accelerates',     detail:'Cellular cleanup (autophagy) meaningfully elevated. This drives many longevity benefits of fasting.' },
+  { hours:20, label:'20:4 target reached',       detail:'Significant ketone production. Mental clarity often peaks. GH surging - muscle preservation active.' },
+  { hours:24, label:'24H - Full metabolic reset',detail:'Immune cell regeneration begins. Autophagy at ~300% above fed baseline. Gut rest allows mucosal healing.' },
+  { hours:36, label:'Deep ketosis',              detail:'Brain running primarily on ketones. Hunger usually subsides. GH surges up to 5x baseline - protecting muscle.' },
+  { hours:48, label:'48H - Immune reset',        detail:'White blood cell regeneration occurring. BDNF elevated - memory and focus enhanced.' },
+  { hours:54, label:'Maximum autophagy',         detail:'Autophagy near-peak. Damaged cell components being aggressively cleared.' },
+  { hours:72, label:'72H - Full cellular reboot',detail:'Stem cell activation. Immune system regeneration nearly complete. Re-feed carefully: broth then small meals.' },
+];
+
+let fastInterval    = null;
+let fastState       = { active:false, startTime:null, targetHours:16, protocol:'16-8' };
+let fastHistory     = [];
+let fastSchedule    = {};
+let selectedProtocol= '16-8';
 
 async function loadFastHistory() {
   try {
-    const doc = await db.collection('userdata').doc(SESSION.username)
-      .collection('fasting').doc('log').get();
-    fastHistory = doc.exists ? (doc.data().entries || []) : [];
-    const stateDoc = await db.collection('userdata').doc(SESSION.username)
-      .collection('fasting').doc('state').get();
+    const doc = await db.collection('userdata').doc(SESSION.username).collection('fasting').doc('log').get();
+    fastHistory = doc.exists ? (doc.data().entries||[]) : [];
+    const stateDoc = await db.collection('userdata').doc(SESSION.username).collection('fasting').doc('state').get();
     if (stateDoc.exists) {
       const s = stateDoc.data();
       if (s.active && s.startTime) {
-        fastState = { active: true, startTime: new Date(s.startTime), targetHours: s.targetHours || 16, protocol: s.protocol || '16-8' };
+        fastState = { active:true, startTime:new Date(s.startTime), targetHours:s.targetHours||16, protocol:s.protocol||'16-8' };
         selectedProtocol = fastState.protocol;
       }
     }
-  } catch(e) { fastHistory = []; }
+    const schedDoc = await db.collection('userdata').doc(SESSION.username).collection('fasting').doc('schedule').get();
+    if (schedDoc.exists) fastSchedule = schedDoc.data().schedule||{};
+  } catch(e) { fastHistory=[]; }
 }
 
 async function saveFastState() {
-  await db.collection('userdata').doc(SESSION.username)
-    .collection('fasting').doc('state').set({
-      active: fastState.active,
-      startTime: fastState.startTime ? fastState.startTime.toISOString() : null,
-      targetHours: fastState.targetHours,
-      protocol: fastState.protocol,
-    });
+  await db.collection('userdata').doc(SESSION.username).collection('fasting').doc('state').set({
+    active: fastState.active,
+    startTime: fastState.startTime ? new Date(fastState.startTime).toISOString() : null,
+    targetHours: fastState.targetHours,
+    protocol: fastState.protocol,
+  });
 }
 
 async function saveFastHistory() {
-  await db.collection('userdata').doc(SESSION.username)
-    .collection('fasting').doc('log').set({ entries: fastHistory, updated: new Date().toISOString() });
+  await db.collection('userdata').doc(SESSION.username).collection('fasting').doc('log')
+    .set({ entries:fastHistory, updated:new Date().toISOString() });
+}
+
+async function saveFastSchedule() {
+  const days = ['mon','tue','wed','thu','fri','sat','sun'];
+  const sched = {};
+  days.forEach(d => {
+    const cb  = document.getElementById('fsched-fast-'+d);
+    const sel = document.getElementById('fsched-proto-'+d);
+    sched[d]  = { fast:cb?.checked||false, protocol:sel?.value||'16-8' };
+  });
+  fastSchedule = sched;
+  await db.collection('userdata').doc(SESSION.username).collection('fasting').doc('schedule')
+    .set({ schedule:sched, updated:new Date().toISOString() });
+  const msg = document.getElementById('fastScheduleMsg');
+  if (msg) { msg.style.color='#4caf50'; msg.textContent='SCHEDULE SAVED'; setTimeout(()=>msg.textContent='',2500); }
 }
 
 function initFastingTab() {
+  const now = new Date();
+  const dateEl = document.getElementById('fastStartDate');
+  const timeEl = document.getElementById('fastStartTime');
+  if (dateEl && !fastState.active) dateEl.value = localDateStr(now);
+  if (timeEl && !fastState.active) timeEl.value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const pfsEl = document.getElementById('pastFastStart');
+  const pfeEl = document.getElementById('pastFastEnd');
+  if (pfsEl && !pfsEl.value) pfsEl.value = localDateStr(new Date(now-86400000))+'T22:00';
+  if (pfeEl && !pfeEl.value) pfeEl.value = localDateStr(now)+'T18:00';
   loadFastHistory().then(() => {
     renderFastProtocolBtns();
     renderFastScienceCard();
     renderFastHistory();
+    renderFastStats();
+    renderFastScheduleGrid();
+    renderExtendedFastGuide();
     updateFastTimer();
+    updateFastEndCalc();
     if (fastState.active) startFastInterval();
   });
+}
+
+function fastTab(tab) {
+  ['timer','schedule','log','science'].forEach(t => {
+    const p = document.getElementById('fpanel-'+t);
+    const b = document.getElementById('ftab-'+t);
+    if (p) p.style.display = t===tab?'block':'none';
+    if (b) b.className    = t===tab?'btn btn-p':'btn btn-s';
+  });
+  if (tab==='log')      { renderFastHistory(); renderFastStats(); }
+  if (tab==='schedule') { renderFastScheduleGrid(); renderExtendedFastGuide(); }
+  if (tab==='science')  renderFastScienceCard();
 }
 
 function renderFastProtocolBtns() {
@@ -3979,251 +4132,299 @@ function renderFastProtocolBtns() {
   if (!el) return;
   el.innerHTML = FAST_PROTOCOLS.map(p => {
     const active = selectedProtocol === p.id;
-    return `<button onclick="selectProtocol('${p.id}')" type="button"
-      style="font-family:var(--font-mono);font-size:0.65rem;padding:6px 12px;cursor:pointer;
-      background:${active?'var(--accent-dim)':'var(--bg3)'};
-      border:1px solid ${active?'var(--accent2)':'var(--border)'};
-      color:${active?'var(--accent2)':'var(--text-dim)'};">${p.label}</button>`;
+    return '<button onclick="selectProtocol(\''+p.id+'\')" type="button" style="font-family:var(--font-mono);font-size:0.62rem;padding:5px 10px;cursor:pointer;background:'+(active?'var(--accent-dim)':'var(--bg3)')+';border:1px solid '+(active?p.color:'var(--border)')+';color:'+(active?p.color:'var(--text-dim)')+';">'+p.label+'</button>';
   }).join('');
-
-  const proto = FAST_PROTOCOLS.find(p => p.id === selectedProtocol) || FAST_PROTOCOLS[0];
-  const eatEl = document.getElementById('fastEatingWindow');
+  const proto = FAST_PROTOCOLS.find(p=>p.id===selectedProtocol)||FAST_PROTOCOLS[0];
   const customRow = document.getElementById('fastCustomRow');
+  if (customRow) customRow.style.display = proto.id==='custom'?'block':'none';
+  const eatEl = document.getElementById('fastEatingWindow');
   if (eatEl) {
-    if (proto.id === 'custom') {
-      eatEl.innerHTML = '';
-      if (customRow) customRow.style.display = 'flex';
-    } else if (proto.id === '5-2') {
-      if (customRow) customRow.style.display = 'none';
-      eatEl.innerHTML = `<span style="color:var(--accent2);">${proto.name}:</span> ${proto.desc}`;
+    if (proto.eatHours > 0) {
+      const timeEl = document.getElementById('fastStartTime');
+      const startH = timeEl ? parseInt(timeEl.value.split(':')[0]) : 22;
+      const eatStartH = (startH + proto.hours) % 24;
+      const eatEndH   = (eatStartH + proto.eatHours) % 24;
+      const fmt = h => (h%12||12)+':00 '+(h>=12?'PM':'AM');
+      eatEl.innerHTML = '<span style="color:var(--accent2);">'+proto.name+':</span> '+proto.desc+'<br>Eating window: <strong style="color:var(--accent2);">'+fmt(eatStartH)+' – '+fmt(eatEndH)+'</strong>';
     } else {
-      if (customRow) customRow.style.display = 'none';
-      const now = new Date();
-      const eatStart = new Date(now);
-      const fastHrs = fastState.active ? fastState.targetHours : proto.hours;
-      eatStart.setHours(eatStart.getHours() - (fastState.active ? Math.min(fastHrs, new Date() - fastState.startTime)/3600000 : 0));
-      // Calculate eating window from a 12pm start assumption
-      const winStart = 12; // noon default
-      const winEnd   = winStart + proto.eatHours;
-      eatEl.innerHTML = `<span style="color:var(--accent2);">${proto.name}:</span> ${proto.desc}<br>
-        <span style="color:var(--text);">Suggested eating window: <strong style="color:var(--accent2);">${winStart}:00 – ${winEnd > 12 ? winEnd - 12 : winEnd}:00 ${winEnd >= 12 ? 'PM' : 'AM'}</strong></span>`;
+      eatEl.innerHTML = proto.desc ? '<span style="color:var(--text-dim);">'+proto.desc+'</span>' : '';
     }
   }
+  updateFastEndCalc();
 }
 
-function selectProtocol(id) {
-  selectedProtocol = id;
-  renderFastProtocolBtns();
+function updateFastEndCalc() {
+  const el = document.getElementById('fastEndCalc');
+  if (!el) return;
+  const dateEl = document.getElementById('fastStartDate');
+  const timeEl = document.getElementById('fastStartTime');
+  if (!dateEl?.value||!timeEl?.value) { el.textContent=''; return; }
+  const hours = getProtocolHours();
+  if (!hours) { el.textContent=''; return; }
+  const start = new Date(dateEl.value+'T'+timeEl.value+':00');
+  const end   = new Date(start.getTime()+hours*3600000);
+  const endStr = end.toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  const nowDiff = (new Date()-start)/3600000;
+  const already = nowDiff>0 ? ' ('+nowDiff.toFixed(1)+'h elapsed)' : '';
+  el.innerHTML = '<span style="color:var(--accent2);">Target end: '+endStr+'</span><span style="color:var(--text-dim);">'+already+'</span>';
 }
+
+function setFastStartNow() {
+  const now = new Date();
+  const dateEl = document.getElementById('fastStartDate');
+  const timeEl = document.getElementById('fastStartTime');
+  if (dateEl) dateEl.value = localDateStr(now);
+  if (timeEl) timeEl.value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  updateFastEndCalc(); renderFastProtocolBtns();
+}
+
+function setFastStartYesterday() {
+  const dateEl = document.getElementById('fastStartDate');
+  const timeEl = document.getElementById('fastStartTime');
+  if (dateEl) dateEl.value = localDateStr(new Date(Date.now()-86400000));
+  if (timeEl) timeEl.value = '22:00';
+  updateFastEndCalc(); renderFastProtocolBtns();
+}
+
+function selectProtocol(id) { selectedProtocol=id; renderFastProtocolBtns(); }
 
 function getProtocolHours() {
-  const p = FAST_PROTOCOLS.find(p => p.id === selectedProtocol);
-  if (selectedProtocol === 'custom') {
-    return parseFloat(document.getElementById('fastCustomHours')?.value) || 16;
-  }
-  return p?.hours || 16;
+  if (selectedProtocol==='custom') return parseFloat(document.getElementById('fastCustomHours')?.value)||16;
+  return FAST_PROTOCOLS.find(p=>p.id===selectedProtocol)?.hours||16;
 }
 
 async function startFast() {
   if (fastState.active) return;
-  const hours = getProtocolHours();
-  fastState = { active: true, startTime: new Date(), targetHours: hours, protocol: selectedProtocol };
+  const hours   = getProtocolHours();
+  const dateEl  = document.getElementById('fastStartDate');
+  const timeEl  = document.getElementById('fastStartTime');
+  const startDT = (dateEl?.value&&timeEl?.value) ? new Date(dateEl.value+'T'+timeEl.value+':00') : new Date();
+  fastState = { active:true, startTime:startDT, targetHours:hours, protocol:selectedProtocol };
   await saveFastState();
   updateFastTimer();
   startFastInterval();
-  document.getElementById('fastMsg').style.color = '#4caf50';
-  document.getElementById('fastMsg').textContent = `✓ Fast started — ${hours}h target. Stay strong!`;
-  setTimeout(() => { const m = document.getElementById('fastMsg'); if(m) m.textContent = ''; }, 4000);
+  const started = startDT<=new Date() && startDT.toDateString()!==new Date().toDateString()
+    ? ' (from '+startDT.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+')'
+    : '';
+  const msg = document.getElementById('fastMsg');
+  if (msg) { msg.style.color='#4caf50'; msg.textContent='Fast started'+started+' — '+hours+'h target'; setTimeout(()=>msg.textContent='',5000); }
 }
 
 async function stopFast() {
   if (!fastState.active) return;
-  const now = new Date();
-  const elapsedMs = now - fastState.startTime;
-  const elapsedH  = elapsedMs / 3600000;
-  const completed  = elapsedH >= fastState.targetHours;
-
+  const now       = new Date();
+  const startTime = new Date(fastState.startTime);
+  const elapsedH  = (now-startTime)/3600000;
+  const completed = elapsedH >= fastState.targetHours;
   const entry = {
-    id: 'fast_' + Date.now(),
-    protocol: fastState.protocol,
-    startTime: fastState.startTime.toISOString(),
-    endTime: now.toISOString(),
-    targetHours: fastState.targetHours,
-    actualHours: parseFloat(elapsedH.toFixed(2)),
-    completed,
-    date: localDateStr(fastState.startTime),
+    id:'fast_'+Date.now(), protocol:fastState.protocol,
+    startTime:startTime.toISOString(), endTime:now.toISOString(),
+    targetHours:fastState.targetHours, actualHours:parseFloat(elapsedH.toFixed(2)),
+    completed, date:localDateStr(startTime),
   };
   fastHistory.unshift(entry);
-  if (fastHistory.length > 90) fastHistory = fastHistory.slice(0, 90);
-
-  fastState = { active: false, startTime: null, targetHours: 16, protocol: selectedProtocol };
-  clearInterval(fastInterval); fastInterval = null;
-
-  await saveFastState();
-  await saveFastHistory();
-  updateFastTimer();
-  renderFastHistory();
-
+  if (fastHistory.length>180) fastHistory=fastHistory.slice(0,180);
+  const proto = selectedProtocol;
+  fastState = { active:false, startTime:null, targetHours:16, protocol:proto };
+  clearInterval(fastInterval); fastInterval=null;
+  await saveFastState(); await saveFastHistory();
+  updateFastTimer(); renderFastHistory(); renderFastStats();
   const msg = document.getElementById('fastMsg');
   if (msg) {
-    msg.style.color = completed ? '#4caf50' : '#ff9800';
+    msg.style.color = completed?'#4caf50':'#ff9800';
     msg.textContent = completed
-      ? `✓ Fast complete — ${elapsedH.toFixed(1)}h. Well done!`
-      : `Fast ended at ${elapsedH.toFixed(1)}h of ${fastState.targetHours || entry.targetHours}h target.`;
-    setTimeout(() => { msg.textContent = ''; }, 5000);
+      ? 'Fast complete — '+elapsedH.toFixed(1)+'h. Excellent work.'
+      : 'Fast ended at '+elapsedH.toFixed(1)+'h of '+entry.targetHours+'h target.';
+    setTimeout(()=>msg.textContent='',6000);
   }
 }
 
-function startFastInterval() {
-  clearInterval(fastInterval);
-  fastInterval = setInterval(updateFastTimer, 1000);
+async function logPastFast() {
+  const startEl = document.getElementById('pastFastStart');
+  const endEl   = document.getElementById('pastFastEnd');
+  const protoEl = document.getElementById('pastFastProtocol');
+  const msgEl   = document.getElementById('pastFastMsg');
+  if (!startEl?.value||!endEl?.value) {
+    if (msgEl) { msgEl.style.color='var(--danger)'; msgEl.textContent='START AND END TIME REQUIRED'; } return;
+  }
+  const start   = new Date(startEl.value);
+  const end     = new Date(endEl.value);
+  if (end<=start) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='END MUST BE AFTER START';} return; }
+  const elapsedH= (end-start)/3600000;
+  const proto   = protoEl?.value||'custom';
+  const targetH = FAST_PROTOCOLS.find(p=>p.id===proto)?.hours||elapsedH;
+  const entry   = {
+    id:'fast_'+Date.now(), protocol:proto,
+    startTime:start.toISOString(), endTime:end.toISOString(),
+    targetHours:targetH, actualHours:parseFloat(elapsedH.toFixed(2)),
+    completed:elapsedH>=targetH, date:localDateStr(start), retroactive:true,
+  };
+  fastHistory.unshift(entry);
+  fastHistory.sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
+  if (fastHistory.length>180) fastHistory=fastHistory.slice(0,180);
+  await saveFastHistory();
+  renderFastHistory(); renderFastStats();
+  if (msgEl) { msgEl.style.color='#4caf50'; msgEl.textContent='Past fast logged — '+elapsedH.toFixed(1)+'h on '+localDateStr(start); setTimeout(()=>msgEl.textContent='',3000); }
 }
+
+async function clearFastHistory() {
+  if (!confirm('Clear all fasting history? This cannot be undone.')) return;
+  fastHistory=[];
+  await saveFastHistory();
+  renderFastHistory(); renderFastStats();
+}
+
+async function deleteFastEntry(idx) {
+  fastHistory.splice(idx,1);
+  await saveFastHistory();
+  renderFastHistory(); renderFastStats();
+}
+
+function startFastInterval() { clearInterval(fastInterval); fastInterval=setInterval(updateFastTimer,1000); }
 
 function updateFastTimer() {
-  const timerEl  = document.getElementById('fastTimerDisplay');
-  const subEl    = document.getElementById('fastTimerSub');
-  const statusEl = document.getElementById('fastStatusLabel');
-  const pctEl    = document.getElementById('fastPctDisplay');
-  const ring     = document.getElementById('fastRingFill');
-  const startBtn = document.getElementById('fastStartBtn');
-  const stopBtn  = document.getElementById('fastStopBtn');
+  const timerEl=document.getElementById('fastTimerDisplay'), subEl=document.getElementById('fastTimerSub');
+  const statusEl=document.getElementById('fastStatusLabel'), pctEl=document.getElementById('fastPctDisplay');
+  const milestoneEl=document.getElementById('fastMilestoneDisplay'), ring=document.getElementById('fastRingFill');
+  const startBtn=document.getElementById('fastStartBtn'), stopBtn=document.getElementById('fastStopBtn');
   if (!timerEl) return;
-
   if (!fastState.active) {
-    timerEl.textContent  = '0:00:00';
-    timerEl.style.color  = 'var(--text-dim)';
-    if (subEl)    subEl.textContent    = 'NOT FASTING';
-    if (statusEl) statusEl.textContent = 'NOT FASTING';
-    if (pctEl)    pctEl.textContent    = '';
-    if (ring)     ring.style.strokeDashoffset = '427.3';
-    if (ring)     ring.style.stroke    = 'var(--border2)';
-    if (startBtn) startBtn.style.display = '';
-    if (stopBtn)  stopBtn.style.display  = 'none';
-    return;
+    timerEl.textContent='0:00:00'; timerEl.style.color='var(--text-dim)';
+    if(subEl) subEl.textContent='NOT FASTING';
+    if(statusEl) statusEl.textContent='NO ACTIVE FAST';
+    if(pctEl) pctEl.textContent='';
+    if(milestoneEl) milestoneEl.textContent='';
+    if(ring){ring.style.strokeDashoffset='427.3';ring.style.stroke='var(--border2)';}
+    if(startBtn) startBtn.style.display=''; if(stopBtn) stopBtn.style.display='none'; return;
   }
-
-  if (startBtn) startBtn.style.display = 'none';
-  if (stopBtn)  stopBtn.style.display  = '';
-
-  const now       = new Date();
-  const elapsedMs = now - new Date(fastState.startTime);
-  const elapsedH  = elapsedMs / 3600000;
-  const targetH   = fastState.targetHours;
-  const pct       = Math.min(1, elapsedH / targetH);
-  const remaining = Math.max(0, targetH - elapsedH);
-
-  // Format elapsed
-  const totalSec = Math.floor(elapsedMs / 1000);
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  timerEl.textContent = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  timerEl.style.color = pct >= 1 ? '#4caf50' : 'var(--accent2)';
-
-  if (subEl)    subEl.textContent    = pct >= 1 ? 'GOAL REACHED ✓' : 'ELAPSED';
-  if (statusEl) statusEl.textContent = pct >= 1 ? '✓ FAST COMPLETE — GREAT WORK' : `FASTING — ${(remaining).toFixed(1)}h REMAINING`;
-
-  if (pctEl) {
-    const remH = Math.floor(remaining);
-    const remM = Math.floor((remaining - remH) * 60);
-    pctEl.textContent = pct >= 1
-      ? `${(elapsedH).toFixed(1)}h complete — you hit your goal!`
-      : `${Math.round(pct*100)}% — ${remH}h ${remM}m remaining`;
+  if(startBtn) startBtn.style.display='none'; if(stopBtn) stopBtn.style.display='';
+  const now=new Date(), startTime=new Date(fastState.startTime);
+  const elapsedMs=now-startTime, elapsedH=elapsedMs/3600000;
+  const targetH=fastState.targetHours, pct=Math.min(1,elapsedH/targetH);
+  const remaining=Math.max(0,targetH-elapsedH);
+  const ts=Math.floor(Math.abs(elapsedMs)/1000);
+  timerEl.textContent=Math.floor(ts/3600)+':'+String(Math.floor((ts%3600)/60)).padStart(2,'0')+':'+String(ts%60).padStart(2,'0');
+  timerEl.style.color=pct>=1?'#4caf50':'var(--accent2)';
+  if(subEl) subEl.textContent=pct>=1?'GOAL REACHED':'ELAPSED';
+  if(statusEl) {
+    if(pct>=1) statusEl.textContent='FAST COMPLETE — TAP END FAST TO LOG';
+    else { const rH=Math.floor(remaining),rM=Math.round((remaining-rH)*60); statusEl.textContent='FASTING — '+rH+'h '+rM+'m remaining'; }
   }
-
-  if (ring) {
-    const circumference = 427.3;
-    ring.style.strokeDashoffset = String(circumference * (1 - pct));
-    ring.style.stroke = pct >= 1 ? '#4caf50' : 'var(--accent2)';
+  if(pctEl) pctEl.textContent=Math.round(pct*100)+'% of '+targetH+'h goal';
+  if(milestoneEl) {
+    const last=[...FAST_MILESTONES].reverse().find(ms=>ms.hours<=elapsedH);
+    const next=FAST_MILESTONES.find(ms=>ms.hours>elapsedH);
+    let txt='';
+    if(last) txt='<span style="color:#4caf50;">'+last.label+'</span>';
+    if(next) { const d=next.hours-elapsedH; const dh=Math.floor(d),dm=Math.round((d-dh)*60); txt+=(last?' · ':'')+'Next: <span style="color:var(--accent2);">'+next.label+'</span> in '+dh+'h '+dm+'m'; }
+    milestoneEl.innerHTML=txt;
   }
+  if(ring){const c=427.3;ring.style.strokeDashoffset=String(c*(1-pct));ring.style.stroke=pct>=1?'#4caf50':'var(--accent2)';}
 }
 
 function renderFastHistory() {
-  const el = document.getElementById('fastHistoryList');
-  const streakBadge = document.getElementById('fastStreakBadge');
-  const streakNum   = document.getElementById('fastStreakNum');
-  if (!el) return;
-
-  if (!fastHistory.length) {
-    el.innerHTML = '<div style="color:var(--text-dim);padding:8px 0;">No fasts logged yet. Start your first fast above.</div>';
-    if (streakBadge) streakBadge.style.display = 'none';
-    return;
-  }
-
-  // Calculate streak — consecutive calendar days with a completed fast
-  const completedDates = [...new Set(fastHistory.filter(f=>f.completed).map(f=>f.date))].sort().reverse();
-  let streak = 0;
-  const today = localDateStr();
-  const yest  = localDateStr(new Date(Date.now() - 86400000));
-  if (completedDates[0] === today || completedDates[0] === yest) {
-    streak = 1;
-    for (let i = 1; i < completedDates.length; i++) {
-      const prev = localDateStr(new Date(new Date(completedDates[i-1]).getTime() - 86400000));
-      if (completedDates[i] === prev) streak++;
-      else break;
-    }
-  }
-  if (streakBadge && streak > 0) {
-    streakBadge.style.display = 'block';
-    if (streakNum) streakNum.textContent = streak;
-  } else if (streakBadge) streakBadge.style.display = 'none';
-
-  el.innerHTML = fastHistory.slice(0, 30).map(f => {
-    const proto = FAST_PROTOCOLS.find(p => p.id === f.protocol);
-    const startD = new Date(f.startTime);
-    const endD   = new Date(f.endTime);
-    const startStr = startD.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
-    const endStr   = endD.toLocaleString('en-US',{hour:'numeric',minute:'2-digit'});
-    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;
-      border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;">
-      <div style="flex:1;min-width:140px;">
-        <div style="font-family:var(--font-mono);font-size:0.65rem;
-          color:${f.completed?'var(--accent2)':'var(--text-dim)'};">
-          ${f.completed?'✓':'○'} ${proto?.name || f.protocol} — ${f.actualHours.toFixed(1)}h
-        </div>
-        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">
-          ${startStr} → ${endStr}
-        </div>
-      </div>
-      <div style="font-family:var(--font-mono);font-size:0.6rem;
-        color:${f.completed?'#4caf50':'#ff9800'};white-space:nowrap;">
-        ${f.completed?'COMPLETED':`${f.actualHours.toFixed(1)}/${f.targetHours}h`}
-      </div>
-    </div>`;
+  const el=document.getElementById('fastHistoryList'); if(!el) return;
+  renderFastStreak();
+  if(!fastHistory.length){el.innerHTML='<div style="color:var(--text-dim);padding:8px 0;">No fasts logged yet.</div>';return;}
+  el.innerHTML=fastHistory.slice(0,60).map((f,i)=>{
+    const proto=FAST_PROTOCOLS.find(p=>p.id===f.protocol);
+    const sD=new Date(f.startTime),eD=new Date(f.endTime);
+    const sStr=sD.toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+    const eStr=eD.toLocaleString('en-US',{hour:'numeric',minute:'2-digit'});
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;"><div style="font-size:1rem;">'+(f.completed?'checkmark':'o')+'</div><div style="flex:1;min-width:140px;"><div style="font-family:var(--font-mono);font-size:0.65rem;color:'+(f.completed?'var(--accent2)':'var(--text-dim)')+';">'+(proto?.name||f.protocol)+' · '+f.actualHours.toFixed(1)+'h'+(f.retroactive?' (retro)':'')+'</div><div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">'+sStr+' to '+eStr+'</div></div><button onclick="deleteFastEntry('+i+')" style="font-family:var(--font-mono);font-size:0.65rem;background:none;border:none;color:var(--border2);cursor:pointer;padding:2px 4px;">X</button></div>';
   }).join('');
 }
 
-function renderFastScienceCard() {
-  const el = document.getElementById('fastScienceCard');
-  if (!el) return;
-  const priority = userGoals?.focusPriority || [];
-  let scienceEntry = null;
-  for (const fid of priority) {
-    if (FAST_SCIENCE[fid]) { scienceEntry = { ...FAST_SCIENCE[fid], goal: GOAL_ACTIONS[fid]?.label || fid }; break; }
+function renderFastStreak() {
+  const numEl=document.getElementById('fastStreakNum'), detailEl=document.getElementById('fastStreakDetail');
+  const completedDates=[...new Set(fastHistory.filter(f=>f.completed).map(f=>f.date))].sort().reverse();
+  let streak=0;
+  const today=localDateStr(), yest=localDateStr(new Date(Date.now()-86400000));
+  if(completedDates.length&&(completedDates[0]===today||completedDates[0]===yest)){
+    streak=1;
+    for(let i=1;i<completedDates.length;i++){
+      if(completedDates[i]===localDateStr(new Date(new Date(completedDates[i-1]).getTime()-86400000))) streak++;
+      else break;
+    }
   }
+  if(numEl) numEl.textContent=streak;
+  if(detailEl) detailEl.textContent=streak>0?streak+' consecutive day'+(streak!==1?'s':'')+' with a completed fast':'Complete a fast to start your streak';
+}
 
-  const rows = [
-    { proto:'16:8 (Leangains)', best:'Fat loss, general health, muscle retention, beginners', science:'Most studied TRF protocol. Meta-analyses show consistent improvements in BMI, blood pressure, and insulin sensitivity.' },
-    { proto:'18:6',             best:'Fat loss, visceral fat, metabolic health',               science:'Stronger autophagy signal than 16:8. Associated with greater insulin sensitivity improvements and visceral fat reduction.' },
-    { proto:'20:4 (Warrior)',   best:'Aggressive fat loss, mental clarity',                    science:'Significant metabolic effect but difficult to meet protein targets. Best for short-term fat loss phases.' },
-    { proto:'OMAD',             best:'Maximum autophagy, advanced practitioners',               science:'Not recommended for muscle-building goals. Risk of nutrient deficiency. Very effective for fat loss when managed.' },
-    { proto:'5:2',              best:'Those who struggle with daily restriction',               science:'Research shows equivalent fat loss to daily restriction with significantly better long-term adherence in many populations.' },
+function renderFastStats() {
+  const el=document.getElementById('fastStatsGrid'); if(!el) return;
+  if(!fastHistory.length){el.innerHTML='<div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">No fasts yet.</div>';return;}
+  const completed=fastHistory.filter(f=>f.completed);
+  const totalH=fastHistory.reduce((s,f)=>s+f.actualHours,0);
+  const avgH=totalH/fastHistory.length;
+  const longest=fastHistory.reduce((b,f)=>f.actualHours>b.actualHours?f:b,fastHistory[0]);
+  const compRate=Math.round(completed.length/fastHistory.length*100);
+  const thisWeek=fastHistory.filter(f=>(new Date()-new Date(f.startTime))<7*86400000).length;
+  const stats=[
+    {label:'TOTAL FASTS',val:fastHistory.length},
+    {label:'COMPLETED',val:completed.length+' ('+compRate+'%)'},
+    {label:'TOTAL HOURS',val:totalH.toFixed(1)+'h'},
+    {label:'AVG DURATION',val:avgH.toFixed(1)+'h'},
+    {label:'LONGEST',val:longest.actualHours.toFixed(1)+'h'},
+    {label:'THIS WEEK',val:thisWeek+' fast'+(thisWeek!==1?'s':'')},
   ];
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">'+stats.map(s=>'<div style="text-align:center;padding:10px;background:var(--bg3);border:1px solid var(--border);"><div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">'+s.label+'</div><div style="font-family:var(--font-display);font-size:1.2rem;color:var(--accent2);">'+s.val+'</div></div>').join('')+'</div>';
+}
 
-  el.innerHTML = `
-    ${scienceEntry ? `<div style="padding:10px 12px;background:var(--accent-dim);border:1px solid var(--accent2);
-      font-family:var(--font-mono);font-size:0.62rem;color:var(--text);line-height:1.7;margin-bottom:12px;">
-      <div style="color:var(--accent2);font-weight:bold;margin-bottom:4px;">⭐ FOR YOUR GOAL: ${scienceEntry.goal.toUpperCase()}</div>
-      <div><strong style="color:var(--accent2);">Best protocol:</strong> ${scienceEntry.best}</div>
-      <div style="margin-top:4px;color:var(--text-dim);">${scienceEntry.why}</div>
-    </div>` : ''}
-    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.1em;
-      margin-bottom:8px;">PROTOCOL COMPARISON</div>
-    ${rows.map(r => `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);margin-bottom:2px;">${r.proto}</div>
-      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text);margin-bottom:2px;">Best for: ${r.best}</div>
-      <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);line-height:1.5;">${r.science}</div>
-    </div>`).join('')}`;
+function renderFastScheduleGrid() {
+  const el=document.getElementById('fastScheduleGrid'); if(!el) return;
+  const days=[{id:'mon',label:'Monday'},{id:'tue',label:'Tuesday'},{id:'wed',label:'Wednesday'},{id:'thu',label:'Thursday'},{id:'fri',label:'Friday'},{id:'sat',label:'Saturday'},{id:'sun',label:'Sunday'}];
+  const protoOpts=FAST_PROTOCOLS.filter(p=>p.id!=='custom').map(p=>'<option value="'+p.id+'">'+p.label+' - '+p.name+'</option>').join('');
+  el.innerHTML=days.map(d=>{
+    const sched=fastSchedule[d.id]||{};
+    const isFast=sched.fast||false, proto=sched.protocol||'16-8';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:var(--font-mono);font-size:0.65rem;color:var(--text);width:90px;flex-shrink:0;"><input type="checkbox" id="fsched-fast-'+d.id+'" '+(isFast?'checked':'')+' style="accent-color:var(--accent);" onchange="renderFastScheduleRow(\''+d.id+'\')">'+d.label+'</label><select id="fsched-proto-'+d.id+'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:0.6rem;padding:5px 7px;outline:none;display:'+(isFast?'block':'none')+';">'+protoOpts+'</select></div>';
+  }).join('');
+  days.forEach(d=>{const sel=document.getElementById('fsched-proto-'+d.id);if(sel)sel.value=fastSchedule[d.id]?.protocol||'16-8';});
+}
+
+function renderFastScheduleRow(dayId) {
+  const cb=document.getElementById('fsched-fast-'+dayId), sel=document.getElementById('fsched-proto-'+dayId);
+  if(sel) sel.style.display=cb?.checked?'block':'none';
+}
+
+function renderExtendedFastGuide() {
+  const el=document.getElementById('extendedFastGuide'); if(!el) return;
+  const guides=[
+    { label:'24-Hour Fast', phases:[
+      {time:'0-8h',color:'#4a9eff',what:'Blood sugar drops, glycogen depleting. Fat oxidation begins.'},
+      {time:'8-16h',color:'#ff9800',what:'Ketosis begins. Fat burning increases. Hunger may peak then subside as ghrelin adapts.'},
+      {time:'16-24h',color:'#ff7a1a',what:'Full ketosis. Autophagy active. Many report mental clarity and reduced hunger past the 20h mark.'},
+    ], tips:['Break fast with bone broth, eggs, or light protein — not a large meal.','Electrolytes (sodium, potassium, magnesium) prevent headaches.','Avoid intense training — light walking only.'],
+    expect:'Most find 20-24h surprisingly manageable. Hunger paradoxically decreases past 16-18h as ghrelin drops.' },
+    { label:'48-Hour Fast', phases:[
+      {time:'24-36h',color:'#e91e63',what:'Deep ketosis. Growth hormone surging (up to 5x baseline). Muscle protected by GH even without food.'},
+      {time:'36-48h',color:'#c2185b',what:'Autophagy near-peak. BDNF elevated — cognitive enhancement. Immune cell regeneration beginning.'},
+    ], tips:['Sleep through as much of day 2 as possible.','Sparkling water with electrolytes are your allies.','Monitor for dizziness — rest if needed.','Re-feed: bone broth first, small protein meal after 2h, then normal eating.'],
+    expect:'Day 2 morning is often hardest. After 36h, most feel surprisingly energetic. Re-feeding protocol is critical — do not eat a large meal.' },
+    { label:'72-Hour Fast', phases:[
+      {time:'48-60h',color:'#880e4f',what:'Stem cell activation. Maximum autophagy window. Significant immune system regeneration.'},
+      {time:'60-72h',color:'#4a148c',what:'Full cellular reboot. Gut mucosal healing. Insulin sensitivity dramatically improved.'},
+    ], tips:['Only attempt after successful 24-48h fasts.','Medical supervision recommended with any health conditions.','Re-feed carefully over 24h: broth, then soft foods, then normal meals.','Take electrolytes every 4-6 hours.','No exercise on day 3.'],
+    expect:'72h fasts are a serious intervention. Immune reset comes from IGF-1 suppression and stem cell-driven regeneration (Valter Longo research). Use at most once per quarter.' },
+  ];
+  el.innerHTML=guides.map(g=>'<div style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);font-weight:bold;margin-bottom:10px;">'+g.label+'</div>'+g.phases.map(ph=>'<div style="display:flex;gap:10px;margin-bottom:6px;"><span style="font-family:var(--font-mono);font-size:0.58rem;color:'+ph.color+';white-space:nowrap;width:60px;flex-shrink:0;">'+ph.time+'</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text);line-height:1.5;">'+ph.what+'</span></div>').join('')+'<div style="margin-top:8px;padding:8px 10px;background:var(--bg3);border-left:3px solid var(--accent2);margin-bottom:8px;"><div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">WHAT TO EXPECT</div><div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);line-height:1.6;">'+g.expect+'</div></div>'+g.tips.map(t=>'<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);line-height:1.6;">&#9658; '+t+'</div>').join('')+'</div>').join('');
+}
+
+function renderFastScienceCard() {
+  const el=document.getElementById('fastScienceCard'); if(!el) return;
+  const priority=userGoals?.focusPriority||[];
+  let scienceEntry=null;
+  for(const fid of priority){if(FAST_SCIENCE[fid]){scienceEntry={...FAST_SCIENCE[fid],goal:GOAL_ACTIONS?.[fid]?.label||fid};break;}}
+  const rows=[
+    {proto:'16:8',best:'Fat loss, general health, muscle retention, beginners',science:'Most studied TRF protocol. Meta-analyses show consistent improvements in BMI, blood pressure, and insulin sensitivity.'},
+    {proto:'18:6',best:'Fat loss, visceral fat, metabolic health',science:'Stronger autophagy signal. Associated with greater insulin sensitivity improvements and visceral fat reduction.'},
+    {proto:'20:4 (Warrior)',best:'Aggressive fat loss, mental clarity',science:'Significant metabolic effect but difficult to meet protein targets. Best for short-term fat loss phases.'},
+    {proto:'OMAD',best:'Maximum autophagy, advanced practitioners',science:'Not recommended for muscle-building goals. Risk of nutrient deficiency. Very effective for fat loss when managed carefully.'},
+    {proto:'5:2',best:'Those who struggle with daily restriction',science:'Research shows equivalent fat loss to daily restriction with significantly better long-term adherence.'},
+    {proto:'24H / 48H / 72H',best:'Periodic deep fasts for metabolic reset',science:'Longer fasts produce exponentially greater autophagy, immune regeneration, and growth hormone elevation. Not for weekly use.'},
+  ];
+  el.innerHTML=(scienceEntry?'<div style="padding:10px 12px;background:var(--accent-dim);border:1px solid var(--accent2);font-family:var(--font-mono);font-size:0.62rem;color:var(--text);line-height:1.7;margin-bottom:12px;"><div style="color:var(--accent2);font-weight:bold;margin-bottom:4px;">FOR YOUR GOAL: '+scienceEntry.goal.toUpperCase()+'</div><div><strong style="color:var(--accent2);">Best protocol:</strong> '+scienceEntry.best+'</div><div style="margin-top:4px;color:var(--text-dim);">'+scienceEntry.why+'</div></div>':'')+rows.map(r=>'<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);margin-bottom:2px;">'+r.proto+'</div><div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text);margin-bottom:2px;">Best for: '+r.best+'</div><div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);line-height:1.5;">'+r.science+'</div></div>').join('');
 }
 
 // ═══════════════════════════════════════════════════════════
