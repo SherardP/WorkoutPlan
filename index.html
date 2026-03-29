@@ -1312,7 +1312,7 @@ body.theme-female .goal-chip{border-radius:20px;}
         </div>
 
         <!-- ── TIMER TAB ── -->
-        <div id="fpanel-timer">
+        <div id="fpanel-timer" style="display:none;">
 
           <!-- Protocol selector -->
           <div class="card mb16">
@@ -1327,30 +1327,51 @@ body.theme-female .goal-chip{border-radius:20px;}
             <div id="fastEatingWindow" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);"></div>
           </div>
 
-          <!-- Start time + date override -->
+          <!-- Fast start / end time entry -->
           <div class="card mb16">
-            <div class="card-label">FAST START TIME</div>
+            <div class="card-label">SET YOUR FAST TIMES</div>
             <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
-              Set the actual time you started your fast — even if it was yesterday or earlier.
+              Set when you started — and optionally when you ended. You can set these at any time, even retroactively.
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
               <div class="field">
                 <label>START DATE</label>
                 <input type="date" id="fastStartDate"
                   style="width:100%;background:var(--bg3);border:1px solid var(--border);
-                  color:var(--text);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;">
+                  color:var(--text);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;"
+                  onchange="updateFastEndCalc();renderFastProtocolBtns();">
               </div>
               <div class="field">
                 <label>START TIME</label>
                 <input type="time" id="fastStartTime" value="22:00"
                   style="width:100%;background:var(--bg3);border:1px solid var(--border);
-                  color:var(--text);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;">
+                  color:var(--text);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;"
+                  onchange="updateFastEndCalc();renderFastProtocolBtns();">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;" id="fastEndRow">
+              <div class="field">
+                <label style="display:flex;align-items:center;gap:6px;">
+                  <input type="checkbox" id="fastSetEndTime" style="accent-color:var(--accent);"
+                    onchange="toggleFastEndRow()">
+                  END DATE (optional)
+                </label>
+                <input type="date" id="fastEndDate" disabled
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);
+                  color:var(--text-dim);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;">
+              </div>
+              <div class="field">
+                <label>END TIME</label>
+                <input type="time" id="fastEndTime" disabled value="18:00"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);
+                  color:var(--text-dim);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;">
               </div>
             </div>
             <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:10px;" id="fastEndCalc"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button onclick="setFastStartNow()" class="btn btn-s" style="font-size:0.6rem;">USE NOW</button>
+              <button onclick="setFastStartNow()" class="btn btn-s" style="font-size:0.6rem;">NOW</button>
               <button onclick="setFastStartYesterday()" class="btn btn-s" style="font-size:0.6rem;">LAST NIGHT 10 PM</button>
+              <button onclick="setFastEndNow()" class="btn btn-s" style="font-size:0.6rem;">END = NOW</button>
             </div>
           </div>
 
@@ -1378,54 +1399,31 @@ body.theme-female .goal-chip{border-radius:20px;}
               <div id="fastPctDisplay" style="font-family:var(--font-mono);font-size:0.65rem;
                 color:var(--text-dim);margin-bottom:8px;"></div>
               <div id="fastMilestoneDisplay" style="font-family:var(--font-mono);font-size:0.6rem;
-                color:var(--accent2);min-height:18px;"></div>
+                color:var(--accent2);min-height:18px;padding:0 8px;"></div>
             </div>
             <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;">
               <button id="fastStartBtn" class="btn btn-p" onclick="startFast()"
                 style="font-size:0.7rem;padding:10px 24px;">⏱ START FAST</button>
+              <button id="fastLogBtn" class="btn btn-p" onclick="logFastWithTimes()"
+                style="display:none;font-size:0.7rem;padding:10px 24px;">✓ LOG THIS FAST</button>
               <button id="fastStopBtn" class="btn btn-s" onclick="stopFast()"
                 style="display:none;font-size:0.7rem;padding:10px 24px;
-                border-color:var(--danger);color:var(--danger);">■ END FAST</button>
+                border-color:var(--danger);color:var(--danger);">■ END FAST (NOW)</button>
             </div>
             <div id="fastMsg" style="font-family:var(--font-mono);font-size:0.65rem;
               text-align:center;min-height:18px;"></div>
           </div>
 
-          <!-- Log past fast retroactively -->
-          <div class="card mb16" style="border-style:dashed;border-color:var(--border2);">
-            <div class="card-label">LOG A PAST FAST</div>
-            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
-              Forgot to log in the app? Enter it manually here.
+          <!-- Edit a logged fast -->
+          <div class="card mb16" id="fastEditCard" style="display:none;border-left:4px solid #ff9800;">
+            <div class="card-label">EDIT FAST</div>
+            <div id="fastEditContent"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button onclick="saveFastEdit()" class="btn btn-p" style="font-size:0.62rem;">SAVE CHANGES</button>
+              <button onclick="cancelFastEdit()" class="btn btn-s" style="font-size:0.62rem;">CANCEL</button>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-              <div class="field"><label>START DATE &amp; TIME</label>
-                <input type="datetime-local" id="pastFastStart"
-                  style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-                  font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;">
-              </div>
-              <div class="field"><label>END DATE &amp; TIME</label>
-                <input type="datetime-local" id="pastFastEnd"
-                  style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-                  font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;">
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-              <select id="pastFastProtocol" style="flex:1;background:var(--bg3);border:1px solid var(--border);
-                color:var(--text);font-family:var(--font-mono);font-size:0.65rem;padding:7px 8px;outline:none;">
-                <option value="16-8">16:8</option>
-                <option value="18-6">18:6</option>
-                <option value="20-4">20:4</option>
-                <option value="omad">OMAD (23:1)</option>
-                <option value="5-2">5:2</option>
-                <option value="24h">24 Hours</option>
-                <option value="48h">48 Hours</option>
-                <option value="72h">72 Hours</option>
-                <option value="custom">Custom</option>
-              </select>
-              <button onclick="logPastFast()" class="btn btn-p" style="font-size:0.62rem;">+ LOG THIS FAST</button>
-            </div>
-            <div id="pastFastMsg" style="font-family:var(--font-mono);font-size:0.62rem;min-height:16px;"></div>
           </div>
+
         </div>
 
         <!-- ── SCHEDULE TAB ── -->
@@ -1465,6 +1463,41 @@ body.theme-female .goal-chip{border-radius:20px;}
             <div id="fastStreakNum" style="font-family:var(--font-display);font-size:3rem;color:var(--accent2);">0</div>
             <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);">CONSECUTIVE FASTING DAYS</div>
             <div id="fastStreakDetail" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-top:6px;"></div>
+          </div>
+          <!-- Log past fast -->
+          <div class="card mb16" style="border-style:dashed;border-color:var(--border2);">
+            <div class="card-label">LOG A PAST FAST</div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
+              Completed a fast but forgot to track it? Enter it retroactively here.
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <div class="field"><label>START DATE &amp; TIME</label>
+                <input type="datetime-local" id="pastFastStart"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                  font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;">
+              </div>
+              <div class="field"><label>END DATE &amp; TIME</label>
+                <input type="datetime-local" id="pastFastEnd"
+                  style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                  font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+              <select id="pastFastProtocol" style="flex:1;background:var(--bg3);border:1px solid var(--border);
+                color:var(--text);font-family:var(--font-mono);font-size:0.65rem;padding:7px 8px;outline:none;">
+                <option value="16-8">16:8</option>
+                <option value="18-6">18:6</option>
+                <option value="20-4">20:4</option>
+                <option value="omad">OMAD (23:1)</option>
+                <option value="5-2">5:2</option>
+                <option value="24h">24 Hours</option>
+                <option value="48h">48 Hours</option>
+                <option value="72h">72 Hours</option>
+                <option value="custom">Custom</option>
+              </select>
+              <button onclick="logPastFast()" class="btn btn-p" style="font-size:0.62rem;">+ LOG THIS FAST</button>
+            </div>
+            <div id="pastFastMsg" style="font-family:var(--font-mono);font-size:0.62rem;min-height:16px;"></div>
           </div>
           <!-- History list -->
           <div class="card mb16">
@@ -4098,11 +4131,21 @@ function initFastingTab() {
   const timeEl = document.getElementById('fastStartTime');
   if (dateEl && !fastState.active) dateEl.value = localDateStr(now);
   if (timeEl && !fastState.active) timeEl.value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  // Pre-fill past fast defaults
   const pfsEl = document.getElementById('pastFastStart');
   const pfeEl = document.getElementById('pastFastEnd');
   if (pfsEl && !pfsEl.value) pfsEl.value = localDateStr(new Date(now-86400000))+'T22:00';
   if (pfeEl && !pfeEl.value) pfeEl.value = localDateStr(now)+'T18:00';
+
+  // If active fast, populate start fields from state
+  if (fastState.active && fastState.startTime) {
+    const st = new Date(fastState.startTime);
+    if (dateEl) dateEl.value = localDateStr(st);
+    if (timeEl) timeEl.value = String(st.getHours()).padStart(2,'0')+':'+String(st.getMinutes()).padStart(2,'0');
+  }
+
   loadFastHistory().then(() => {
+    fastTab('timer'); // initialize to timer tab with correct display
     renderFastProtocolBtns();
     renderFastScienceCard();
     renderFastHistory();
@@ -4113,6 +4156,39 @@ function initFastingTab() {
     updateFastEndCalc();
     if (fastState.active) startFastInterval();
   });
+}
+
+function toggleFastEndRow() {
+  const cb     = document.getElementById('fastSetEndTime');
+  const endDate= document.getElementById('fastEndDate');
+  const endTime= document.getElementById('fastEndTime');
+  const logBtn = document.getElementById('fastLogBtn');
+  if (!cb) return;
+  const enabled = cb.checked;
+  if (endDate) { endDate.disabled = !enabled; endDate.style.color = enabled ? 'var(--text)' : 'var(--text-dim)'; }
+  if (endTime) { endTime.disabled = !enabled; endTime.style.color = enabled ? 'var(--text)' : 'var(--text-dim)'; }
+  // If end time set and not active fast, show LOG button instead of START
+  if (logBtn && !fastState.active) {
+    logBtn.style.display = enabled ? '' : 'none';
+    const startBtn = document.getElementById('fastStartBtn');
+    if (startBtn) startBtn.style.display = enabled ? 'none' : '';
+  }
+  updateFastEndCalc();
+}
+
+function setFastEndNow() {
+  const now = new Date();
+  const cb     = document.getElementById('fastSetEndTime');
+  const endDate= document.getElementById('fastEndDate');
+  const endTime= document.getElementById('fastEndTime');
+  if (cb)      cb.checked = true;
+  if (endDate) { endDate.value = localDateStr(now); endDate.disabled = false; endDate.style.color = 'var(--text)'; }
+  if (endTime) { endTime.value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'); endTime.disabled = false; endTime.style.color = 'var(--text)'; }
+  const logBtn  = document.getElementById('fastLogBtn');
+  const startBtn= document.getElementById('fastStartBtn');
+  if (logBtn && !fastState.active) logBtn.style.display = '';
+  if (startBtn && !fastState.active) startBtn.style.display = 'none';
+  updateFastEndCalc();
 }
 
 function fastTab(tab) {
@@ -4212,13 +4288,25 @@ async function startFast() {
 
 async function stopFast() {
   if (!fastState.active) return;
-  const now       = new Date();
   const startTime = new Date(fastState.startTime);
-  const elapsedH  = (now-startTime)/3600000;
+
+  // Use the end-time fields if explicitly set, otherwise use now
+  const cb      = document.getElementById('fastSetEndTime');
+  const endDateEl = document.getElementById('fastEndDate');
+  const endTimeEl = document.getElementById('fastEndTime');
+  let end;
+  if (cb?.checked && endDateEl?.value && endTimeEl?.value) {
+    end = new Date(endDateEl.value+'T'+endTimeEl.value+':00');
+    if (end <= startTime) end = new Date(); // fallback if invalid
+  } else {
+    end = new Date();
+  }
+
+  const elapsedH  = (end-startTime)/3600000;
   const completed = elapsedH >= fastState.targetHours;
   const entry = {
     id:'fast_'+Date.now(), protocol:fastState.protocol,
-    startTime:startTime.toISOString(), endTime:now.toISOString(),
+    startTime:startTime.toISOString(), endTime:end.toISOString(),
     targetHours:fastState.targetHours, actualHours:parseFloat(elapsedH.toFixed(2)),
     completed, date:localDateStr(startTime),
   };
@@ -4227,6 +4315,11 @@ async function stopFast() {
   const proto = selectedProtocol;
   fastState = { active:false, startTime:null, targetHours:16, protocol:proto };
   clearInterval(fastInterval); fastInterval=null;
+
+  // Reset end-time checkbox
+  if (cb) cb.checked = false;
+  toggleFastEndRow();
+
   await saveFastState(); await saveFastHistory();
   updateFastTimer(); renderFastHistory(); renderFastStats();
   const msg = document.getElementById('fastMsg');
@@ -4237,6 +4330,137 @@ async function stopFast() {
       : 'Fast ended at '+elapsedH.toFixed(1)+'h of '+entry.targetHours+'h target.';
     setTimeout(()=>msg.textContent='',6000);
   }
+}
+
+// Log a complete fast using the start+end fields (no active state needed)
+async function logFastWithTimes() {
+  const dateEl  = document.getElementById('fastStartDate');
+  const timeEl  = document.getElementById('fastStartTime');
+  const endDateEl = document.getElementById('fastEndDate');
+  const endTimeEl = document.getElementById('fastEndTime');
+  const msg = document.getElementById('fastMsg');
+
+  if (!dateEl?.value || !timeEl?.value) {
+    if (msg) { msg.style.color='var(--danger)'; msg.textContent='SET A START DATE AND TIME FIRST'; }
+    return;
+  }
+  if (!endDateEl?.value || !endTimeEl?.value) {
+    if (msg) { msg.style.color='var(--danger)'; msg.textContent='SET AN END DATE AND TIME'; }
+    return;
+  }
+
+  const start   = new Date(dateEl.value+'T'+timeEl.value+':00');
+  const end     = new Date(endDateEl.value+'T'+endTimeEl.value+':00');
+  if (end <= start) {
+    if (msg) { msg.style.color='var(--danger)'; msg.textContent='END TIME MUST BE AFTER START TIME'; }
+    return;
+  }
+  const elapsedH = (end-start)/3600000;
+  const targetH  = getProtocolHours();
+  const entry = {
+    id: 'fast_'+Date.now(), protocol: selectedProtocol,
+    startTime: start.toISOString(), endTime: end.toISOString(),
+    targetHours: targetH, actualHours: parseFloat(elapsedH.toFixed(2)),
+    completed: elapsedH >= targetH, date: localDateStr(start), retroactive: true,
+  };
+  fastHistory.unshift(entry);
+  fastHistory.sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
+  if (fastHistory.length>180) fastHistory=fastHistory.slice(0,180);
+  await saveFastHistory();
+  renderFastHistory(); renderFastStats();
+
+  // Reset end fields
+  const cb = document.getElementById('fastSetEndTime');
+  if (cb) cb.checked = false;
+  toggleFastEndRow();
+
+  if (msg) {
+    msg.style.color='#4caf50';
+    msg.textContent='Fast logged — '+elapsedH.toFixed(1)+'h ('+start.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' to '+end.toLocaleString('en-US',{hour:'numeric',minute:'2-digit'})+')';
+    setTimeout(()=>msg.textContent='',5000);
+  }
+}
+
+let fastEditIdx = -1;
+
+function editFastEntry(idx) {
+  fastEditIdx = idx;
+  const f = fastHistory[idx];
+  if (!f) return;
+  const proto  = FAST_PROTOCOLS.find(p=>p.id===f.protocol);
+  const startD = new Date(f.startTime);
+  const endD   = new Date(f.endTime);
+
+  const protoOpts = FAST_PROTOCOLS.map(p=>
+    '<option value="'+p.id+'"'+(p.id===f.protocol?' selected':'')+'>'+p.label+' — '+p.name+'</option>'
+  ).join('');
+
+  const card = document.getElementById('fastEditCard');
+  const content = document.getElementById('fastEditContent');
+  if (!card||!content) return;
+
+  content.innerHTML = `
+    <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:10px;">
+      Editing: <span style="color:var(--accent2);">${proto?.name||f.protocol} · ${f.actualHours.toFixed(1)}h</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div class="field"><label>START DATE &amp; TIME</label>
+        <input type="datetime-local" id="editFastStart" value="${startD.toISOString().slice(0,16)}"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;"></div>
+      <div class="field"><label>END DATE &amp; TIME</label>
+        <input type="datetime-local" id="editFastEnd" value="${endD.toISOString().slice(0,16)}"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;"></div>
+    </div>
+    <div class="field"><label>PROTOCOL</label>
+      <select id="editFastProtocol" style="width:100%;background:var(--bg3);border:1px solid var(--border);
+        color:var(--text);font-family:var(--font-mono);font-size:0.65rem;padding:7px 8px;outline:none;">
+        ${protoOpts}
+      </select>
+    </div>`;
+
+  card.style.display = 'block';
+  card.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  fastTab('timer');
+}
+
+async function saveFastEdit() {
+  if (fastEditIdx < 0) return;
+  const startEl = document.getElementById('editFastStart');
+  const endEl   = document.getElementById('editFastEnd');
+  const protoEl = document.getElementById('editFastProtocol');
+  if (!startEl?.value || !endEl?.value) return;
+
+  const start   = new Date(startEl.value);
+  const end     = new Date(endEl.value);
+  if (end<=start) { toast('END TIME MUST BE AFTER START TIME'); return; }
+
+  const elapsedH = (end-start)/3600000;
+  const proto    = protoEl?.value || fastHistory[fastEditIdx].protocol;
+  const targetH  = FAST_PROTOCOLS.find(p=>p.id===proto)?.hours || elapsedH;
+
+  fastHistory[fastEditIdx] = {
+    ...fastHistory[fastEditIdx],
+    protocol: proto,
+    startTime: start.toISOString(),
+    endTime: end.toISOString(),
+    targetHours: targetH,
+    actualHours: parseFloat(elapsedH.toFixed(2)),
+    completed: elapsedH >= targetH,
+    date: localDateStr(start),
+  };
+  fastHistory.sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
+  await saveFastHistory();
+  cancelFastEdit();
+  renderFastHistory(); renderFastStats();
+  toast('✓ Fast updated');
+}
+
+function cancelFastEdit() {
+  fastEditIdx = -1;
+  const card = document.getElementById('fastEditCard');
+  if (card) card.style.display = 'none';
 }
 
 async function logPastFast() {
@@ -4325,13 +4549,39 @@ function updateFastTimer() {
 function renderFastHistory() {
   const el=document.getElementById('fastHistoryList'); if(!el) return;
   renderFastStreak();
-  if(!fastHistory.length){el.innerHTML='<div style="color:var(--text-dim);padding:8px 0;">No fasts logged yet.</div>';return;}
+  if(!fastHistory.length){el.innerHTML='<div style="color:var(--text-dim);padding:8px 0;">No fasts logged yet. Start your first fast on the TIMER tab.</div>';return;}
   el.innerHTML=fastHistory.slice(0,60).map((f,i)=>{
     const proto=FAST_PROTOCOLS.find(p=>p.id===f.protocol);
-    const sD=new Date(f.startTime),eD=new Date(f.endTime);
+    const sD=new Date(f.startTime), eD=new Date(f.endTime);
     const sStr=sD.toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
     const eStr=eD.toLocaleString('en-US',{hour:'numeric',minute:'2-digit'});
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;"><div style="font-size:1rem;">'+(f.completed?'checkmark':'o')+'</div><div style="flex:1;min-width:140px;"><div style="font-family:var(--font-mono);font-size:0.65rem;color:'+(f.completed?'var(--accent2)':'var(--text-dim)')+';">'+(proto?.name||f.protocol)+' · '+f.actualHours.toFixed(1)+'h'+(f.retroactive?' (retro)':'')+'</div><div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">'+sStr+' to '+eStr+'</div></div><button onclick="deleteFastEntry('+i+')" style="font-family:var(--font-mono);font-size:0.65rem;background:none;border:none;color:var(--border2);cursor:pointer;padding:2px 4px;">X</button></div>';
+    const icon = f.completed ? '✅' : '⚪';
+    const retro = f.retroactive ? `<span style="font-size:0.55rem;color:var(--border2);"> (edited)</span>` : '';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 0;
+      border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div style="font-size:1rem;flex-shrink:0;margin-top:1px;">${icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;
+          color:${f.completed?'var(--accent2)':'var(--text)'};">
+          ${proto?.name||f.protocol} · ${f.actualHours.toFixed(1)}h${retro}
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-top:2px;">
+          ${sStr} → ${eStr}
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.57rem;margin-top:2px;
+          color:${f.completed?'#4caf50':'#ff9800'};">
+          ${f.completed?'Completed ✓':'Partial — '+f.actualHours.toFixed(1)+'/'+f.targetHours+'h'}
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button onclick="editFastEntry(${i})"
+          style="font-family:var(--font-mono);font-size:0.6rem;background:var(--bg3);
+          border:1px solid var(--border);color:var(--accent2);cursor:pointer;padding:3px 8px;">✎</button>
+        <button onclick="deleteFastEntry(${i})"
+          style="font-family:var(--font-mono);font-size:0.6rem;background:none;
+          border:none;color:var(--border2);cursor:pointer;padding:3px 5px;">✕</button>
+      </div>
+    </div>`;
   }).join('');
 }
 
