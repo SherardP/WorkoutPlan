@@ -1303,191 +1303,169 @@ body.theme-female .goal-chip{border-radius:20px;}
       <!-- ══ FASTING TAB ══ -->
       <div id="npanel-fasting" style="display:none;">
 
-        <!-- Sub-nav tabs within fasting -->
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
-          <button class="btn btn-p" id="ftab-timer"    onclick="fastTab('timer')"    style="font-size:0.6rem;">⏱ TIMER</button>
-          <button class="btn btn-s" id="ftab-schedule" onclick="fastTab('schedule')" style="font-size:0.6rem;">📅 SCHEDULE</button>
-          <button class="btn btn-s" id="ftab-log"      onclick="fastTab('log')"      style="font-size:0.6rem;">📊 LOG &amp; STATS</button>
-          <button class="btn btn-s" id="ftab-science"  onclick="fastTab('science')"  style="font-size:0.6rem;">🔬 SCIENCE</button>
+        <!-- ── ACTIVE FAST / TIMER ── -->
+        <div class="card mb16" style="border-left:4px solid var(--accent2);">
+          <div class="card-label">FASTING TIMER</div>
+
+          <!-- Protocol buttons -->
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;" id="fastProtocolBtns"></div>
+          <div id="fastCustomRow" style="display:none;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+            <label style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);">HOURS:</label>
+            <input type="number" id="fastCustomHours" min="1" max="120" step="0.5" value="16"
+              style="width:70px;background:var(--bg3);border:1px solid var(--border);
+              color:var(--text);font-family:var(--font-mono);font-size:0.8rem;padding:5px 7px;outline:none;">
+          </div>
+          <div id="fastEatingWindow" style="font-family:var(--font-mono);font-size:0.6rem;
+            color:var(--text-dim);margin-bottom:12px;line-height:1.6;"></div>
+
+          <!-- Start + end time row -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+            <div class="field">
+              <label>START DATE</label>
+              <input type="date" id="fastStartDate"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);
+                color:var(--text);font-family:var(--font-mono);font-size:0.72rem;
+                padding:6px 8px;outline:none;box-sizing:border-box;"
+                onchange="updateFastEndCalc();renderFastProtocolBtns();">
+            </div>
+            <div class="field">
+              <label>START TIME</label>
+              <input type="time" id="fastStartTime" value="22:00"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);
+                color:var(--text);font-family:var(--font-mono);font-size:0.72rem;
+                padding:6px 8px;outline:none;box-sizing:border-box;"
+                onchange="updateFastEndCalc();renderFastProtocolBtns();">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+            <div class="field">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+                <input type="checkbox" id="fastSetEndTime" style="accent-color:var(--accent);"
+                  onchange="toggleFastEndRow()"> END DATE
+              </label>
+              <input type="date" id="fastEndDate" disabled
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);
+                color:var(--text-dim);font-family:var(--font-mono);font-size:0.72rem;
+                padding:6px 8px;outline:none;box-sizing:border-box;">
+            </div>
+            <div class="field">
+              <label>END TIME</label>
+              <input type="time" id="fastEndTime" disabled value="18:00"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);
+                color:var(--text-dim);font-family:var(--font-mono);font-size:0.72rem;
+                padding:6px 8px;outline:none;box-sizing:border-box;">
+            </div>
+          </div>
+
+          <!-- Quick time buttons -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+            <button onclick="setFastStartNow()" class="btn btn-s" style="font-size:0.58rem;padding:4px 9px;">START = NOW</button>
+            <button onclick="setFastStartYesterday()" class="btn btn-s" style="font-size:0.58rem;padding:4px 9px;">LAST NIGHT 10 PM</button>
+            <button onclick="setFastEndNow()" class="btn btn-s" style="font-size:0.58rem;padding:4px 9px;">END = NOW</button>
+          </div>
+
+          <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);
+            margin-bottom:14px;" id="fastEndCalc"></div>
+
+          <!-- Ring + elapsed -->
+          <div style="text-align:center;margin-bottom:14px;">
+            <div id="fastStatusLabel" style="font-family:var(--font-mono);font-size:0.62rem;
+              color:var(--border2);letter-spacing:.12em;margin-bottom:8px;">NO ACTIVE FAST</div>
+            <div style="position:relative;width:140px;height:140px;margin:0 auto 8px;">
+              <svg width="140" height="140" style="transform:rotate(-90deg);">
+                <circle cx="70" cy="70" r="58" fill="none" stroke="var(--bg3)" stroke-width="9"/>
+                <circle id="fastRingFill" cx="70" cy="70" r="58" fill="none"
+                  stroke="var(--accent2)" stroke-width="9" stroke-linecap="round"
+                  stroke-dasharray="364.4" stroke-dashoffset="364.4"
+                  style="transition:stroke-dashoffset 1s ease;"/>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+                align-items:center;justify-content:center;">
+                <div id="fastTimerDisplay" style="font-family:var(--font-display);
+                  font-size:1.8rem;color:var(--accent2);line-height:1;">0:00:00</div>
+                <div id="fastTimerSub" style="font-family:var(--font-mono);
+                  font-size:0.52rem;color:var(--text-dim);letter-spacing:.1em;margin-top:3px;">ELAPSED</div>
+              </div>
+            </div>
+            <div id="fastPctDisplay" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:4px;"></div>
+            <div id="fastMilestoneDisplay" style="font-family:var(--font-mono);font-size:0.58rem;color:var(--accent2);min-height:16px;padding:0 8px;line-height:1.5;"></div>
+          </div>
+
+          <!-- Action buttons -->
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
+            <button id="fastStartBtn" class="btn btn-p" onclick="startFast()"
+              style="font-size:0.68rem;padding:9px 20px;">⏱ START FAST</button>
+            <button id="fastLogBtn" class="btn btn-p" onclick="logFastWithTimes()"
+              style="display:none;font-size:0.68rem;padding:9px 20px;">✓ LOG THIS FAST</button>
+            <button id="fastStopBtn" class="btn btn-s" onclick="stopFast()"
+              style="display:none;font-size:0.68rem;padding:9px 20px;
+              border-color:var(--danger);color:var(--danger);">■ END FAST</button>
+          </div>
+          <div id="fastMsg" style="font-family:var(--font-mono);font-size:0.62rem;
+            text-align:center;min-height:16px;"></div>
         </div>
 
-        <!-- ── TIMER TAB ── -->
-        <div id="fpanel-timer" style="display:none;">
-
-          <!-- Protocol selector -->
-          <div class="card mb16">
-            <div class="card-label">PROTOCOL</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="fastProtocolBtns"></div>
-            <div id="fastCustomRow" style="display:none;margin-bottom:10px;">
-              <label style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);">CUSTOM FAST (hours):</label>
-              <input type="number" id="fastCustomHours" min="1" max="120" step="0.5" value="16"
-                style="width:80px;margin-left:8px;background:var(--bg3);border:1px solid var(--border);
-                color:var(--text);font-family:var(--font-mono);font-size:0.8rem;padding:6px 8px;outline:none;">
-            </div>
-            <div id="fastEatingWindow" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);"></div>
-          </div>
-
-          <!-- Fast start / end time entry -->
-          <div class="card mb16">
-            <div class="card-label">SET YOUR FAST TIMES</div>
-            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
-              Set when you started — and optionally when you ended. You can set these at any time, even retroactively.
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
-              <div class="field">
-                <label>START DATE</label>
-                <input type="date" id="fastStartDate"
-                  style="width:100%;background:var(--bg3);border:1px solid var(--border);
-                  color:var(--text);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;"
-                  onchange="updateFastEndCalc();renderFastProtocolBtns();">
-              </div>
-              <div class="field">
-                <label>START TIME</label>
-                <input type="time" id="fastStartTime" value="22:00"
-                  style="width:100%;background:var(--bg3);border:1px solid var(--border);
-                  color:var(--text);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;"
-                  onchange="updateFastEndCalc();renderFastProtocolBtns();">
-              </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;" id="fastEndRow">
-              <div class="field">
-                <label style="display:flex;align-items:center;gap:6px;">
-                  <input type="checkbox" id="fastSetEndTime" style="accent-color:var(--accent);"
-                    onchange="toggleFastEndRow()">
-                  END DATE (optional)
-                </label>
-                <input type="date" id="fastEndDate" disabled
-                  style="width:100%;background:var(--bg3);border:1px solid var(--border);
-                  color:var(--text-dim);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;">
-              </div>
-              <div class="field">
-                <label>END TIME</label>
-                <input type="time" id="fastEndTime" disabled value="18:00"
-                  style="width:100%;background:var(--bg3);border:1px solid var(--border);
-                  color:var(--text-dim);font-family:var(--font-mono);font-size:0.75rem;padding:7px 9px;outline:none;box-sizing:border-box;">
-              </div>
-            </div>
-            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:10px;" id="fastEndCalc"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button onclick="setFastStartNow()" class="btn btn-s" style="font-size:0.6rem;">NOW</button>
-              <button onclick="setFastStartYesterday()" class="btn btn-s" style="font-size:0.6rem;">LAST NIGHT 10 PM</button>
-              <button onclick="setFastEndNow()" class="btn btn-s" style="font-size:0.6rem;">END = NOW</button>
-            </div>
-          </div>
-
-          <!-- Live timer -->
-          <div class="card mb16" style="border-left:4px solid var(--accent2);">
-            <div style="text-align:center;padding:8px 0 16px;">
-              <div id="fastStatusLabel" style="font-family:var(--font-mono);font-size:0.6rem;
-                color:var(--border2);letter-spacing:.15em;margin-bottom:8px;">NOT FASTING</div>
-              <div style="position:relative;width:160px;height:160px;margin:0 auto 10px;">
-                <svg width="160" height="160" style="transform:rotate(-90deg);">
-                  <circle cx="80" cy="80" r="68" fill="none" stroke="var(--bg3)" stroke-width="10"/>
-                  <circle id="fastRingFill" cx="80" cy="80" r="68" fill="none"
-                    stroke="var(--accent2)" stroke-width="10" stroke-linecap="round"
-                    stroke-dasharray="427.3" stroke-dashoffset="427.3"
-                    style="transition:stroke-dashoffset 1s ease;"/>
-                </svg>
-                <div style="position:absolute;inset:0;display:flex;flex-direction:column;
-                  align-items:center;justify-content:center;">
-                  <div id="fastTimerDisplay" style="font-family:var(--font-display);
-                    font-size:2rem;color:var(--accent2);line-height:1;">0:00:00</div>
-                  <div id="fastTimerSub" style="font-family:var(--font-mono);
-                    font-size:0.55rem;color:var(--text-dim);letter-spacing:.1em;margin-top:4px;">ELAPSED</div>
+        <!-- ── STATS SUMMARY ── -->
+        <div class="card mb16">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <div>
+              <div class="card-label">FASTING STATISTICS</div>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+                <div>
+                  <span style="font-family:var(--font-display);font-size:2rem;color:var(--accent2);" id="fastStreakNum">0</span>
+                  <span style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);margin-left:4px;">DAY STREAK</span>
                 </div>
               </div>
-              <div id="fastPctDisplay" style="font-family:var(--font-mono);font-size:0.65rem;
-                color:var(--text-dim);margin-bottom:8px;"></div>
-              <div id="fastMilestoneDisplay" style="font-family:var(--font-mono);font-size:0.6rem;
-                color:var(--accent2);min-height:18px;padding:0 8px;"></div>
-            </div>
-            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;">
-              <button id="fastStartBtn" class="btn btn-p" onclick="startFast()"
-                style="font-size:0.7rem;padding:10px 24px;">⏱ START FAST</button>
-              <button id="fastLogBtn" class="btn btn-p" onclick="logFastWithTimes()"
-                style="display:none;font-size:0.7rem;padding:10px 24px;">✓ LOG THIS FAST</button>
-              <button id="fastStopBtn" class="btn btn-s" onclick="stopFast()"
-                style="display:none;font-size:0.7rem;padding:10px 24px;
-                border-color:var(--danger);color:var(--danger);">■ END FAST (NOW)</button>
-            </div>
-            <div id="fastMsg" style="font-family:var(--font-mono);font-size:0.65rem;
-              text-align:center;min-height:18px;"></div>
-          </div>
-
-          <!-- Edit a logged fast -->
-          <div class="card mb16" id="fastEditCard" style="display:none;border-left:4px solid #ff9800;">
-            <div class="card-label">EDIT FAST</div>
-            <div id="fastEditContent"></div>
-            <div style="display:flex;gap:8px;margin-top:10px;">
-              <button onclick="saveFastEdit()" class="btn btn-p" style="font-size:0.62rem;">SAVE CHANGES</button>
-              <button onclick="cancelFastEdit()" class="btn btn-s" style="font-size:0.62rem;">CANCEL</button>
+              <div id="fastStreakDetail" style="font-family:var(--font-mono);font-size:0.57rem;color:var(--text-dim);margin-top:2px;"></div>
             </div>
           </div>
-
+          <div id="fastStatsGrid"></div>
         </div>
 
-        <!-- ── SCHEDULE TAB ── -->
-        <div id="fpanel-schedule" style="display:none;">
-          <div class="card mb16">
-            <div class="card-label">WEEKLY FASTING SCHEDULE</div>
-            <div class="card-title">SET YOUR FASTING DAYS</div>
-            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">
-              Configure which days you fast and which protocols. Days marked as non-fasting show no fast reminder.
-            </div>
-            <div id="fastScheduleGrid"></div>
-            <div style="margin-top:14px;">
-              <button onclick="saveFastSchedule()" class="btn btn-p" style="width:100%;">SAVE SCHEDULE</button>
-              <div id="fastScheduleMsg" style="font-family:var(--font-mono);font-size:0.62rem;
-                text-align:center;margin-top:8px;min-height:16px;"></div>
-            </div>
+        <!-- ── WEEKLY SCHEDULE ── -->
+        <div class="card mb16">
+          <div class="card-label">WEEKLY FASTING SCHEDULE</div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
+            Set which days you fast and which protocol. Your Sunday extended fast can be set here too.
           </div>
-
-          <!-- Extended fast guide -->
-          <div class="card mb16">
-            <div class="card-label">EXTENDED FASTING GUIDE</div>
-            <div class="card-title">WHAT TO EXPECT: 24H, 48H &amp; 72H FASTS</div>
-            <div id="extendedFastGuide"></div>
+          <div id="fastScheduleGrid"></div>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <button onclick="saveFastSchedule()" class="btn btn-p" style="flex:1;font-size:0.62rem;">SAVE SCHEDULE</button>
           </div>
+          <div id="fastScheduleMsg" style="font-family:var(--font-mono);font-size:0.6rem;
+            text-align:center;margin-top:6px;min-height:14px;"></div>
         </div>
 
-        <!-- ── LOG & STATS TAB ── -->
-        <div id="fpanel-log" style="display:none;">
-          <!-- Stats summary -->
-          <div class="card mb16">
-            <div class="card-label">FASTING STATISTICS</div>
-            <div id="fastStatsGrid"></div>
+        <!-- ── FAST HISTORY — full editable list ── -->
+        <div class="card mb16">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <div class="card-label" style="margin:0;">FAST HISTORY</div>
+            <button onclick="clearFastHistory()" class="btn btn-s"
+              style="font-size:0.58rem;padding:3px 8px;color:var(--danger);border-color:var(--danger);">CLEAR ALL</button>
           </div>
-          <!-- Streak -->
-          <div class="card mb16" style="text-align:center;">
-            <div class="card-label">FASTING STREAK</div>
-            <div id="fastStreakNum" style="font-family:var(--font-display);font-size:3rem;color:var(--accent2);">0</div>
-            <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);">CONSECUTIVE FASTING DAYS</div>
-            <div id="fastStreakDetail" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-top:6px;"></div>
-          </div>
-          <!-- Log past fast -->
-          <div class="card mb16" style="border-style:dashed;border-color:var(--border2);">
-            <div class="card-label">LOG A PAST FAST</div>
-            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
-              Completed a fast but forgot to track it? Enter it retroactively here.
-            </div>
+          <!-- Add / edit form — always visible -->
+          <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin-bottom:12px;">
+            <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--accent2);
+              letter-spacing:.08em;margin-bottom:8px;" id="fastFormLabel">+ ADD A FAST</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
               <div class="field"><label>START DATE &amp; TIME</label>
-                <input type="datetime-local" id="pastFastStart"
-                  style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                <input type="datetime-local" id="editFastStartField"
+                  style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);
                   font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;">
               </div>
               <div class="field"><label>END DATE &amp; TIME</label>
-                <input type="datetime-local" id="pastFastEnd"
-                  style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                <input type="datetime-local" id="editFastEndField"
+                  style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);
                   font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;">
               </div>
             </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-              <select id="pastFastProtocol" style="flex:1;background:var(--bg3);border:1px solid var(--border);
-                color:var(--text);font-family:var(--font-mono);font-size:0.65rem;padding:7px 8px;outline:none;">
-                <option value="16-8">16:8</option>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <select id="editFastProtocol" style="flex:1;min-width:120px;background:var(--bg2);
+                border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.65rem;padding:7px 8px;outline:none;">
+                <option value="16-8">16:8 — Leangains</option>
                 <option value="18-6">18:6</option>
-                <option value="20-4">20:4</option>
+                <option value="20-4">20:4 — Warrior</option>
                 <option value="omad">OMAD (23:1)</option>
                 <option value="5-2">5:2</option>
                 <option value="24h">24 Hours</option>
@@ -1495,29 +1473,23 @@ body.theme-female .goal-chip{border-radius:20px;}
                 <option value="72h">72 Hours</option>
                 <option value="custom">Custom</option>
               </select>
-              <button onclick="logPastFast()" class="btn btn-p" style="font-size:0.62rem;">+ LOG THIS FAST</button>
+              <button onclick="saveHistoryEntry()" class="btn btn-p" style="font-size:0.62rem;white-space:nowrap;">SAVE</button>
+              <button onclick="cancelHistoryEdit()" class="btn btn-s" id="fastHistoryCancelBtn"
+                style="font-size:0.62rem;display:none;">CANCEL</button>
             </div>
-            <div id="pastFastMsg" style="font-family:var(--font-mono);font-size:0.62rem;min-height:16px;"></div>
+            <div id="fastHistoryFormMsg" style="font-family:var(--font-mono);font-size:0.6rem;
+              min-height:14px;margin-top:6px;"></div>
           </div>
-          <!-- History list -->
-          <div class="card mb16">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <div class="card-label" style="margin:0;">FAST HISTORY</div>
-              <button onclick="clearFastHistory()" class="btn btn-s"
-                style="font-size:0.58rem;padding:3px 8px;color:var(--danger);border-color:var(--danger);">CLEAR ALL</button>
-            </div>
-            <div id="fastHistoryList" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">
-              No fasts logged yet.
-            </div>
+          <!-- History rows -->
+          <div id="fastHistoryList">
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">Loading...</div>
           </div>
         </div>
 
-        <!-- ── SCIENCE TAB ── -->
-        <div id="fpanel-science" style="display:none;">
-          <div class="card mb16">
-            <div class="card-label">THE SCIENCE OF FASTING</div>
-            <div id="fastScienceCard"></div>
-          </div>
+        <!-- ── SCIENCE ── -->
+        <div class="card mb16">
+          <div class="card-label">THE SCIENCE OF FASTING</div>
+          <div id="fastScienceCard"></div>
         </div>
 
       </div>
@@ -4131,13 +4103,14 @@ function initFastingTab() {
   const timeEl = document.getElementById('fastStartTime');
   if (dateEl && !fastState.active) dateEl.value = localDateStr(now);
   if (timeEl && !fastState.active) timeEl.value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-  // Pre-fill past fast defaults
-  const pfsEl = document.getElementById('pastFastStart');
-  const pfeEl = document.getElementById('pastFastEnd');
-  if (pfsEl && !pfsEl.value) pfsEl.value = localDateStr(new Date(now-86400000))+'T22:00';
-  if (pfeEl && !pfeEl.value) pfeEl.value = localDateStr(now)+'T18:00';
 
-  // If active fast, populate start fields from state
+  // Set defaults for the history add form
+  const efStart = document.getElementById('editFastStartField');
+  const efEnd   = document.getElementById('editFastEndField');
+  if (efStart && !efStart.value) efStart.value = localDateStr(new Date(now-86400000))+'T22:00';
+  if (efEnd   && !efEnd.value)   efEnd.value   = localDateStr(now)+'T18:00';
+
+  // If active fast, show start fields from state
   if (fastState.active && fastState.startTime) {
     const st = new Date(fastState.startTime);
     if (dateEl) dateEl.value = localDateStr(st);
@@ -4145,13 +4118,11 @@ function initFastingTab() {
   }
 
   loadFastHistory().then(() => {
-    fastTab('timer'); // initialize to timer tab with correct display
     renderFastProtocolBtns();
     renderFastScienceCard();
     renderFastHistory();
     renderFastStats();
     renderFastScheduleGrid();
-    renderExtendedFastGuide();
     updateFastTimer();
     updateFastEndCalc();
     if (fastState.active) startFastInterval();
@@ -4387,80 +4358,86 @@ function editFastEntry(idx) {
   fastEditIdx = idx;
   const f = fastHistory[idx];
   if (!f) return;
-  const proto  = FAST_PROTOCOLS.find(p=>p.id===f.protocol);
   const startD = new Date(f.startTime);
   const endD   = new Date(f.endTime);
 
-  const protoOpts = FAST_PROTOCOLS.map(p=>
-    '<option value="'+p.id+'"'+(p.id===f.protocol?' selected':'')+'>'+p.label+' — '+p.name+'</option>'
-  ).join('');
+  const startEl = document.getElementById('editFastStartField');
+  const endEl   = document.getElementById('editFastEndField');
+  const protoEl = document.getElementById('editFastProtocol');
+  const labelEl = document.getElementById('fastFormLabel');
+  const cancelBtn = document.getElementById('fastHistoryCancelBtn');
 
-  const card = document.getElementById('fastEditCard');
-  const content = document.getElementById('fastEditContent');
-  if (!card||!content) return;
+  if (startEl) startEl.value = startD.toISOString().slice(0,16);
+  if (endEl)   endEl.value   = endD.toISOString().slice(0,16);
+  if (protoEl) protoEl.value = f.protocol;
 
-  content.innerHTML = `
-    <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:10px;">
-      Editing: <span style="color:var(--accent2);">${proto?.name||f.protocol} · ${f.actualHours.toFixed(1)}h</span>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-      <div class="field"><label>START DATE &amp; TIME</label>
-        <input type="datetime-local" id="editFastStart" value="${startD.toISOString().slice(0,16)}"
-          style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-          font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;"></div>
-      <div class="field"><label>END DATE &amp; TIME</label>
-        <input type="datetime-local" id="editFastEnd" value="${endD.toISOString().slice(0,16)}"
-          style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-          font-family:var(--font-mono);font-size:0.68rem;padding:6px 8px;outline:none;box-sizing:border-box;"></div>
-    </div>
-    <div class="field"><label>PROTOCOL</label>
-      <select id="editFastProtocol" style="width:100%;background:var(--bg3);border:1px solid var(--border);
-        color:var(--text);font-family:var(--font-mono);font-size:0.65rem;padding:7px 8px;outline:none;">
-        ${protoOpts}
-      </select>
-    </div>`;
+  const proto = FAST_PROTOCOLS.find(p=>p.id===f.protocol);
+  if (labelEl) labelEl.textContent = 'EDITING: ' + (proto?.name||f.protocol) + ' · ' + f.actualHours.toFixed(1) + 'h';
+  if (labelEl) labelEl.style.color = '#ff9800';
+  if (cancelBtn) cancelBtn.style.display = '';
 
-  card.style.display = 'block';
-  card.scrollIntoView({ behavior:'smooth', block:'nearest' });
-  fastTab('timer');
+  // Scroll the form into view
+  document.getElementById('editFastStartField')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
-async function saveFastEdit() {
-  if (fastEditIdx < 0) return;
-  const startEl = document.getElementById('editFastStart');
-  const endEl   = document.getElementById('editFastEnd');
+async function saveHistoryEntry() {
+  const startEl = document.getElementById('editFastStartField');
+  const endEl   = document.getElementById('editFastEndField');
   const protoEl = document.getElementById('editFastProtocol');
-  if (!startEl?.value || !endEl?.value) return;
+  const msgEl   = document.getElementById('fastHistoryFormMsg');
+
+  if (!startEl?.value) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='START DATE/TIME REQUIRED';} return; }
+  if (!endEl?.value)   { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='END DATE/TIME REQUIRED';}   return; }
 
   const start   = new Date(startEl.value);
   const end     = new Date(endEl.value);
-  if (end<=start) { toast('END TIME MUST BE AFTER START TIME'); return; }
+  if (end <= start) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='END MUST BE AFTER START';} return; }
 
+  const proto    = protoEl?.value || '16-8';
   const elapsedH = (end-start)/3600000;
-  const proto    = protoEl?.value || fastHistory[fastEditIdx].protocol;
   const targetH  = FAST_PROTOCOLS.find(p=>p.id===proto)?.hours || elapsedH;
 
-  fastHistory[fastEditIdx] = {
-    ...fastHistory[fastEditIdx],
+  const entry = {
+    id: fastEditIdx >= 0 ? fastHistory[fastEditIdx].id : 'fast_'+Date.now(),
     protocol: proto,
-    startTime: start.toISOString(),
-    endTime: end.toISOString(),
-    targetHours: targetH,
-    actualHours: parseFloat(elapsedH.toFixed(2)),
-    completed: elapsedH >= targetH,
-    date: localDateStr(start),
+    startTime: start.toISOString(), endTime: end.toISOString(),
+    targetHours: targetH, actualHours: parseFloat(elapsedH.toFixed(2)),
+    completed: elapsedH >= targetH, date: localDateStr(start), retroactive: true,
   };
+
+  if (fastEditIdx >= 0) {
+    fastHistory[fastEditIdx] = entry;
+  } else {
+    fastHistory.unshift(entry);
+  }
   fastHistory.sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
+  if (fastHistory.length>180) fastHistory=fastHistory.slice(0,180);
+
   await saveFastHistory();
-  cancelFastEdit();
+  cancelHistoryEdit();
   renderFastHistory(); renderFastStats();
-  toast('✓ Fast updated');
+
+  if (msgEl) {
+    msgEl.style.color='#4caf50';
+    msgEl.textContent = (fastEditIdx>=0?'Updated':'Added')+' — '+elapsedH.toFixed(1)+'h fast on '+localDateStr(start);
+    setTimeout(()=>msgEl.textContent='',3000);
+  }
 }
 
-function cancelFastEdit() {
+function cancelHistoryEdit() {
   fastEditIdx = -1;
-  const card = document.getElementById('fastEditCard');
-  if (card) card.style.display = 'none';
+  const labelEl = document.getElementById('fastFormLabel');
+  const cancelBtn = document.getElementById('fastHistoryCancelBtn');
+  if (labelEl) { labelEl.textContent='+ ADD A FAST'; labelEl.style.color='var(--accent2)'; }
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  // Clear fields
+  const startEl = document.getElementById('editFastStartField');
+  const endEl   = document.getElementById('editFastEndField');
+  const now = new Date();
+  if (startEl) startEl.value = localDateStr(new Date(now-86400000))+'T22:00';
+  if (endEl)   endEl.value   = localDateStr(now)+'T18:00';
+  const protoEl = document.getElementById('editFastProtocol');
+  if (protoEl) protoEl.value = '16-8';
 }
 
 async function logPastFast() {
@@ -4518,7 +4495,7 @@ function updateFastTimer() {
     if(statusEl) statusEl.textContent='NO ACTIVE FAST';
     if(pctEl) pctEl.textContent='';
     if(milestoneEl) milestoneEl.textContent='';
-    if(ring){ring.style.strokeDashoffset='427.3';ring.style.stroke='var(--border2)';}
+    if(ring){ring.style.strokeDashoffset='364.4';ring.style.stroke='var(--border2)';}
     if(startBtn) startBtn.style.display=''; if(stopBtn) stopBtn.style.display='none'; return;
   }
   if(startBtn) startBtn.style.display='none'; if(stopBtn) stopBtn.style.display='';
@@ -4543,7 +4520,7 @@ function updateFastTimer() {
     if(next) { const d=next.hours-elapsedH; const dh=Math.floor(d),dm=Math.round((d-dh)*60); txt+=(last?' · ':'')+'Next: <span style="color:var(--accent2);">'+next.label+'</span> in '+dh+'h '+dm+'m'; }
     milestoneEl.innerHTML=txt;
   }
-  if(ring){const c=427.3;ring.style.strokeDashoffset=String(c*(1-pct));ring.style.stroke=pct>=1?'#4caf50':'var(--accent2)';}
+  if(ring){const c=364.4;ring.style.strokeDashoffset=String(c*(1-pct));ring.style.stroke=pct>=1?'#4caf50':'var(--accent2)';}
 }
 
 function renderFastHistory() {
@@ -4575,8 +4552,9 @@ function renderFastHistory() {
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
         <button onclick="editFastEntry(${i})"
+          title="Edit this fast"
           style="font-family:var(--font-mono);font-size:0.6rem;background:var(--bg3);
-          border:1px solid var(--border);color:var(--accent2);cursor:pointer;padding:3px 8px;">✎</button>
+          border:1px solid var(--border);color:var(--accent2);cursor:pointer;padding:3px 8px;">✎ EDIT</button>
         <button onclick="deleteFastEntry(${i})"
           style="font-family:var(--font-mono);font-size:0.6rem;background:none;
           border:none;color:var(--border2);cursor:pointer;padding:3px 5px;">✕</button>
