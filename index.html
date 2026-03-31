@@ -2214,6 +2214,30 @@ function localDateStr(date) {
   return `${y}-${m}-${day}`;
 }
 
+// Returns "YYYY-MM-DDTHH:MM" in LOCAL time — safe for datetime-local inputs
+function localDateTimeStr(date) {
+  const d = date || new Date();
+  return localDateStr(d) + 'T' +
+    String(d.getHours()).padStart(2,'0') + ':' +
+    String(d.getMinutes()).padStart(2,'0');
+}
+
+// Parse a date+time string from separate date ("YYYY-MM-DD") and time ("HH:MM")
+// inputs as LOCAL time — avoids UTC interpretation bug
+function parseDateTimeLocal(dateStr, timeStr) {
+  if (!dateStr || !timeStr) return null;
+  const [y,mo,dy] = dateStr.split('-').map(Number);
+  const [h,mi]    = timeStr.split(':').map(Number);
+  return new Date(y, mo-1, dy, h, mi, 0, 0); // local time constructor
+}
+
+// Parse a datetime-local input value ("YYYY-MM-DDTHH:MM") as LOCAL time
+function parseDateTimeLocalInput(val) {
+  if (!val) return null;
+  const [datePart, timePart] = val.split('T');
+  return parseDateTimeLocal(datePart, timePart);
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyBbFkivfcy6McwvmrGkUQt03oe84Wvr5l0",
   authDomain: "operatorfit-9d323.firebaseapp.com",
@@ -4208,7 +4232,8 @@ function updateFastEndCalc() {
   if (!dateEl?.value||!timeEl?.value) { el.textContent=''; return; }
   const hours = getProtocolHours();
   if (!hours) { el.textContent=''; return; }
-  const start = new Date(dateEl.value+'T'+timeEl.value+':00');
+  const start = parseDateTimeLocal(dateEl.value, timeEl.value);
+  if (!start) { el.textContent=''; return; }
   const end   = new Date(start.getTime()+hours*3600000);
   const endStr = end.toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
   const nowDiff = (new Date()-start)/3600000;
@@ -4245,12 +4270,14 @@ async function startFast() {
   const hours   = getProtocolHours();
   const dateEl  = document.getElementById('fastStartDate');
   const timeEl  = document.getElementById('fastStartTime');
-  const startDT = (dateEl?.value&&timeEl?.value) ? new Date(dateEl.value+'T'+timeEl.value+':00') : new Date();
+  // Use parseDateTimeLocal to avoid UTC bug — overnight fasts span two calendar dates
+  const startDT = parseDateTimeLocal(dateEl?.value, timeEl?.value) || new Date();
   fastState = { active:true, startTime:startDT, targetHours:hours, protocol:selectedProtocol };
   await saveFastState();
   updateFastTimer();
   startFastInterval();
-  const started = startDT<=new Date() && startDT.toDateString()!==new Date().toDateString()
+  const isToday = startDT.toDateString() === new Date().toDateString();
+  const started = !isToday
     ? ' (from '+startDT.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+')'
     : '';
   const msg = document.getElementById('fastMsg');
@@ -4267,8 +4294,8 @@ async function stopFast() {
   const endTimeEl = document.getElementById('fastEndTime');
   let end;
   if (cb?.checked && endDateEl?.value && endTimeEl?.value) {
-    end = new Date(endDateEl.value+'T'+endTimeEl.value+':00');
-    if (end <= startTime) end = new Date(); // fallback if invalid
+    end = parseDateTimeLocal(endDateEl.value, endTimeEl.value);
+    if (!end || end <= startTime) end = new Date(); // fallback if invalid
   } else {
     end = new Date();
   }
@@ -4320,10 +4347,14 @@ async function logFastWithTimes() {
     return;
   }
 
-  const start   = new Date(dateEl.value+'T'+timeEl.value+':00');
-  const end     = new Date(endDateEl.value+'T'+endTimeEl.value+':00');
+  const start   = parseDateTimeLocal(dateEl?.value, timeEl?.value);
+  const end     = parseDateTimeLocal(endDateEl?.value, endTimeEl?.value);
+  if (!start || !end) {
+    if (msg) { msg.style.color='var(--danger)'; msg.textContent='INVALID DATE OR TIME'; }
+    return;
+  }
   if (end <= start) {
-    if (msg) { msg.style.color='var(--danger)'; msg.textContent='END TIME MUST BE AFTER START TIME'; }
+    if (msg) { msg.style.color='var(--danger)'; msg.textContent='END TIME MUST BE AFTER START TIME — check the date too (overnight = end date is tomorrow)'; }
     return;
   }
   const elapsedH = (end-start)/3600000;
@@ -4367,8 +4398,8 @@ function editFastEntry(idx) {
   const labelEl = document.getElementById('fastFormLabel');
   const cancelBtn = document.getElementById('fastHistoryCancelBtn');
 
-  if (startEl) startEl.value = startD.toISOString().slice(0,16);
-  if (endEl)   endEl.value   = endD.toISOString().slice(0,16);
+  if (startEl) startEl.value = localDateTimeStr(startD);
+  if (endEl)   endEl.value   = localDateTimeStr(endD);
   if (protoEl) protoEl.value = f.protocol;
 
   const proto = FAST_PROTOCOLS.find(p=>p.id===f.protocol);
@@ -4389,23 +4420,26 @@ async function saveHistoryEntry() {
   if (!startEl?.value) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='START DATE/TIME REQUIRED';} return; }
   if (!endEl?.value)   { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='END DATE/TIME REQUIRED';}   return; }
 
-  const start   = new Date(startEl.value);
-  const end     = new Date(endEl.value);
-  if (end <= start) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='END MUST BE AFTER START';} return; }
+  const start   = parseDateTimeLocalInput(startEl.value);
+  const end     = parseDateTimeLocalInput(endEl.value);
+  if (!start) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='INVALID START DATE/TIME';} return; }
+  if (!end)   { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='INVALID END DATE/TIME';}   return; }
+  if (end <= start) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='END MUST BE AFTER START — for overnight fasts set END DATE to the next day';} return; }
 
   const proto    = protoEl?.value || '16-8';
   const elapsedH = (end-start)/3600000;
   const targetH  = FAST_PROTOCOLS.find(p=>p.id===proto)?.hours || elapsedH;
 
+  const isEditing = fastEditIdx >= 0; // capture BEFORE cancelHistoryEdit resets it
   const entry = {
-    id: fastEditIdx >= 0 ? fastHistory[fastEditIdx].id : 'fast_'+Date.now(),
+    id: isEditing ? fastHistory[fastEditIdx].id : 'fast_'+Date.now(),
     protocol: proto,
     startTime: start.toISOString(), endTime: end.toISOString(),
     targetHours: targetH, actualHours: parseFloat(elapsedH.toFixed(2)),
     completed: elapsedH >= targetH, date: localDateStr(start), retroactive: true,
   };
 
-  if (fastEditIdx >= 0) {
+  if (isEditing) {
     fastHistory[fastEditIdx] = entry;
   } else {
     fastHistory.unshift(entry);
@@ -4419,7 +4453,7 @@ async function saveHistoryEntry() {
 
   if (msgEl) {
     msgEl.style.color='#4caf50';
-    msgEl.textContent = (fastEditIdx>=0?'Updated':'Added')+' — '+elapsedH.toFixed(1)+'h fast on '+localDateStr(start);
+    msgEl.textContent = (isEditing ? 'Updated' : 'Added') + ' — ' + elapsedH.toFixed(1) + 'h fast on ' + localDateStr(start);
     setTimeout(()=>msgEl.textContent='',3000);
   }
 }
@@ -4448,9 +4482,10 @@ async function logPastFast() {
   if (!startEl?.value||!endEl?.value) {
     if (msgEl) { msgEl.style.color='var(--danger)'; msgEl.textContent='START AND END TIME REQUIRED'; } return;
   }
-  const start   = new Date(startEl.value);
-  const end     = new Date(endEl.value);
-  if (end<=start) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='END MUST BE AFTER START';} return; }
+  const start   = parseDateTimeLocalInput(startEl.value);
+  const end     = parseDateTimeLocalInput(endEl.value);
+  if (!start||!end) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='INVALID DATE/TIME';} return; }
+  if (end<=start) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='END MUST BE AFTER START — for overnight fasts set END to the next day';} return; }
   const elapsedH= (end-start)/3600000;
   const proto   = protoEl?.value||'custom';
   const targetH = FAST_PROTOCOLS.find(p=>p.id===proto)?.hours||elapsedH;
