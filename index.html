@@ -622,7 +622,6 @@ body.theme-female .goal-chip{border-radius:20px;}
     <button class="nav-btn" onclick="nav('progress')">PROGRESS</button>
     <button class="nav-btn" onclick="nav('program')">PROGRAM</button>
     <button class="nav-btn" onclick="nav('workout')">WORKOUTS</button>
-    <button class="nav-btn" onclick="nav('steps')">STEPS</button>
     <button class="nav-btn" onclick="nav('goals')">GOALS</button>
     <button class="nav-btn" onclick="nav('decomp')">DECOMPRESS</button>
     <button class="nav-btn" onclick="nav('log')">LOG DATA</button>
@@ -1099,30 +1098,91 @@ body.theme-female .goal-chip{border-radius:20px;}
     </div>
 
     <div id="log-steps" style="display:none;">
-      <div class="card">
-        <div class="card-label">LOG DAILY STEPS</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-          <div class="card-title" style="margin:0;">STEP COUNT</div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <input type="date" id="s-date" onchange="reloadLogForDate('steps')"
-              style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
-              font-family:var(--font-mono);font-size:0.75rem;padding:6px 10px;outline:none;">
-          </div>
+
+      <!-- Date picker + day navigation -->
+      <div class="card mb16">
+        <div class="card-label">STEP TRACKER</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+          <input type="date" id="steps-log-date"
+            style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);
+            color:var(--text);font-family:var(--font-mono);font-size:0.78rem;
+            padding:8px 10px;outline:none;"
+            onchange="changeStepsLogDate()">
+          <button onclick="stepsLogDateOffset(-1)" class="btn btn-s" style="font-size:0.65rem;padding:7px 12px;">◀ PREV</button>
+          <button onclick="stepsLogSetToday()" class="btn btn-s" style="font-size:0.65rem;padding:7px 12px;">TODAY</button>
+          <button onclick="stepsLogDateOffset(1)" class="btn btn-s" style="font-size:0.65rem;padding:7px 12px;">NEXT ▶</button>
         </div>
-        <div id="steps-cal-bar" style="display:none;padding:10px 14px;background:var(--accent2)11;border:1px solid var(--accent2)33;
-          font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);margin-bottom:12px;"></div>
-        <div class="log-grid">
-          <div class="lf"><label>TOTAL STEPS</label>
-            <input type="number" id="s-total" placeholder="10000" oninput="updateStepsCalBurn()">
-          </div>
-          <div class="lf"><label>MORNING WALK</label><input type="number" id="s-morn" placeholder="2000" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
-          <div class="lf"><label>LUNCH WALK</label><input type="number" id="s-lunch" placeholder="2500" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
-          <div class="lf"><label>PRE-WORKOUT</label><input type="number" id="s-pre" placeholder="2000" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
-          <div class="lf"><label>POST-WORKOUT ★</label><input type="number" id="s-post" placeholder="2000" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
-          <div class="lf"><label>EVENING WALK</label><input type="number" id="s-eve" placeholder="1500" oninput="updateStepsTotal();updateStepsCalBurn()"></div>
-        </div>
-        <div style="margin-top:14px;"><button class="btn btn-p" onclick="saveEntry('steps')">SAVE STEPS</button></div>
+        <div id="steps-log-date-banner" style="display:none;font-family:var(--font-mono);font-size:0.62rem;
+          color:var(--accent2);padding:6px 10px;background:var(--accent-dim);border:1px solid var(--accent2);"></div>
       </div>
+
+      <!-- Progress ring + total -->
+      <div class="card mb16" style="text-align:center;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;padding:8px 0;">
+          <div style="position:relative;width:130px;height:130px;flex-shrink:0;">
+            <svg width="130" height="130" style="transform:rotate(-90deg);">
+              <circle cx="65" cy="65" r="55" fill="none" stroke="var(--bg3)" stroke-width="10"/>
+              <circle id="logStepRingFill" cx="65" cy="65" r="55" fill="none" stroke="var(--accent2)" stroke-width="10"
+                stroke-linecap="round" stroke-dasharray="345.4" stroke-dashoffset="345.4"
+                style="transition:stroke-dashoffset 0.6s ease;"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div id="logStepRingPct" style="font-family:var(--font-display);font-size:1.6rem;color:var(--accent2);line-height:1;">0%</div>
+              <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);letter-spacing:.1em;">OF GOAL</div>
+            </div>
+          </div>
+          <div style="text-align:left;">
+            <div style="margin-bottom:12px;">
+              <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.15em;" id="logStepsTodayLabel">TODAY'S STEPS</div>
+              <div id="logStepTodayTotal" style="font-family:var(--font-display);font-size:2.4rem;color:var(--text-bright);line-height:1;">0</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.15em;">DAILY GOAL</div>
+              <div id="logStepGoalDisplay" style="font-family:var(--font-display);font-size:1.4rem;color:var(--accent2);line-height:1;">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Goal recommendation -->
+      <div id="logStepsTabRecommendation" class="card mb16" style="display:none;border-left:4px solid var(--accent2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+          <div>
+            <div class="card-label">RECOMMENDED FOR YOUR GOALS</div>
+            <div id="logStepsRecUrgency" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);margin-top:2px;"></div>
+          </div>
+          <div id="logStepsRecTarget" style="font-family:var(--font-display);font-size:1.8rem;color:var(--accent2);"></div>
+        </div>
+        <div id="logStepsRecWhy" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);line-height:1.7;margin-bottom:10px;"></div>
+        <button id="logStepsRecApplyBtn" onclick="" class="btn btn-p" style="font-size:0.62rem;">⭐ APPLY THIS GOAL</button>
+      </div>
+
+      <!-- Walk sections (rendered by JS) -->
+      <div id="logStepSections"></div>
+
+      <!-- Add custom walk -->
+      <div class="card mb16" style="border-style:dashed;border-color:var(--border2);">
+        <div class="card-label">ADD CUSTOM WALK</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="logCustomWalkName" placeholder="Walk name (e.g. Evening stroll)"
+            style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);
+            color:var(--text);font-family:var(--font-mono);font-size:0.8rem;padding:8px 10px;outline:none;">
+          <input type="number" id="logCustomWalkSteps" placeholder="Steps" min="0"
+            style="width:100px;background:var(--bg3);border:1px solid var(--border);
+            color:var(--text);font-family:var(--font-mono);font-size:0.8rem;padding:8px 10px;outline:none;">
+          <button class="btn btn-p" onclick="saveLogCustomWalk()" style="white-space:nowrap;">+ LOG WALK</button>
+        </div>
+      </div>
+
+      <!-- Science card -->
+      <div class="card">
+        <div class="card-label">WHY SPLIT THE STEPS?</div>
+        <div class="card-title">CORTISOL-SMART WALKING</div>
+        <div class="mono dim" style="line-height:1.8;">One long march elevates cortisol for hours — directly storing visceral fat.<br>
+        Multiple shorter walks keep each session in the fat-burning zone (60–70% max HR).<br>
+        <span class="orange">★ Post-workout walk is the most important — drives cortisol down before sleep.</span></div>
+      </div>
+
     </div>
 
     <div id="log-body" style="display:none;">
@@ -2690,7 +2750,7 @@ function logTab(t) {
   }
   if (t==='summary')   renderLogSummary();
   if (t==='history')   showHist('workout');
-  if (t==='steps')     autoPopulateStepsLog();
+  if (t==='steps')     initLogStepsPanel();
   if (t==='body')      autoPopulateBodyLog();
   if (t==='nutrition') autoPopulateNutritionLog();
 }
@@ -3140,7 +3200,7 @@ async function _renderLogSummaryInner(el) {
           : `<div style="background:var(--bg3);padding:10px;border:1px solid var(--border);">
               <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">👣 STEPS</div>
               <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);">Not logged</div>
-              <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--accent);cursor:pointer;" onclick="nav('steps')">→ Go log it</div>
+              <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--accent);cursor:pointer;" onclick="nav('log');setTimeout(()=>logTab('steps'),100);">→ Go log it</div>
              </div>`}
 
         ${todayNutrition
@@ -7929,6 +7989,317 @@ async function saveStepSection(sectionId, mode) {
     const label = DEFAULT_WALK_SECTIONS.find(s => s.id === sectionId)?.label || sectionId;
     toast(`✓ ${label} SAVED — ${steps.toLocaleString()} STEPS`);
   } catch(e) { toast('ERROR: ' + e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOG DATA → STEPS — date-aware, reads/writes DB per date
+// ═══════════════════════════════════════════════════════════
+let currentLogStepDate = localDateStr();  // "YYYY-MM-DD"
+let logStepData = {};                     // same shape as todayStepData
+
+async function initLogStepsPanel() {
+  currentLogStepDate = localDateStr();
+  const dateEl = document.getElementById('steps-log-date');
+  if (dateEl) dateEl.value = currentLogStepDate;
+  await loadGoals();
+  renderLogStepRecommendation();
+  await loadLogStepsForDate(currentLogStepDate);
+}
+
+async function loadLogStepsForDate(dateStr) {
+  // Show banner if not today
+  const banner = document.getElementById('steps-log-date-banner');
+  const label  = document.getElementById('logStepsTodayLabel');
+  const isToday = dateStr === localDateStr();
+  if (banner) {
+    if (!isToday) {
+      const d = new Date(dateStr+'T12:00:00');
+      banner.textContent = '📅 LOGGING FOR ' + d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+  if (label) label.textContent = isToday ? "TODAY'S STEPS" : "STEPS FOR DAY";
+
+  // Read from Firestore steplog/{date}
+  logStepData = {};
+  try {
+    const doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(dateStr).get();
+    if (doc.exists) {
+      const raw = doc.data().sections || {};
+      for (const [k, v] of Object.entries(raw)) {
+        logStepData[k] = (typeof v === 'object') ? v : { steps: v, startSteps: null, endSteps: null };
+      }
+    }
+  } catch(e) { logStepData = {}; }
+
+  renderLogStepSections();
+  updateLogStepProgress();
+}
+
+function renderLogStepSections() {
+  const el = document.getElementById('logStepSections');
+  if (!el) return;
+  const goal = userGoals.stepGoal || 10000;
+
+  el.innerHTML = DEFAULT_WALK_SECTIONS.map((s, idx) => {
+    const saved = logStepData[s.id] || {};
+    const done = saved.steps || 0;
+    const savedStart = saved.startSteps || '';
+    const savedEnd   = saved.endSteps   || '';
+    const target = Math.round(goal * s.pct);
+    const pct    = Math.min(100, Math.round(done / target * 100));
+    const complete = done >= target;
+    const prevSection = idx > 0 ? DEFAULT_WALK_SECTIONS[idx - 1] : null;
+    const prevEnd = prevSection ? (logStepData[prevSection.id]?.endSteps || '') : '';
+    const autoStart = savedStart || prevEnd;
+
+    return `<div class="card mb16" id="logstepcard-${s.id}"
+      style="border-left:4px solid ${complete?'#4caf50':s.star?'var(--accent2)':'var(--border)'};">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.15em;">${s.time}</div>
+          <div style="font-family:var(--font-display);font-size:1.1rem;color:${s.star?'var(--accent2)':'var(--text-bright)'};">${s.label}</div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:${s.star?'var(--accent2)':'var(--text-dim)'};">${s.note}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--font-display);font-size:2rem;color:${complete?'#4caf50':'var(--accent2)'};">${done.toLocaleString()}</div>
+          <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);">of ${target.toLocaleString()} · ${pct}%</div>
+        </div>
+      </div>
+      <div style="height:4px;background:var(--bg3);border-radius:2px;margin-bottom:14px;">
+        <div style="height:100%;width:${pct}%;background:${complete?'#4caf50':'var(--accent2)'};border-radius:2px;transition:width 0.5s;"></div>
+      </div>
+      <div style="display:flex;gap:0;margin-bottom:12px;border:1px solid var(--border);overflow:hidden;">
+        <button id="lmodetab-total-${s.id}" onclick="switchLogStepMode('${s.id}','total')"
+          style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:.1em;cursor:pointer;border:none;
+          background:var(--bg3);color:var(--text-dim);border-right:1px solid var(--border);">TOTAL STEPS</button>
+        <button id="lmodetab-range-${s.id}" onclick="switchLogStepMode('${s.id}','range')"
+          style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:.1em;cursor:pointer;border:none;
+          background:var(--bg3);color:var(--text-dim);">START → END</button>
+      </div>
+      <div id="lstepmode-total-${s.id}" style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="lstepinput-${s.id}" value="${done||''}"
+          placeholder="Enter step count" min="0" max="50000"
+          style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;">
+        <button class="btn btn-p" onclick="saveLogStepSection('${s.id}','total')"
+          style="white-space:nowrap;font-size:0.65rem;padding:9px 14px;">${complete?'✓ UPDATE':'SAVE'}</button>
+      </div>
+      <div id="lstepmode-range-${s.id}" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:8px;">
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">START STEPS</div>
+            <input type="number" id="lstepstart-${s.id}" value="${autoStart}"
+              placeholder="Watch reading at start" min="0" oninput="calcLogStepDiff('${s.id}')"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">
+          </div>
+          <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--border2);padding-top:20px;">→</div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">END STEPS</div>
+            <input type="number" id="lstepend-${s.id}" value="${savedEnd||''}"
+              placeholder="Watch reading at end" min="0" oninput="calcLogStepDiff('${s.id}')"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">
+          </div>
+        </div>
+        <div id="lstepdiff-${s.id}" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);
+          text-align:center;margin-bottom:8px;min-height:18px;">
+          ${savedStart && savedEnd ? `= ${(savedEnd - savedStart).toLocaleString()} steps this walk` : ''}
+        </div>
+        <button class="btn btn-p" onclick="saveLogStepSection('${s.id}','range')"
+          style="width:100%;font-size:0.65rem;padding:9px;">${complete?'✓ UPDATE':'SAVE WALK'}</button>
+      </div>
+      ${complete ? `<div style="font-family:var(--font-mono);font-size:0.62rem;color:#4caf50;margin-top:8px;text-align:center;">✓ SECTION TARGET MET</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Set active mode tabs
+  DEFAULT_WALK_SECTIONS.forEach(s => {
+    const saved = logStepData[s.id] || {};
+    if (saved.startSteps || saved.endSteps) switchLogStepMode(s.id, 'range', false);
+    else highlightLogModeTab(s.id, 'total');
+  });
+}
+
+function switchLogStepMode(sectionId, mode, highlight=true) {
+  const t = document.getElementById(`lstepmode-total-${sectionId}`);
+  const r = document.getElementById(`lstepmode-range-${sectionId}`);
+  if (t) t.style.display = mode==='total' ? 'flex' : 'none';
+  if (r) r.style.display = mode==='range' ? 'block' : 'none';
+  if (highlight) highlightLogModeTab(sectionId, mode);
+}
+
+function highlightLogModeTab(sectionId, activeMode) {
+  ['total','range'].forEach(m => {
+    const btn = document.getElementById(`lmodetab-${m}-${sectionId}`);
+    if (!btn) return;
+    btn.style.background = m===activeMode ? 'var(--accent-dim)' : 'var(--bg3)';
+    btn.style.color = m===activeMode ? 'var(--accent2)' : 'var(--text-dim)';
+  });
+}
+
+function calcLogStepDiff(sectionId) {
+  const s = parseInt(document.getElementById(`lstepstart-${sectionId}`)?.value) || 0;
+  const e = parseInt(document.getElementById(`lstepend-${sectionId}`)?.value)   || 0;
+  const d = document.getElementById(`lstepdiff-${sectionId}`);
+  if (!d) return;
+  if (s > 0 && e > s) { d.textContent = `= ${(e-s).toLocaleString()} steps this walk`; d.style.color='var(--accent2)'; }
+  else if (e > 0 && e <= s) { d.textContent='End steps must be greater than start steps'; d.style.color='var(--danger)'; }
+  else d.textContent='';
+}
+
+async function saveLogStepSection(sectionId, mode) {
+  let steps=0, startSteps=null, endSteps=null;
+  if (mode==='range') {
+    startSteps = parseInt(document.getElementById(`lstepstart-${sectionId}`)?.value) || 0;
+    endSteps   = parseInt(document.getElementById(`lstepend-${sectionId}`)?.value)   || 0;
+    if (endSteps <= startSteps) { toast('END STEPS MUST BE GREATER THAN START STEPS'); return; }
+    steps = endSteps - startSteps;
+  } else {
+    steps = parseInt(document.getElementById(`lstepinput-${sectionId}`)?.value) || 0;
+  }
+
+  logStepData[sectionId] = { steps, startSteps, endSteps };
+
+  // Auto-chain next section start
+  if (mode==='range' && endSteps) {
+    const idx = DEFAULT_WALK_SECTIONS.findIndex(s => s.id === sectionId);
+    const next = DEFAULT_WALK_SECTIONS[idx+1];
+    if (next && !logStepData[next.id]?.startSteps) {
+      const el = document.getElementById(`lstepstart-${next.id}`);
+      if (el) el.value = endSteps;
+    }
+  }
+
+  const dateStr = currentLogStepDate;
+  const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (logStepData[s.id]?.steps || 0), 0);
+
+  try {
+    // Write steplog/{date} — same collection as the main steps page
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(dateStr)
+      .set({ sections: logStepData, total, date: dateStr, updated: new Date().toISOString() });
+
+    // Also update encrypted steps log for charts/history
+    const existing = await encryptedLoad('steps');
+    const idx = existing.findIndex(e => e.date === dateStr);
+    const entry = {
+      saved: new Date().toISOString(), date: dateStr, total: String(total),
+      morning: String(logStepData.morning?.steps || 0),
+      lunch:   String(logStepData.lunch?.steps   || 0),
+      pre:     String(logStepData.pre?.steps      || 0),
+      post:    String(logStepData.post?.steps     || 0),
+      evening: String(logStepData.evening?.steps  || 0),
+    };
+    idx >= 0 ? existing[idx] = entry : existing.unshift(entry);
+    await encryptedSave('steps', existing);
+
+    // If logging for today, also sync the main steps page data
+    if (dateStr === localDateStr()) {
+      todayStepData = { ...logStepData };
+      if (document.getElementById('stepSections')) { renderStepSections(); updateStepProgress(); }
+    }
+
+    renderLogStepSections();
+    updateLogStepProgress();
+    loadStats();
+    const label = DEFAULT_WALK_SECTIONS.find(s => s.id === sectionId)?.label || sectionId;
+    toast(`✓ ${label} SAVED — ${steps.toLocaleString()} STEPS`);
+  } catch(e) { toast('ERROR: ' + e.message); }
+}
+
+function updateLogStepProgress() {
+  const goal  = userGoals.stepGoal || 10000;
+  const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (logStepData[s.id]?.steps || 0), 0);
+  const pct   = Math.min(100, Math.round(total / goal * 100));
+
+  const totalEl = document.getElementById('logStepTodayTotal');
+  const pctEl   = document.getElementById('logStepRingPct');
+  const goalEl  = document.getElementById('logStepGoalDisplay');
+  const ring    = document.getElementById('logStepRingFill');
+
+  if (totalEl) totalEl.textContent = total.toLocaleString();
+  if (pctEl)   pctEl.textContent   = pct + '%';
+  if (goalEl)  goalEl.textContent  = goal.toLocaleString();
+  if (ring) {
+    const circumference = 345.4;
+    ring.style.strokeDashoffset = String(circumference * (1 - pct/100));
+    ring.style.stroke = pct >= 100 ? '#4caf50' : 'var(--accent2)';
+  }
+}
+
+function renderLogStepRecommendation() {
+  const card    = document.getElementById('logStepsTabRecommendation');
+  const urgEl   = document.getElementById('logStepsRecUrgency');
+  const targetEl= document.getElementById('logStepsRecTarget');
+  const whyEl   = document.getElementById('logStepsRecWhy');
+  const applyBtn= document.getElementById('logStepsRecApplyBtn');
+  if (!card) return;
+  const priority = userGoals?.focusPriority || userGoals?.trainingFocus || [];
+  let rec = null;
+  for (const fid of priority) {
+    if (STEP_RECS?.[fid]) { rec = { ...STEP_RECS[fid], focusId: fid }; break; }
+  }
+  if (!rec) { card.style.display='none'; return; }
+  card.style.display='block';
+  if (urgEl)    urgEl.textContent   = rec.urgency + '  ' + (GOAL_ACTIONS?.[rec.focusId]?.label||'');
+  if (targetEl) targetEl.textContent= rec.label;
+  if (whyEl)    whyEl.textContent   = rec.why;
+  if (applyBtn) {
+    applyBtn.textContent = `⭐ SET GOAL TO ${rec.steps.toLocaleString()} STEPS`;
+    applyBtn.onclick = () => {
+      userGoals.stepGoal = rec.steps;
+      updateLogStepProgress();
+      renderLogStepRecommendation();
+      applyBtn.textContent = '✓ APPLIED';
+      setTimeout(()=>applyBtn.textContent=`⭐ SET GOAL TO ${rec.steps.toLocaleString()} STEPS`,2500);
+    };
+  }
+}
+
+function changeStepsLogDate() {
+  const el = document.getElementById('steps-log-date');
+  if (!el?.value) return;
+  currentLogStepDate = el.value;
+  loadLogStepsForDate(currentLogStepDate);
+}
+
+function stepsLogDateOffset(days) {
+  const d = new Date(currentLogStepDate+'T12:00:00');
+  d.setDate(d.getDate() + days);
+  const newDate = localDateStr(d);
+  currentLogStepDate = newDate;
+  const el = document.getElementById('steps-log-date');
+  if (el) el.value = newDate;
+  loadLogStepsForDate(newDate);
+}
+
+function stepsLogSetToday() {
+  currentLogStepDate = localDateStr();
+  const el = document.getElementById('steps-log-date');
+  if (el) el.value = currentLogStepDate;
+  loadLogStepsForDate(currentLogStepDate);
+}
+
+async function saveLogCustomWalk() {
+  const name  = document.getElementById('logCustomWalkName')?.value.trim();
+  const steps = parseInt(document.getElementById('logCustomWalkSteps')?.value) || 0;
+  if (!name || !steps) { toast('ENTER A NAME AND STEP COUNT'); return; }
+  const id = 'custom_' + name.toLowerCase().replace(/\s+/g,'_');
+  logStepData[id] = { steps, startSteps: null, endSteps: null };
+  const dateStr = currentLogStepDate;
+  const total = DEFAULT_WALK_SECTIONS.reduce((s,sec)=>s+(logStepData[sec.id]?.steps||0),0) + steps;
+  await db.collection('userdata').doc(SESSION.username)
+    .collection('steplog').doc(dateStr)
+    .set({ sections: logStepData, total, date: dateStr, updated: new Date().toISOString() });
+  if (document.getElementById('logCustomWalkName')) document.getElementById('logCustomWalkName').value='';
+  if (document.getElementById('logCustomWalkSteps')) document.getElementById('logCustomWalkSteps').value='';
+  updateLogStepProgress();
+  toast(`✓ ${name} LOGGED — ${steps.toLocaleString()} STEPS`);
 }
 
 async function saveCustomWalk() {
