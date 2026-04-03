@@ -2017,24 +2017,69 @@ body.theme-female .goal-chip{border-radius:20px;}
 
       <!-- Food search popup (shared) -->
       <div id="food-search-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-        width:min(420px,94vw);background:var(--bg2);border:1px solid var(--accent2);z-index:999;padding:16px;
-        box-shadow:0 8px 32px rgba(0,0,0,0.6);max-height:80vh;overflow-y:auto;">
+        width:min(460px,96vw);background:var(--bg2);border:1px solid var(--accent2);z-index:999;padding:16px;
+        box-shadow:0 8px 32px rgba(0,0,0,0.6);max-height:85vh;overflow-y:auto;">
+
+        <!-- Header -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);letter-spacing:.12em;">ADD FROM DATABASE</div>
-          <button onclick="closeFoodSearch()" style="background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;">✕</button>
+          <button onclick="closeFoodSearch()" style="background:none;border:none;color:var(--text-dim);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
         </div>
-        <input type="text" id="popup-search-input" placeholder="Search food..." oninput="searchFoodDb('popup-search-input','popup-search-results')"
+
+        <!-- Source + cuisine filters -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="flex:1;min-width:120px;">
+            <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">SOURCE</div>
+            <select id="popup-source-filter" onchange="searchFoodDb('popup-search-input','popup-search-results')"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.68rem;padding:6px 7px;outline:none;">
+              <option value="all">All Sources</option>
+              <option value="ingredient">🥦 Ingredients Only</option>
+              <option value="restaurant">🏪 Restaurant Only</option>
+              <option value="recipe">📖 Recipes Only</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px;">
+            <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">CUISINE</div>
+            <select id="popup-cuisine-filter" onchange="searchFoodDb('popup-search-input','popup-search-results')"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.68rem;padding:6px 7px;outline:none;">
+              <option value="">All Cuisines</option>
+              <option value="american">🇺🇸 American</option>
+              <option value="mexican">🌮 Mexican</option>
+              <option value="italian">🍝 Italian</option>
+              <option value="mediterranean">🫒 Mediterranean</option>
+              <option value="asian">🥢 Asian</option>
+              <option value="japanese">🍜 Japanese</option>
+              <option value="chinese">🥟 Chinese</option>
+              <option value="indian">🍛 Indian</option>
+              <option value="thai">🌶 Thai</option>
+              <option value="greek">🫙 Greek</option>
+              <option value="french">🥖 French</option>
+              <option value="middle_eastern">🧆 Middle Eastern</option>
+              <option value="korean">🍱 Korean</option>
+              <option value="bbq">🔥 BBQ &amp; Grill</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Search box -->
+        <input type="text" id="popup-search-input" placeholder="Search by name, brand, tag..."
+          oninput="searchFoodDb('popup-search-input','popup-search-results')"
           style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-          font-family:var(--font-mono);font-size:0.8rem;padding:8px 10px;outline:none;box-sizing:border-box;margin-bottom:8px;">
-        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+          font-family:var(--font-mono);font-size:0.8rem;padding:8px 10px;outline:none;
+          box-sizing:border-box;margin-bottom:8px;">
+
+        <!-- Ingredient qty/unit row — shown for ingredients, hidden otherwise -->
+        <div id="popup-ingredient-row" style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-end;">
           <div>
-            <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;" id="popup-qty-label">AMOUNT</div>
-            <input type="number" id="popup-qty" value="1" min="0" step="0.25"
+            <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">AMOUNT</div>
+            <input type="number" id="popup-qty" value="100" min="0" step="1"
               style="width:80px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
               font-family:var(--font-mono);font-size:0.8rem;padding:7px 8px;outline:none;text-align:center;">
           </div>
           <div style="flex:1;">
-            <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">UNIT</div>
+            <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">UNIT</div>
             <select id="popup-unit" onchange="onPopupUnitChange()" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
               font-family:var(--font-mono);font-size:0.75rem;padding:7px 8px;outline:none;">
               <option value="g">g (grams)</option>
@@ -2047,6 +2092,34 @@ body.theme-female .goal-chip{border-radius:20px;}
             </select>
           </div>
         </div>
+
+        <!-- Recipe serving calculator — shown only when a recipe is selected -->
+        <div id="popup-recipe-serving-row" style="display:none;padding:10px 12px;
+          background:var(--bg3);border:1px solid var(--accent2);margin-bottom:8px;">
+          <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);
+            letter-spacing:.1em;margin-bottom:8px;">📖 RECIPE SERVING CALCULATOR</div>
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:8px;">
+            <div>
+              <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">I'M EATING</div>
+              <input type="number" id="popup-eat-servings" value="1" min="0.25" step="0.25"
+                oninput="updateRecipeServingCalc()"
+                style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.9rem;padding:7px 8px;outline:none;text-align:center;box-sizing:border-box;">
+            </div>
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);text-align:center;">out of</div>
+            <div>
+              <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);letter-spacing:.1em;margin-bottom:3px;">TOTAL SERVINGS MADE</div>
+              <input type="number" id="popup-total-servings" value="4" min="0.25" step="0.25"
+                oninput="updateRecipeServingCalc()"
+                style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.9rem;padding:7px 8px;outline:none;text-align:center;box-sizing:border-box;">
+            </div>
+          </div>
+          <!-- Live macro preview -->
+          <div id="popup-recipe-macro-preview" style="font-family:var(--font-mono);font-size:0.62rem;
+            color:var(--text);line-height:1.8;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);"></div>
+        </div>
+
         <div id="popup-unit-note" style="display:none;font-family:var(--font-mono);font-size:0.58rem;color:#ff9800;padding:2px 0;margin-bottom:4px;"></div>
         <div id="popup-search-results"></div>
       </div>
@@ -5475,68 +5548,87 @@ function onRecipeUnitChange() {
 }
 
 function searchFoodDb(inputId, resultsId) {
-  const q  = (document.getElementById(inputId)?.value || '').toLowerCase().trim();
-  const el = document.getElementById(resultsId);
+  const q       = (document.getElementById(inputId)?.value || '').toLowerCase().trim();
+  const el      = document.getElementById(resultsId);
   if (!el) return;
-  if (!q || q.length < 2) { el.innerHTML = ''; return; }
 
-  // Build unified search results across 3 sources
-  const results = [];
+  // Read filters — only active when using the popup
+  const sourceFilter  = document.getElementById('popup-source-filter')?.value  || 'all';
+  const cuisineFilter = document.getElementById('popup-cuisine-filter')?.value || '';
 
-  // 1. Ingredients database
-  foodDatabase.filter(f =>
-    f.name.toLowerCase().includes(q) || (f.brand||'').toLowerCase().includes(q)
-  ).slice(0, 8).forEach(f => {
-    results.push({
-      type: 'ingredient',
-      label: f.name + (f.brand ? ` — ${f.brand}` : ''),
-      sub: `${f.serving || '100g'} · ${f.calories} kcal · ${f.protein}g P · ${f.carbs}g C · ${f.fat}g F`,
-      badge: '🥦',
-      data: f,
-      idx: foodDatabase.indexOf(f),
-    });
-  });
+  const showIngredients = sourceFilter === 'all' || sourceFilter === 'ingredient';
+  const showRestaurant  = sourceFilter === 'all' || sourceFilter === 'restaurant';
+  const showRecipes     = sourceFilter === 'all' || sourceFilter === 'recipe';
 
-  // 2. Saved restaurant meals
-  (restaurantDb || []).filter(r =>
-    r.restaurant.toLowerCase().includes(q) || r.meal.toLowerCase().includes(q)
-  ).slice(0, 5).forEach(r => {
-    results.push({
-      type: 'restaurant',
-      label: `${r.meal} @ ${r.restaurant}`,
-      sub: `${r.calories} kcal · ${r.protein||0}g P · ${r.carbs||0}g C · ${r.fat||0}g F`,
-      badge: '🏪',
-      data: r,
-      idx: null,
-    });
-  });
-
-  // 3. Community recipes (use total macros)
-  (communityRecipes || []).filter(r =>
-    r.name.toLowerCase().includes(q) ||
-    (r.tags||[]).some(t => t.includes(q))
-  ).slice(0, 5).forEach(r => {
-    const totCal  = r.totalCalories || (r.ingredients||[]).reduce((s,i)=>s+(i.cals||0),0);
-    const totProt = r.totalProtein  || (r.ingredients||[]).reduce((s,i)=>s+(i.prot||0),0);
-    const totCarb = (r.ingredients||[]).reduce((s,i)=>s+(i.carb||0),0);
-    const totFat  = (r.ingredients||[]).reduce((s,i)=>s+(i.fat||0),0);
-    results.push({
-      type: 'recipe',
-      label: r.name,
-      sub: `${Math.round(totCal)} kcal · ${totProt.toFixed(0)}g P · ${totCarb.toFixed(0)}g C · ${totFat.toFixed(0)}g F (${r.servings||1} serving${(r.servings||1)!==1?'s':''})`,
-      badge: '📖',
-      data: r,
-      idx: null,
-    });
-  });
-
-  if (!results.length) {
-    el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);padding:8px 10px;">
-      No matches for "${q}". Add ingredients via the Food tab.</div>`;
+  if (!q || q.length < 2) {
+    // With no query but filters set, show hint
+    if (sourceFilter !== 'all' || cuisineFilter) {
+      el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);padding:8px 10px;">
+        Type to search${sourceFilter!=='all'?' ('+sourceFilter+' only)':''}${cuisineFilter?' — '+cuisineFilter+' cuisine':''}</div>`;
+    } else {
+      el.innerHTML = '';
+    }
     return;
   }
 
-  // Group by source type
+  const results = [];
+
+  // 1. Ingredients
+  if (showIngredients) {
+    foodDatabase.filter(f => {
+      if (!f.name.toLowerCase().includes(q) && !(f.brand||'').toLowerCase().includes(q)) return false;
+      if (cuisineFilter && (f.cuisine||'') !== cuisineFilter) return false;
+      return true;
+    }).slice(0, 8).forEach(f => results.push({
+      type: 'ingredient',
+      label: f.name + (f.brand ? ` — ${f.brand}` : ''),
+      sub: `${f.serving || '100g'} · ${f.calories} kcal · ${f.protein}g P · ${f.carbs}g C · ${f.fat}g F`,
+      data: f, idx: foodDatabase.indexOf(f),
+    }));
+  }
+
+  // 2. Restaurant meals
+  if (showRestaurant) {
+    (restaurantDb || []).filter(r => {
+      if (!r.restaurant.toLowerCase().includes(q) && !r.meal.toLowerCase().includes(q)) return false;
+      if (cuisineFilter && (r.cuisine||'') !== cuisineFilter) return false;
+      return true;
+    }).slice(0, 5).forEach(r => results.push({
+      type: 'restaurant',
+      label: `${r.meal} @ ${r.restaurant}`,
+      sub: `${r.calories} kcal · ${r.protein||0}g P · ${r.carbs||0}g C · ${r.fat||0}g F${r.cuisine?' · '+r.cuisine:''}`,
+      data: r, idx: null,
+    }));
+  }
+
+  // 3. Community recipes
+  if (showRecipes) {
+    (communityRecipes || []).filter(r => {
+      if (!r.name.toLowerCase().includes(q) && !(r.tags||[]).some(t => t.includes(q))) return false;
+      if (cuisineFilter && (r.cuisine||'') !== cuisineFilter) return false;
+      return true;
+    }).slice(0, 5).forEach(r => {
+      const totCal  = r.totalCalories || (r.ingredients||[]).reduce((s,i)=>s+(i.cals||0),0);
+      const totProt = r.totalProtein  || (r.ingredients||[]).reduce((s,i)=>s+(i.prot||0),0);
+      const totCarb = (r.ingredients||[]).reduce((s,i)=>s+(i.carb||0),0);
+      const totFat  = (r.ingredients||[]).reduce((s,i)=>s+(i.fat||0),0);
+      results.push({
+        type: 'recipe',
+        label: r.name,
+        sub: `${Math.round(totCal)} kcal total · ${totProt.toFixed(0)}g P · ${r.servings||1} serving recipe${r.cuisine?' · '+r.cuisine:''}`,
+        data: r, idx: null,
+        totals: { cal: totCal, prot: totProt, carb: totCarb, fat: totFat },
+        servings: r.servings || 1,
+      });
+    });
+  }
+
+  if (!results.length) {
+    el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);padding:8px 10px;">
+      No matches${cuisineFilter?' for '+cuisineFilter+' cuisine':''}. Try broadening filters.</div>`;
+    return;
+  }
+
   const groups = [
     { key:'ingredient', title:'🥦 INGREDIENTS', color:'#4caf50' },
     { key:'restaurant', title:'🏪 RESTAURANT MEALS', color:'var(--accent2)' },
@@ -5548,53 +5640,45 @@ function searchFoodDb(inputId, resultsId) {
     .map(g => {
       const items = results.filter(r => r.type === g.key);
       return `<div style="font-family:var(--font-mono);font-size:0.52rem;color:${g.color};
-        letter-spacing:.12em;padding:6px 10px 2px;background:var(--bg2);">${g.title}</div>` +
+        letter-spacing:.12em;padding:5px 10px 3px;background:var(--bg2);">${g.title}</div>` +
         items.map(item => {
-          // Build safe data attribute
-          const safeData = JSON.stringify({
-            type: item.type,
-            label: item.label,
-            idx: item.idx,
-            calories: item.data.calories || item.data.totalCalories || 0,
-            protein: item.data.protein  || item.data.totalProtein   || 0,
-            carbs:   item.data.carbs    || 0,
-            fat:     item.data.fat      || 0,
-            name:    item.data.name     || item.data.meal || '',
-            serving: item.data.serving  || '1 serving',
-          }).replace(/'/g, '&#39;');
-
-          return `<div onclick="selectFoodUnified('${item.type}',${item.idx !== null ? item.idx : -1},'${inputId}','${resultsId}',${item.type==='ingredient'?'false':'true'},'${encodeURIComponent(JSON.stringify({
-            name:    item.data.name || item.data.meal || '',
-            restaurant: item.data.restaurant || '',
-            calories: item.data.calories || item.data.totalCalories || 0,
-            protein:  item.data.protein  || item.data.totalProtein   || 0,
-            carbs:    item.data.carbs    || 0,
-            fat:      item.data.fat      || 0,
-            serving:  item.data.serving  || '1 serving',
-          }))}')"
-            style="padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--border);
+          const safeJson = encodeURIComponent(JSON.stringify({
+            type:      item.type,
+            name:      item.data.name || item.data.meal || '',
+            restaurant:item.data.restaurant || '',
+            calories:  item.data.calories || item.data.totalCalories || item.totals?.cal || 0,
+            protein:   item.data.protein  || item.data.totalProtein  || item.totals?.prot || 0,
+            carbs:     item.data.carbs    || item.totals?.carb || 0,
+            fat:       item.data.fat      || item.totals?.fat  || 0,
+            serving:   item.data.serving  || '1 serving',
+            servings:  item.servings      || 1,
+            cuisine:   item.data.cuisine  || '',
+          }));
+          return `<div onclick="selectFoodUnified('${item.type}',${item.idx !== null ? item.idx : -1},'popup-search-input','popup-search-results','${safeJson}')"
+            style="padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--border);
             font-family:var(--font-mono);font-size:0.68rem;background:var(--bg3);"
             onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='var(--bg3)'">
             <div style="color:var(--text);">${item.label}</div>
-            <div style="color:var(--text-dim);font-size:0.57rem;">${item.sub}</div>
+            <div style="color:var(--text-dim);font-size:0.57rem;margin-top:1px;">${item.sub}</div>
           </div>`;
         }).join('');
     }).join('');
 }
 
-function selectFoodUnified(type, idx, inputId, resultsId, isCustom, encodedData) {
+function selectFoodUnified(type, idx, inputId, resultsId, encodedData) {
   const el = document.getElementById(resultsId);
   if (el) el.innerHTML = '';
   const inpEl = document.getElementById(inputId);
 
   if (type === 'ingredient' && idx >= 0) {
-    // Standard ingredient — use existing selectFood path
+    // Standard ingredient — use existing path
     if (inpEl) inpEl.value = foodDatabase[idx]?.name || '';
+    // Show ingredient qty row, hide recipe row
+    setPopupMode('ingredient');
     selectFood(idx, inputId, resultsId);
     return;
   }
 
-  // Restaurant or recipe — parse encoded data
   let d;
   try { d = JSON.parse(decodeURIComponent(encodedData)); } catch(e) { return; }
 
@@ -5603,21 +5687,72 @@ function selectFoodUnified(type, idx, inputId, resultsId, isCustom, encodedData)
     : d.name;
   if (inpEl) inpEl.value = displayName;
 
-  if (inputId === 'popup-search-input') {
-    // Show confirm card with macro info
-    window._selectedFoodIdx = null;
+  if (type === 'recipe') {
+    // Show recipe serving calculator
+    setPopupMode('recipe');
     window._selectedFoodCustom = d;
-    const resContainer = document.getElementById(resultsId);
-    if (resContainer) {
-      resContainer.innerHTML = `
-        <div style="padding:10px;background:var(--bg3);border:1px solid #4caf5044;margin-top:4px;">
-          <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);margin-bottom:4px;">${displayName}</div>
-          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
-            ${d.calories} kcal · ${d.protein}g P · ${d.carbs}g C · ${d.fat}g F · per ${d.serving}
-          </div>
-          <button onclick="confirmAddCustomFoodToMeal()" class="btn btn-p" style="width:100%;font-size:0.65rem;">ADD TO MEAL</button>
-        </div>`;
-    }
+    // Pre-fill total servings from recipe's own servings count
+    const totalEl = document.getElementById('popup-total-servings');
+    const eatEl   = document.getElementById('popup-eat-servings');
+    if (totalEl) totalEl.value = d.servings || 1;
+    if (eatEl)   eatEl.value   = 1;
+    updateRecipeServingCalc();
+    // Show ADD button in results area
+    if (el) el.innerHTML = `
+      <button onclick="confirmAddCustomFoodToMeal()" class="btn btn-p"
+        style="width:100%;font-size:0.68rem;padding:10px;margin-top:6px;">
+        ✓ ADD TO MEAL
+      </button>`;
+  } else {
+    // Restaurant meal
+    setPopupMode('restaurant');
+    window._selectedFoodIdx   = null;
+    window._selectedFoodCustom = d;
+    if (el) el.innerHTML = `
+      <div style="padding:10px;background:var(--bg3);border:1px solid #4caf5044;margin-top:4px;">
+        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);margin-bottom:4px;">${displayName}</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
+          ${d.calories} kcal · ${d.protein}g P · ${d.carbs}g C · ${d.fat}g F · per ${d.serving}
+          ${d.cuisine ? ' · 🌍 ' + d.cuisine : ''}
+        </div>
+        <button onclick="confirmAddCustomFoodToMeal()" class="btn btn-p" style="width:100%;font-size:0.65rem;">ADD TO MEAL</button>
+      </div>`;
+  }
+}
+
+// Set which popup row is visible: 'ingredient' | 'recipe' | 'restaurant'
+function setPopupMode(mode) {
+  const ingRow    = document.getElementById('popup-ingredient-row');
+  const recipeRow = document.getElementById('popup-recipe-serving-row');
+  if (ingRow)    ingRow.style.display    = mode === 'ingredient' ? 'flex'  : 'none';
+  if (recipeRow) recipeRow.style.display = mode === 'recipe'     ? 'block' : 'none';
+}
+
+// Live macro calculator for recipe servings
+function updateRecipeServingCalc() {
+  const d = window._selectedFoodCustom;
+  if (!d || d.type !== 'recipe') return;
+  const eat   = parseFloat(document.getElementById('popup-eat-servings')?.value)   || 1;
+  const total = parseFloat(document.getElementById('popup-total-servings')?.value) || 1;
+  const ratio = eat / total;
+
+  const cal  = Math.round((d.calories || 0) * ratio);
+  const prot = ((d.protein || 0) * ratio).toFixed(1);
+  const carb = ((d.carbs   || 0) * ratio).toFixed(1);
+  const fat  = ((d.fat     || 0) * ratio).toFixed(1);
+
+  const preview = document.getElementById('popup-recipe-macro-preview');
+  if (preview) {
+    preview.innerHTML = `
+      <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:4px;">
+        ${eat} ÷ ${total} servings = ${(ratio*100).toFixed(1)}% of recipe
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <span><strong style="color:var(--accent2);font-size:0.85rem;">${cal}</strong> <span style="color:var(--text-dim);font-size:0.5rem;">KCAL</span></span>
+        <span><strong style="color:var(--text);font-size:0.85rem;">${prot}g</strong> <span style="color:var(--text-dim);font-size:0.5rem;">PROTEIN</span></span>
+        <span><strong style="color:var(--text);font-size:0.85rem;">${carb}g</strong> <span style="color:var(--text-dim);font-size:0.5rem;">CARBS</span></span>
+        <span><strong style="color:var(--text);font-size:0.85rem;">${fat}g</strong> <span style="color:var(--text-dim);font-size:0.5rem;">FAT</span></span>
+      </div>`;
   }
 }
 
@@ -5625,56 +5760,59 @@ function confirmAddCustomFoodToMeal() {
   const d = window._selectedFoodCustom;
   if (!d || !activeMealTarget) { closeFoodSearch(); return; }
 
-  const qty  = parseFloat(document.getElementById('popup-qty')?.value) || 1;
-  // Scale macros by qty (treat qty as servings multiplier for restaurant/recipe items)
-  const scale = qty;  // 1 = one serving as described
+  let scale = 1;
+  let servingNote = '';
+
+  if (d.type === 'recipe') {
+    // Use serving calculator ratio
+    const eat   = parseFloat(document.getElementById('popup-eat-servings')?.value)   || 1;
+    const total = parseFloat(document.getElementById('popup-total-servings')?.value) || 1;
+    scale = eat / total;
+    servingNote = `${eat} of ${total} servings`;
+  } else {
+    // Restaurant: qty from the popup (defaults to 1 serving)
+    const qty = parseFloat(document.getElementById('popup-qty')?.value) || 1;
+    scale = qty;
+    servingNote = `${qty} serving${qty !== 1 ? 's' : ''}`;
+  }
+
+  const displayName = d.type === 'restaurant'
+    ? `${d.name} @ ${d.restaurant}`
+    : d.name;
 
   const item = {
-    name:     d.name || d.restaurant || 'Food item',
-    qty:      qty,
+    name:     displayName,
+    qty:      scale,
     unit:     'serving',
     calories: Math.round((d.calories || 0) * scale),
     protein:  parseFloat(((d.protein  || 0) * scale).toFixed(1)),
     carbs:    parseFloat(((d.carbs    || 0) * scale).toFixed(1)),
     fat:      parseFloat(((d.fat      || 0) * scale).toFixed(1)),
-    note:     `1 serving = ${d.serving}`,
+    note:     servingNote,
   };
 
-  // Add to the active meal section
   const target = activeMealTarget;
-  if (!window._mealIngredients) window._mealIngredients = {};
-  if (!window._mealIngredients[target]) window._mealIngredients[target] = [];
-  window._mealIngredients[target].push(item);
+  const calEl  = document.getElementById(`n-${target}-cal`);
+  const protEl = document.getElementById(`n-${target}-prot`);
+  const carbEl = document.getElementById(`n-${target}-carb`);
+  const fatEl  = document.getElementById(`n-${target}-fat`);
 
-  // Update the calorie/macro inputs for this meal section
-  const prefix = target;
-  const calEl  = document.getElementById(`n-${prefix}-cal`);
-  const protEl = document.getElementById(`n-${prefix}-prot`);
-  const carbEl = document.getElementById(`n-${prefix}-carb`);
-  const fatEl  = document.getElementById(`n-${prefix}-fat`);
-  const existing = {
-    cal:  parseFloat(calEl?.value)  || 0,
-    prot: parseFloat(protEl?.value) || 0,
-    carb: parseFloat(carbEl?.value) || 0,
-    fat:  parseFloat(fatEl?.value)  || 0,
-  };
-  if (calEl)  calEl.value  = existing.cal  + item.calories;
-  if (protEl) protEl.value = (existing.prot + item.protein).toFixed(1);
-  if (carbEl) carbEl.value = (existing.carb + item.carbs).toFixed(1);
-  if (fatEl)  fatEl.value  = (existing.fat  + item.fat).toFixed(1);
+  if (calEl)  calEl.value  = (parseFloat(calEl.value)  || 0) + item.calories;
+  if (protEl) protEl.value = ((parseFloat(protEl.value) || 0) + item.protein).toFixed(1);
+  if (carbEl) carbEl.value = ((parseFloat(carbEl.value) || 0) + item.carbs).toFixed(1);
+  if (fatEl)  fatEl.value  = ((parseFloat(fatEl.value)  || 0) + item.fat).toFixed(1);
 
-  // Render the added item tag
-  const ingList = document.getElementById(`${prefix}-ingredients`);
+  const ingList = document.getElementById(`${target}-ingredients`);
   if (ingList) {
     const tag = document.createElement('div');
     tag.style.cssText = 'font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);padding:2px 0;';
-    tag.textContent = `+ ${item.qty}× ${item.name} (${item.calories} kcal)`;
+    tag.textContent = `+ ${item.name} (${servingNote} · ${item.calories} kcal)`;
     ingList.appendChild(tag);
   }
 
   updateNutritionTotals();
   closeFoodSearch();
-  toast(`✓ ${item.name} added to ${target}`);
+  toast(`✓ Added ${item.calories} kcal to ${target}`);
   window._selectedFoodCustom = null;
 }
 
@@ -5769,25 +5907,46 @@ function recalcMealTotals(mealId) {
 function openFoodSearch(mealTarget) {
   activeMealTarget = mealTarget;
   window._selectedFoodCustom = null;
+  window._selectedFoodIdx    = null;
   const popup = document.getElementById('food-search-popup');
-  if (popup) {
-    popup.style.display = 'block';
-    // Reset qty to 1 serving and clear previous state
-    const qtyEl  = document.getElementById('popup-qty');
-    const unitEl = document.getElementById('popup-unit');
-    const lblEl  = document.getElementById('popup-qty-label');
-    if (qtyEl)  qtyEl.value  = '1';
-    if (unitEl) unitEl.value = 'serving';
-    if (lblEl)  lblEl.textContent = 'SERVINGS';
-    document.getElementById('popup-search-input')?.focus();
-  }
+  if (!popup) return;
+  popup.style.display = 'block';
+
+  // Reset filters
+  const sourceEl  = document.getElementById('popup-source-filter');
+  const cuisineEl = document.getElementById('popup-cuisine-filter');
+  if (sourceEl)  sourceEl.value  = 'all';
+  if (cuisineEl) cuisineEl.value = '';
+
+  // Reset to ingredient mode (default)
+  setPopupMode('ingredient');
+
+  // Reset qty and unit for ingredient mode
+  const qtyEl  = document.getElementById('popup-qty');
+  const unitEl = document.getElementById('popup-unit');
+  if (qtyEl)  qtyEl.value  = '100';
+  if (unitEl) unitEl.value = 'g';
+
+  // Reset serving inputs
+  const eatEl   = document.getElementById('popup-eat-servings');
+  const totalEl = document.getElementById('popup-total-servings');
+  if (eatEl)   eatEl.value   = '1';
+  if (totalEl) totalEl.value = '4';
+
+  // Reset search
+  const inp = document.getElementById('popup-search-input');
+  if (inp) { inp.value = ''; inp.focus(); }
+  const res = document.getElementById('popup-search-results');
+  if (res) res.innerHTML = '';
 }
 
 function closeFoodSearch() {
   const popup = document.getElementById('food-search-popup');
   if (popup) popup.style.display = 'none';
   activeMealTarget = null;
-  window._selectedFoodIdx = null;
+  window._selectedFoodIdx    = null;
+  window._selectedFoodCustom = null;
+  setPopupMode('ingredient');
   const inp = document.getElementById('popup-search-input');
   if (inp) inp.value = '';
   const res = document.getElementById('popup-search-results');
