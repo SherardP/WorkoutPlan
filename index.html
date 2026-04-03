@@ -625,7 +625,7 @@ body.theme-female .goal-chip{border-radius:20px;}
     <button class="nav-btn" onclick="nav('goals')">GOALS</button>
     <button class="nav-btn" onclick="nav('decomp')">DECOMPRESS</button>
     <button class="nav-btn" onclick="nav('log')">LOG DATA</button>
-    <button class="nav-btn" onclick="nav('recipes')">🍴 RECIPES</button>
+    <button class="nav-btn" onclick="nav('food')">🍴 FOOD</button>
     <button class="nav-btn" onclick="nav('exlib')">📋 EXERCISES</button>
     <button class="nav-btn" id="adminNavBtn" style="display:none;" onclick="nav('admin')">⚙ ADMIN</button>
   </nav>
@@ -1251,9 +1251,6 @@ body.theme-female .goal-chip{border-radius:20px;}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
         <button class="btn btn-p" id="ntab-meals"      onclick="nutTab('meals')"      style="font-size:0.62rem;">🍽 MEALS</button>
         <button class="btn btn-s" id="ntab-fasting"    onclick="nutTab('fasting')"    style="font-size:0.62rem;">⏱ FASTING</button>
-        <button class="btn btn-s" id="ntab-restaurant" onclick="nutTab('restaurant')" style="font-size:0.62rem;">🏪 RESTAURANT</button>
-        <button class="btn btn-s" id="ntab-recipe"     onclick="nutTab('recipe')"     style="font-size:0.62rem;">👨‍🍳 RECIPE MAKER</button>
-        <button class="btn btn-s" id="ntab-foods"      onclick="nutTab('foods')"      style="font-size:0.62rem;">🥦 FOOD DATABASE</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
           <input type="date" id="n-date" onchange="reloadLogForDate('nutrition')"
             style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
@@ -1613,16 +1610,41 @@ body.theme-female .goal-chip{border-radius:20px;}
             </div>
           </div>
 
-          <div class="field">
-            <label>MEAL TYPE</label>
-            <select id="rest-mealtype"
-              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-              font-family:var(--font-mono);font-size:0.75rem;padding:8px 10px;outline:none;">
-              <option value="breakfast">Breakfast</option>
-              <option value="lunch" selected>Lunch</option>
-              <option value="dinner">Dinner</option>
-              <option value="snack">Snack</option>
-            </select>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div class="field">
+              <label>MEAL TYPE</label>
+              <select id="rest-mealtype"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.75rem;padding:8px 10px;outline:none;">
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch" selected>Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="snack">Snack</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>CUISINE (optional)</label>
+              <select id="rest-cuisine"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.75rem;padding:8px 10px;outline:none;">
+                <option value="">— Select —</option>
+                <option value="american">🇺🇸 American</option>
+                <option value="mexican">🌮 Mexican</option>
+                <option value="italian">🍝 Italian</option>
+                <option value="mediterranean">🫒 Mediterranean</option>
+                <option value="asian">🥢 Asian</option>
+                <option value="japanese">🍜 Japanese</option>
+                <option value="chinese">🥟 Chinese</option>
+                <option value="indian">🍛 Indian</option>
+                <option value="thai">🌶 Thai</option>
+                <option value="greek">🫙 Greek</option>
+                <option value="french">🥖 French</option>
+                <option value="middle_eastern">🧆 Middle Eastern</option>
+                <option value="korean">🍱 Korean</option>
+                <option value="bbq">🔥 BBQ &amp; Grill</option>
+                <option value="other_cuisine">Other</option>
+              </select>
+            </div>
           </div>
 
           <div style="display:flex;gap:6px;align-items:center;margin-bottom:14px;">
@@ -1644,9 +1666,31 @@ body.theme-female .goal-chip{border-radius:20px;}
           <div class="card-label">MY RESTAURANT DATABASE</div>
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
             <div class="card-title" style="margin:0;">SAVED MEALS</div>
-            <input type="text" id="rest-db-search" placeholder="Search..." oninput="renderRestaurantDb()"
-              style="width:180px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-              font-family:var(--font-mono);font-size:0.65rem;padding:5px 9px;outline:none;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <input type="text" id="rest-db-search" placeholder="Search..." oninput="renderRestaurantDb()"
+                style="width:140px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.65rem;padding:5px 9px;outline:none;">
+              <select id="rest-db-cuisine" onchange="renderRestaurantDb()"
+                style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.65rem;padding:5px 8px;outline:none;">
+                <option value="">All Cuisines</option>
+                <option value="american">🇺🇸 American</option>
+                <option value="mexican">🌮 Mexican</option>
+                <option value="italian">🍝 Italian</option>
+                <option value="mediterranean">🫒 Mediterranean</option>
+                <option value="asian">🥢 Asian</option>
+                <option value="japanese">🍜 Japanese</option>
+                <option value="chinese">🥟 Chinese</option>
+                <option value="indian">🍛 Indian</option>
+                <option value="thai">🌶 Thai</option>
+                <option value="greek">🫙 Greek</option>
+                <option value="french">🥖 French</option>
+                <option value="middle_eastern">🧆 Middle Eastern</option>
+                <option value="korean">🍱 Korean</option>
+                <option value="bbq">🔥 BBQ &amp; Grill</option>
+                <option value="other_cuisine">Other</option>
+              </select>
+            </div>
           </div>
           <div id="rest-db-list" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);">
             Loading...
@@ -1673,8 +1717,29 @@ body.theme-female .goal-chip{border-radius:20px;}
           </div>
 
           <div class="log-grid" style="margin-bottom:12px;">
-            <div class="lf full"><label>RECIPE NAME</label><input type="text" id="recipe-name" placeholder="e.g. Chicken & Rice Bowl"></div>
+            <div class="lf full"><label>RECIPE NAME</label><input type="text" id="recipe-name" placeholder="e.g. Chicken &amp; Rice Bowl"></div>
             <div class="lf"><label>TOTAL SERVINGS</label><input type="number" id="recipe-servings" value="1" min="0.25" step="0.25"></div>
+            <div class="lf"><label>CUISINE (optional)</label>
+              <select id="recipe-cuisine" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.78rem;padding:7px;outline:none;">
+                <option value="">— Select cuisine —</option>
+                <option value="american">🇺🇸 American</option>
+                <option value="mexican">🌮 Mexican</option>
+                <option value="italian">🍝 Italian</option>
+                <option value="mediterranean">🫒 Mediterranean</option>
+                <option value="asian">🥢 Asian</option>
+                <option value="japanese">🍜 Japanese</option>
+                <option value="chinese">🥟 Chinese</option>
+                <option value="indian">🍛 Indian</option>
+                <option value="thai">🌶 Thai</option>
+                <option value="greek">🫙 Greek</option>
+                <option value="french">🥖 French</option>
+                <option value="middle_eastern">🧆 Middle Eastern</option>
+                <option value="korean">🍱 Korean</option>
+                <option value="bbq">🔥 BBQ &amp; Grill</option>
+                <option value="other_cuisine">Other</option>
+              </select>
+            </div>
             <div class="lf full"><label>INSTRUCTIONS (optional)</label>
               <textarea id="recipe-instructions" rows="3" placeholder="e.g. 1. Cook rice. 2. Season chicken..."></textarea>
             </div>
@@ -1762,7 +1827,6 @@ body.theme-female .goal-chip{border-radius:20px;}
           </div>
           <div id="food-db-status" style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:10px;"></div>
 
-          <!-- Filter bar -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
             <input type="text" id="food-db-search" placeholder="Search foods, brands..." oninput="foodDbFilter.search=this.value;renderFoodTable()"
               style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
@@ -1776,8 +1840,8 @@ body.theme-female .goal-chip{border-radius:20px;}
               <option value="vegetable">Vegetables</option>
               <option value="fruit">Fruit</option>
               <option value="dairy">Dairy</option>
-              <option value="oil_fat">Oils & Fats</option>
-              <option value="nut_seed">Nuts & Seeds</option>
+              <option value="oil_fat">Oils &amp; Fats</option>
+              <option value="nut_seed">Nuts &amp; Seeds</option>
               <option value="legume">Legumes</option>
               <option value="condiment">Condiments</option>
               <option value="spice">Spices</option>
@@ -1786,6 +1850,26 @@ body.theme-female .goal-chip{border-radius:20px;}
               <option value="beverage">Beverages</option>
               <option value="sweetener">Sweeteners</option>
               <option value="other">Other</option>
+            </select>
+            <select id="food-db-cuisine" onchange="foodDbFilter.cuisine=this.value;renderFoodTable()"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+              font-family:var(--font-mono);font-size:0.7rem;padding:7px 8px;outline:none;">
+              <option value="">All Cuisines</option>
+              <option value="american">🇺🇸 American</option>
+              <option value="mexican">🌮 Mexican</option>
+              <option value="italian">🍝 Italian</option>
+              <option value="mediterranean">🫒 Mediterranean</option>
+              <option value="asian">🥢 Asian</option>
+              <option value="japanese">🍜 Japanese</option>
+              <option value="chinese">🥟 Chinese</option>
+              <option value="indian">🍛 Indian</option>
+              <option value="thai">🌶 Thai</option>
+              <option value="greek">🫙 Greek</option>
+              <option value="french">🥖 French</option>
+              <option value="middle_eastern">🧆 Middle Eastern</option>
+              <option value="korean">🍱 Korean</option>
+              <option value="bbq">🔥 BBQ &amp; Grill</option>
+              <option value="other_cuisine">Other</option>
             </select>
             <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;
               color:var(--text-dim);cursor:pointer;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);">
@@ -1802,7 +1886,7 @@ body.theme-female .goal-chip{border-radius:20px;}
           <div class="card-label">COMMUNITY RECIPES</div>
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
             <div class="card-title" style="margin:0;">SHARED RECIPES</div>
-            <button onclick="nutTab('recipe')" class="btn btn-s" style="font-size:0.6rem;">+ SHARE YOUR RECIPE</button>
+            <button onclick="nav('food');setTimeout(()=>foodTab('maker'),100)" class="btn btn-s" style="font-size:0.6rem;">+ SHARE YOUR RECIPE</button>
           </div>
           <!-- Filter -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
@@ -1842,20 +1926,41 @@ body.theme-female .goal-chip{border-radius:20px;}
                 font-family:var(--font-mono);font-size:0.8rem;padding:8px;outline:none;width:100%;">
                 <option value="">— Select —</option>
                 <option value="protein">Protein (meat, fish, eggs, dairy)</option>
-                <option value="grain">Grains & Cereals</option>
+                <option value="grain">Grains &amp; Cereals</option>
                 <option value="vegetable">Vegetables</option>
                 <option value="fruit">Fruit</option>
-                <option value="legume">Legumes & Beans</option>
-                <option value="nut_seed">Nuts & Seeds</option>
-                <option value="oil_fat">Oils & Fats</option>
-                <option value="dairy">Dairy & Alternatives</option>
-                <option value="condiment">Condiments & Sauces</option>
-                <option value="spice">Spices & Herbs</option>
-                <option value="supplement">Supplements & Powders</option>
+                <option value="legume">Legumes &amp; Beans</option>
+                <option value="nut_seed">Nuts &amp; Seeds</option>
+                <option value="oil_fat">Oils &amp; Fats</option>
+                <option value="dairy">Dairy &amp; Alternatives</option>
+                <option value="condiment">Condiments &amp; Sauces</option>
+                <option value="spice">Spices &amp; Herbs</option>
+                <option value="supplement">Supplements &amp; Powders</option>
                 <option value="beverage">Beverages</option>
                 <option value="snack">Packaged Snacks</option>
                 <option value="sweetener">Sweeteners</option>
                 <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="lf"><label>CUISINE (optional)</label>
+              <select id="nf-cuisine" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+                font-family:var(--font-mono);font-size:0.8rem;padding:8px;outline:none;width:100%;">
+                <option value="">— None / Universal —</option>
+                <option value="american">🇺🇸 American</option>
+                <option value="mexican">🌮 Mexican</option>
+                <option value="italian">🍝 Italian</option>
+                <option value="mediterranean">🫒 Mediterranean</option>
+                <option value="asian">🥢 Asian</option>
+                <option value="japanese">🍜 Japanese</option>
+                <option value="chinese">🥟 Chinese</option>
+                <option value="indian">🍛 Indian</option>
+                <option value="thai">🌶 Thai</option>
+                <option value="greek">🫙 Greek</option>
+                <option value="french">🥖 French</option>
+                <option value="middle_eastern">🧆 Middle Eastern</option>
+                <option value="korean">🍱 Korean</option>
+                <option value="bbq">🔥 BBQ &amp; Grill</option>
+                <option value="other_cuisine">Other</option>
               </select>
             </div>
             <!-- Serving: numeric amount + unit separately -->
@@ -1952,53 +2057,96 @@ body.theme-female .goal-chip{border-radius:20px;}
   </div>
 
   <!-- ── RECIPE VIEWER ── -->
-  <div class="section" id="sec-recipes">
-    <div class="page-title">RECIPE<br><span>VIEWER</span></div>
-    <div class="page-sub">// COMMUNITY RECIPES — BROWSE · RATE · COOK //</div>
+  <div class="section" id="sec-food">
+    <div class="page-title">FOOD<br><span>& NUTRITION</span></div>
+    <div class="page-sub">// RECIPES · RESTAURANT MEALS · INGREDIENTS · BUILD YOUR MEALS //</div>
 
-    <!-- Filter + search bar -->
-    <div class="card mb16">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <input type="text" id="rv-search" placeholder="Search recipes, ingredients, tags..."
-          oninput="renderRecipeViewer()"
-          style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-          font-family:var(--font-mono);font-size:0.75rem;padding:8px 12px;outline:none;">
-        <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;
-          color:var(--text-dim);cursor:pointer;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);">
-          <input type="checkbox" id="rv-keto" onchange="renderRecipeViewer()" style="accent-color:#4caf50;">
-          🥑 KETO
-        </label>
-        <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;
-          color:var(--text-dim);cursor:pointer;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);">
-          <input type="checkbox" id="rv-highprot" onchange="renderRecipeViewer()" style="accent-color:#4caf50;">
-          💪 HIGH PROTEIN
-        </label>
-        <select id="rv-sort" onchange="renderRecipeViewer()"
-          style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
-          font-family:var(--font-mono);font-size:0.7rem;padding:7px 10px;outline:none;">
-          <option value="rating">⭐ Top Rated</option>
-          <option value="newest">🕐 Newest</option>
-          <option value="protein">💪 Most Protein</option>
-          <option value="calories">🔥 Lowest Calories</option>
-          <option value="name">A–Z</option>
-        </select>
-        <button onclick="loadFoodDatabase().then(renderRecipeViewer)" class="btn btn-s" style="font-size:0.62rem;">⟳ REFRESH</button>
-      </div>
-      <div id="rv-stats" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-top:8px;"></div>
+    <!-- Tab bar -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+      <button class="btn btn-p" id="ftab-food-recipes"     onclick="foodTab('recipes')"     style="font-size:0.62rem;">📖 RECIPES</button>
+      <button class="btn btn-s" id="ftab-food-restaurant"  onclick="foodTab('restaurant')"  style="font-size:0.62rem;">🏪 RESTAURANT</button>
+      <button class="btn btn-s" id="ftab-food-ingredients" onclick="foodTab('ingredients')" style="font-size:0.62rem;">🥦 INGREDIENTS</button>
+      <button class="btn btn-s" id="ftab-food-maker"       onclick="foodTab('maker')"       style="font-size:0.62rem;">👨‍🍳 RECIPE MAKER</button>
     </div>
 
-    <!-- Recipe grid -->
-    <div id="recipe-viewer-grid"></div>
-
-    <!-- Recipe detail modal -->
-    <div id="rv-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-      background:rgba(0,0,0,0.85);z-index:998;overflow-y:auto;padding:20px;box-sizing:border-box;">
-      <div style="max-width:640px;margin:0 auto;background:var(--bg2);border:1px solid var(--accent2);padding:24px;position:relative;">
-        <button onclick="closeRvModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;
-          color:var(--text-dim);font-size:1.4rem;cursor:pointer;">✕</button>
-        <div id="rv-modal-content"></div>
+    <!-- ── RECIPES TAB ── -->
+    <div id="fpanel-food-recipes">
+      <div class="card mb16">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="rv-search" placeholder="Search recipes, ingredients, tags..."
+            oninput="renderRecipeViewer()"
+            style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.75rem;padding:8px 12px;outline:none;">
+          <select id="rv-cuisine" onchange="renderRecipeViewer()"
+            style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.7rem;padding:7px 10px;outline:none;">
+            <option value="">All Cuisines</option>
+            <option value="american">🇺🇸 American</option>
+            <option value="mexican">🌮 Mexican</option>
+            <option value="italian">🍝 Italian</option>
+            <option value="mediterranean">🫒 Mediterranean</option>
+            <option value="asian">🥢 Asian</option>
+            <option value="japanese">🍜 Japanese</option>
+            <option value="chinese">🥟 Chinese</option>
+            <option value="indian">🍛 Indian</option>
+            <option value="thai">🌶 Thai</option>
+            <option value="greek">🫙 Greek</option>
+            <option value="french">🥖 French</option>
+            <option value="middle_eastern">🧆 Middle Eastern</option>
+            <option value="korean">🍱 Korean</option>
+            <option value="bbq">🔥 BBQ &amp; Grill</option>
+            <option value="other">Other</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;
+            color:var(--text-dim);cursor:pointer;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);">
+            <input type="checkbox" id="rv-keto" onchange="renderRecipeViewer()" style="accent-color:#4caf50;">
+            🥑 KETO
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.6rem;
+            color:var(--text-dim);cursor:pointer;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);">
+            <input type="checkbox" id="rv-highprot" onchange="renderRecipeViewer()" style="accent-color:#4caf50;">
+            💪 HIGH PROTEIN
+          </label>
+          <select id="rv-sort" onchange="renderRecipeViewer()"
+            style="background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.7rem;padding:7px 10px;outline:none;">
+            <option value="rating">⭐ Top Rated</option>
+            <option value="newest">🕐 Newest</option>
+            <option value="protein">💪 Most Protein</option>
+            <option value="calories">🔥 Lowest Calories</option>
+            <option value="name">A–Z</option>
+          </select>
+          <button onclick="loadFoodDatabase().then(renderRecipeViewer)" class="btn btn-s" style="font-size:0.62rem;">⟳ REFRESH</button>
+        </div>
+        <div id="rv-stats" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-top:8px;"></div>
+      </div>
+      <div id="recipe-viewer-grid"></div>
+      <!-- Recipe detail modal -->
+      <div id="rv-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+        background:rgba(0,0,0,0.85);z-index:998;overflow-y:auto;padding:20px;box-sizing:border-box;">
+        <div style="max-width:640px;margin:0 auto;background:var(--bg2);border:1px solid var(--accent2);padding:24px;position:relative;">
+          <button onclick="closeRvModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;
+            color:var(--text-dim);font-size:1.4rem;cursor:pointer;">✕</button>
+          <div id="rv-modal-content"></div>
+        </div>
       </div>
     </div>
+
+    <!-- ── RESTAURANT TAB ── (moved from Log Data) -->
+    <div id="fpanel-food-restaurant" style="display:none;">
+      <div id="food-restaurant-panel"></div>
+    </div>
+
+    <!-- ── INGREDIENTS TAB ── (moved from Log Data) -->
+    <div id="fpanel-food-ingredients" style="display:none;">
+      <div id="food-ingredients-panel"></div>
+    </div>
+
+    <!-- ── RECIPE MAKER TAB ── (moved from Log Data) -->
+    <div id="fpanel-food-maker" style="display:none;">
+      <div id="food-maker-panel"></div>
+    </div>
+
   </div>
 
   <!-- ── EXERCISE LIBRARY ── -->
@@ -2727,7 +2875,8 @@ function nav(id) {
   if (id === 'steps')   setTimeout(loadStepsPage, 50);
   if (id === 'goals')   setTimeout(loadGoalsPage, 50);
   if (id === 'exlib')   setTimeout(renderExLib, 50);
-  if (id === 'recipes') {
+  if (id === 'food') {
+    foodTab('recipes');
     if (!communityRecipes.length) loadFoodDatabase().then(renderRecipeViewer);
     else renderRecipeViewer();
   }
@@ -4840,6 +4989,7 @@ async function logRestaurantMeal() {
   const fiber      = parseFloat(document.getElementById('rest-fiber')?.value)   || 0;
   const sodium     = parseFloat(document.getElementById('rest-sodium')?.value)  || 0;
   const mealtype   = document.getElementById('rest-mealtype')?.value || 'lunch';
+  const cuisine    = document.getElementById('rest-cuisine')?.value  || '';
   const saveToDb   = document.getElementById('rest-save-db')?.checked;
 
   if (!restaurant) { msg.style.color='var(--danger)'; msg.textContent='RESTAURANT NAME REQUIRED'; return; }
@@ -4850,7 +5000,7 @@ async function logRestaurantMeal() {
 
   try {
     const dateStr = document.getElementById('n-date')?.value || localDateStr();
-    const entry = { restaurant, meal, calories, protein, carbs, fat, fiber, sodium, mealtype,
+    const entry = { restaurant, meal, calories, protein, carbs, fat, fiber, sodium, mealtype, cuisine,
       source: 'restaurant', saved: new Date().toISOString() };
 
     // Log as a nutrition entry for the day
@@ -4887,19 +5037,28 @@ async function logRestaurantMeal() {
 function renderRestaurantDb() {
   const el = document.getElementById('rest-db-list');
   if (!el) return;
-  const q = (document.getElementById('rest-db-search')?.value || '').toLowerCase();
-  const items = restaurantDb.filter(r =>
-    !q || r.restaurant.toLowerCase().includes(q) || r.meal.toLowerCase().includes(q)
+  const q       = (document.getElementById('rest-db-search')?.value || '').toLowerCase();
+  const cuisine = (document.getElementById('rest-db-cuisine')?.value || '');
+  const items   = restaurantDb.filter(r =>
+    (!q || r.restaurant.toLowerCase().includes(q) || r.meal.toLowerCase().includes(q)) &&
+    (!cuisine || (r.cuisine||'') === cuisine)
   );
   if (!items.length) {
-    el.innerHTML = `<div style="color:var(--text-dim);padding:8px 0;">No saved meals yet. Log a restaurant meal above and check "Save to database".</div>`;
+    el.innerHTML = `<div style="color:var(--text-dim);padding:8px 0;">No saved meals${cuisine||q?' matching filters':' yet. Log a restaurant meal above and check "Save to database".'}</div>`;
     return;
   }
+  const CUISINE_EMOJI = {
+    american:'🇺🇸',mexican:'🌮',italian:'🍝',mediterranean:'🫒',asian:'🥢',
+    japanese:'🍜',chinese:'🥟',indian:'🍛',thai:'🌶',greek:'🫙',
+    french:'🥖',middle_eastern:'🧆',korean:'🍱',bbq:'🔥',other_cuisine:'🌍'
+  };
   el.innerHTML = items.map((r, i) => `
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;
       border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;">
       <div style="flex:1;min-width:160px;">
-        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);">${r.restaurant}</div>
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);">
+          ${r.restaurant}${r.cuisine?` <span style="font-size:0.5rem;color:var(--text-dim);">${CUISINE_EMOJI[r.cuisine]||'🌍'} ${r.cuisine}</span>`:''}
+        </div>
         <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text);">${r.meal}</div>
         <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">
           ${r.calories} cal · P:${r.protein||0}g · C:${r.carbs||0}g · F:${r.fat||0}g
@@ -4964,7 +5123,7 @@ let activeMealTarget  = null;
 let recipeIngredients = [];
 let savedRecipes      = []; // personal — userdata/{u}/fooddb/recipes
 let communityRecipes  = []; // shared   — fooddb/Recipes
-let foodDbFilter = { search:'', keto:false, source:'all', category:'' };
+let foodDbFilter = { search:'', keto:false, source:'all', category:'', cuisine:'' };
 
 // ── Keto classification ──
 // Keto = ≤10% of calories from carbs, and has some fat content
@@ -5378,17 +5537,29 @@ function renderFoodTable() {
   const q        = (foodDbFilter.search||'').toLowerCase();
   const ketoOn   = foodDbFilter.keto   || false;
   const cat      = foodDbFilter.category || '';
+  const cuisine  = foodDbFilter.cuisine  || '';
 
   let foods = foodDatabase.filter(f => {
     if (q && !f.name.toLowerCase().includes(q) &&
         !(f.brand||'').toLowerCase().includes(q)) return false;
     if (ketoOn && !f.keto) return false;
     if (cat && (f.category||'') !== cat) return false;
+    if (cuisine && (f.cuisine||'') !== cuisine) return false;
     return true;
   });
 
   const ketoLabel = f => f.keto
     ? `<span style="font-size:0.45rem;padding:1px 4px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;">KETO</span>`
+    : '';
+
+  const CUISINE_EMOJI = {
+    american:'🇺🇸', mexican:'🌮', italian:'🍝', mediterranean:'🫒', asian:'🥢',
+    japanese:'🍜', chinese:'🥟', indian:'🍛', thai:'🌶', greek:'🫙',
+    french:'🥖', middle_eastern:'🧆', korean:'🍱', bbq:'🔥', other_cuisine:'🌍'
+  };
+  const cuisineBadge = f => f.cuisine
+    ? `<span style="font-size:0.45rem;padding:1px 5px;background:var(--bg3);
+        color:var(--text-dim);border:1px solid var(--border);">${CUISINE_EMOJI[f.cuisine]||'🌍'} ${f.cuisine}</span>`
     : '';
 
   const catColor = {
@@ -5436,7 +5607,7 @@ function renderFoodTable() {
         const sUnit = f.servingUnit || parseServingUnit(f.serving);
         return `<tr>
           <td style="max-width:160px;line-height:1.6;">
-            ${f.name} ${ketoLabel(f)} ${catBadge(f)} ${sourceBadge(f)}
+            ${f.name} ${ketoLabel(f)} ${catBadge(f)} ${cuisineBadge(f)} ${sourceBadge(f)}
           </td>
           <td style="color:var(--text-dim);font-size:0.55rem;">${f.brand||'—'}</td>
           <td style="text-align:center;">${sQty}</td>
@@ -5489,8 +5660,10 @@ function openAddFoodPanel(editIdx) {
    'nf-fiber','nf-sodium','nf-sugar','nf-satfat'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
-  const catEl = document.getElementById('nf-category');
-  if (catEl) catEl.value = '';
+  const catEl     = document.getElementById('nf-category');
+  const cuisineEl = document.getElementById('nf-cuisine');
+  if (catEl)     catEl.value     = '';
+  if (cuisineEl) cuisineEl.value = '';
   if (idxEl) idxEl.value = '';
 
   if (editIdx !== undefined) {
@@ -5513,8 +5686,10 @@ function openAddFoodPanel(editIdx) {
     set('nf-sodium',  f.sodium);
     set('nf-sugar',   f.sugar);
     set('nf-satfat',  f.satfat);
-    const catEl = document.getElementById('nf-category');
-    if (catEl) catEl.value = f.category || '';
+    const catEl     = document.getElementById('nf-category');
+    const cuisineEl = document.getElementById('nf-cuisine');
+    if (catEl)     catEl.value     = f.category || '';
+    if (cuisineEl) cuisineEl.value = f.cuisine  || '';
   } else {
     if (titleEl) titleEl.textContent = 'ADD INGREDIENT';
   }
@@ -5562,6 +5737,7 @@ async function saveCustomFood() {
     name,
     brand:       document.getElementById('nf-brand')?.value?.trim()   || '',
     category:    document.getElementById('nf-category')?.value        || '',
+    cuisine:     document.getElementById('nf-cuisine')?.value         || '',
     servingQty,
     servingUnit,
     serving:     `${servingQty} ${servingUnit}`,  // keep legacy string for display
@@ -5791,21 +5967,157 @@ async function deleteSavedRecipe(idx) {
 }
 
 function nutTab(tab) {
-  ['meals','fasting','restaurant','recipe','foods'].forEach(t => {
+  ['meals','fasting'].forEach(t => {
     const panel = document.getElementById(`npanel-${t}`);
     const btn   = document.getElementById(`ntab-${t}`);
     if (panel) panel.style.display = t === tab ? 'block' : 'none';
     if (btn)   btn.className = t === tab ? 'btn btn-p' : 'btn btn-s';
   });
-  if (tab === 'foods' && !foodDatabase.length) loadFoodDatabase();
-  if (tab === 'recipe' && !foodDatabase.length) loadFoodDatabase();
-  if (tab === 'restaurant') { loadRestaurantDb(); renderRestaurantDb(); }
   if (tab === 'fasting') initFastingTab();
+}
+
+function foodTab(tab) {
+  ['recipes','restaurant','ingredients','maker'].forEach(t => {
+    const panel = document.getElementById(`fpanel-food-${t}`);
+    const btn   = document.getElementById(`ftab-food-${t}`);
+    if (panel) panel.style.display = t === tab ? 'block' : 'none';
+    if (btn)   btn.className = t === tab ? 'btn btn-p' : 'btn btn-s';
+  });
+  if (tab === 'recipes')     { loadFoodDatabase().then(renderRecipeViewer); }
+  if (tab === 'restaurant')  { renderFoodTabRestaurant(); }
+  if (tab === 'ingredients') { renderFoodTabIngredients(); }
+  if (tab === 'maker')       { renderFoodTabMaker(); }
+}
+
+function renderFoodTabRestaurant() {
+  const el = document.getElementById('food-restaurant-panel');
+  if (!el || el.dataset.loaded) return;
+  // Clone the existing restaurant panel content into Food tab
+  const src = document.getElementById('npanel-restaurant');
+  if (src) {
+    el.innerHTML = src.innerHTML;
+    el.dataset.loaded = '1';
+  }
+  loadRestaurantDb().then(renderRestaurantDb);
+}
+
+function renderFoodTabIngredients() {
+  const el = document.getElementById('food-ingredients-panel');
+  if (!el || el.dataset.loaded) return;
+  const src = document.getElementById('npanel-foods');
+  if (src) {
+    el.innerHTML = src.innerHTML;
+    el.dataset.loaded = '1';
+  }
+  if (!foodDatabase.length) loadFoodDatabase();
+}
+
+function renderFoodTabMaker() {
+  const el = document.getElementById('food-maker-panel');
+  if (!el || el.dataset.loaded) return;
+  const src = document.getElementById('npanel-recipe');
+  if (src) {
+    el.innerHTML = src.innerHTML;
+    el.dataset.loaded = '1';
+  }
+  if (!foodDatabase.length) loadFoodDatabase();
 }
 
 // ═══════════════════════════════════════════════════════════
 // COMMUNITY RECIPES — shared at fooddb/Recipes
 // ═══════════════════════════════════════════════════════════
+
+function renderRecipeViewer() {
+  const el = document.getElementById('recipe-viewer-grid');
+  if (!el) return;
+
+  const q        = (document.getElementById('rv-search')?.value    || '').toLowerCase();
+  const cuisine  = (document.getElementById('rv-cuisine')?.value   || '');
+  const ketoOnly = document.getElementById('rv-keto')?.checked     || false;
+  const highProt = document.getElementById('rv-highprot')?.checked || false;
+  const sort     = document.getElementById('rv-sort')?.value       || 'rating';
+
+  let recipes = communityRecipes.filter(r => {
+    if (q && !r.name.toLowerCase().includes(q) &&
+        !(r.tags||[]).some(t => t.toLowerCase().includes(q)) &&
+        !(r.ingredients||[]).some(i => (i.name||'').toLowerCase().includes(q))) return false;
+    if (ketoOnly && !r.keto) return false;
+    if (highProt && (r.totalProtein || 0) < 30) return false;
+    if (cuisine && (r.cuisine||'') !== cuisine) return false;
+    return true;
+  });
+
+  if (sort === 'rating')   recipes.sort((a,b) => (b.avgRating||0) - (a.avgRating||0));
+  else if (sort === 'newest')  recipes.sort((a,b) => new Date(b.published||0) - new Date(a.published||0));
+  else if (sort === 'protein') recipes.sort((a,b) => (b.totalProtein||0) - (a.totalProtein||0));
+  else if (sort === 'calories') recipes.sort((a,b) => (a.totalCalories||9999) - (b.totalCalories||9999));
+  else recipes.sort((a,b) => a.name.localeCompare(b.name));
+
+  const statsEl = document.getElementById('rv-stats');
+  if (statsEl) statsEl.textContent = `${recipes.length} of ${communityRecipes.length} recipes`;
+
+  const CUISINE_EMOJI = {
+    american:'🇺🇸',mexican:'🌮',italian:'🍝',mediterranean:'🫒',asian:'🥢',
+    japanese:'🍜',chinese:'🥟',indian:'🍛',thai:'🌶',greek:'🫙',
+    french:'🥖',middle_eastern:'🧆',korean:'🍱',bbq:'🔥',other_cuisine:'🌍'
+  };
+
+  if (!recipes.length) {
+    el.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-dim);padding:12px;">
+      No recipes match the current filters. ${!communityRecipes.length ? '<br>Be the first to share one via the Recipe Maker tab.' : ''}</div>`;
+    return;
+  }
+
+  el.innerHTML = recipes.map((r) => {
+    const origIdx = communityRecipes.indexOf(r);
+    const totCal  = r.totalCalories || (r.ingredients||[]).reduce((s,i)=>s+(i.cals||0),0);
+    const totProt = r.totalProtein  || (r.ingredients||[]).reduce((s,i)=>s+(i.prot||0),0);
+    const stars   = [1,2,3,4,5].map(n =>
+      `<span onclick="rateRecipe(${origIdx},${n})" style="cursor:pointer;font-size:1rem;
+        color:${n<=(r.userRating||r.avgRating||0)?'#ffd700':'var(--border2)'};">★</span>`
+    ).join('');
+    const ketoTag    = r.keto ? `<span style="font-size:0.45rem;padding:1px 4px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;margin-left:4px;">KETO</span>` : '';
+    const cuisineTag = r.cuisine ? `<span style="font-size:0.45rem;padding:1px 5px;background:var(--bg3);color:var(--text-dim);border:1px solid var(--border);margin-left:4px;">${CUISINE_EMOJI[r.cuisine]||'🌍'} ${r.cuisine}</span>` : '';
+    const tags = (r.tags||[]).map(t =>
+      `<span style="font-size:0.45rem;padding:1px 5px;background:var(--bg3);color:var(--border2);border:1px solid var(--border);margin-right:3px;">${t}</span>`
+    ).join('');
+    return `<div style="padding:14px;background:var(--bg3);border:1px solid var(--border);margin-bottom:10px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text);font-weight:bold;">
+            ${r.name}${ketoTag}${cuisineTag}
+          </div>
+          <div style="margin-top:4px;">${tags}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div>${stars}</div>
+          <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">
+            ${r.ratingCount||0} rating${(r.ratingCount||0)!==1?'s':''}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-display);font-size:1.3rem;color:var(--accent2);">${Math.round(totCal)}</div>
+          <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);">KCAL</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-display);font-size:1.3rem;color:var(--text);">${totProt.toFixed(0)}g</div>
+          <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);">PROTEIN</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);padding-top:6px;">${(r.ingredients||[]).length} ingredients</div>
+        </div>
+      </div>
+      ${r.description ? `<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:8px;line-height:1.5;">${r.description}</div>` : ''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button onclick="openRvModal(${origIdx})" class="btn btn-s" style="font-size:0.6rem;">📖 VIEW RECIPE</button>
+        <button onclick="importRecipeToMaker(${origIdx})" class="btn btn-s" style="font-size:0.6rem;">↓ IMPORT</button>
+        ${SESSION.username === r.author ? `<button onclick="deleteRecipe(${origIdx})" style="background:none;border:none;color:var(--danger);font-family:var(--font-mono);font-size:0.6rem;cursor:pointer;">✕ DELETE</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
 
 function renderCommunityRecipes() {
   const el = document.getElementById('community-recipes-list');
@@ -5895,6 +6207,65 @@ function renderCommunityRecipes() {
   }).join('');
 }
 
+function openRvModal(recipeIdx) {
+  const r   = communityRecipes[recipeIdx];
+  const el  = document.getElementById('rv-modal');
+  const cnt = document.getElementById('rv-modal-content');
+  if (!r || !el || !cnt) return;
+
+  const CUISINE_EMOJI = {
+    american:'🇺🇸',mexican:'🌮',italian:'🍝',mediterranean:'🫒',asian:'🥢',
+    japanese:'🍜',chinese:'🥟',indian:'🍛',thai:'🌶',greek:'🫙',
+    french:'🥖',middle_eastern:'🧆',korean:'🍱',bbq:'🔥',other_cuisine:'🌍'
+  };
+  const totCal  = r.totalCalories || (r.ingredients||[]).reduce((s,i)=>s+(i.cals||0),0);
+  const totProt = r.totalProtein  || (r.ingredients||[]).reduce((s,i)=>s+(i.prot||0),0);
+  const totCarb = (r.ingredients||[]).reduce((s,i)=>s+(i.carb||0),0);
+  const totFat  = (r.ingredients||[]).reduce((s,i)=>s+(i.fat||0),0);
+
+  cnt.innerHTML = `
+    <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:6px;">
+      ${r.cuisine ? (CUISINE_EMOJI[r.cuisine]||'🌍')+' '+r.cuisine+' · ' : ''}BY ${(r.author||'').toUpperCase()}
+    </div>
+    <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--accent2);margin-bottom:10px;">${r.name}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+      ${[['KCAL',Math.round(totCal)],['PROTEIN',totProt.toFixed(1)+'g'],['CARBS',totCarb.toFixed(1)+'g'],['FAT',totFat.toFixed(1)+'g']].map(([l,v])=>`
+        <div style="text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);">
+          <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--accent2);">${v}</div>
+          <div style="font-family:var(--font-mono);font-size:0.5rem;color:var(--border2);">${l}</div>
+        </div>`).join('')}
+    </div>
+    ${(r.ingredients||[]).length ? `
+    <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.1em;margin-bottom:8px;">INGREDIENTS (${r.servings||1} serving${(r.servings||1)!==1?'s':''})</div>
+    ${(r.ingredients).map(i=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-family:var(--font-mono);font-size:0.62rem;">
+      <span style="color:var(--text);">${i.name}</span>
+      <span style="color:var(--text-dim);">${i.qty||''} ${i.unit||''} · ${i.cals||0} kcal</span>
+    </div>`).join('')}` : ''}
+    ${r.instructions ? `<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);letter-spacing:.1em;margin:14px 0 8px;">INSTRUCTIONS</div>
+    <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);line-height:1.7;">${r.instructions.replace(/\n/g,'<br>')}</div>` : ''}
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+      <button onclick="importRecipeToMaker(${recipeIdx});closeRvModal()" class="btn btn-s" style="font-size:0.6rem;">↓ IMPORT TO MAKER</button>
+      <button onclick="closeRvModal()" class="btn btn-s" style="font-size:0.6rem;">CLOSE</button>
+    </div>`;
+  el.style.display = 'block';
+}
+
+function closeRvModal() {
+  const el = document.getElementById('rv-modal');
+  if (el) el.style.display = 'none';
+}
+
+async function deleteRecipe(recipeIdx) {
+  const r = communityRecipes[recipeIdx];
+  if (!r) return;
+  if (r.author !== SESSION.username && !SESSION.isAdmin) { toast('Can only delete your own recipes'); return; }
+  if (!confirm(`Delete "${r.name}"?`)) return;
+  communityRecipes.splice(recipeIdx, 1);
+  await db.collection('fooddb').doc('Recipes').set({ recipes: communityRecipes });
+  renderRecipeViewer();
+  toast('Recipe deleted');
+}
+
 async function publishRecipe() {
   const name = document.getElementById('recipe-name')?.value?.trim();
   if (!name || !recipeIngredients.length) { toast('Name your recipe and add ingredients first'); return; }
@@ -5913,10 +6284,13 @@ async function publishRecipe() {
     author:       SESSION.username,
     published:    new Date().toISOString(),
     servings:     parseFloat(document.getElementById('recipe-servings')?.value) || 1,
+    cuisine:      document.getElementById('recipe-cuisine')?.value || '',
     ingredients:  [...recipeIngredients],
     instructions,
     tags:         recipeKeto && !tags.includes('keto') ? [...tags,'keto'] : tags,
     keto:         recipeKeto,
+    totalCalories: tots.cals,
+    totalProtein:  tots.carb ? undefined : recipeIngredients.reduce((s,i)=>s+(i.prot||0),0),
     avgRating:    0,
     ratingCount:  0,
     ratings:      {},
@@ -5926,8 +6300,8 @@ async function publishRecipe() {
     communityRecipes.push(recipe);
     await db.collection('fooddb').doc('Recipes').set({ recipes: communityRecipes });
     toast(`✓ "${name}" shared with the community!`);
-    nutTab('foods'); // switch to show community recipes
-    setTimeout(() => renderCommunityRecipes(), 300);
+    nav('food');
+    setTimeout(() => renderRecipeViewer(), 300);
   } catch(e) { toast('Publish failed: ' + e.message); communityRecipes.pop(); }
 }
 
@@ -5959,8 +6333,11 @@ function importCommunityRecipe(recipeIdx) {
   document.getElementById('recipe-name').value         = r.name + ' (copy)';
   document.getElementById('recipe-instructions').value = r.instructions || '';
   document.getElementById('recipe-tags').value         = (r.tags||[]).join(', ');
+  const cuisineEl = document.getElementById('recipe-cuisine');
+  if (cuisineEl) cuisineEl.value = r.cuisine || '';
   renderRecipeIngredients();
-  nutTab('recipe');
+  nav('food');
+  setTimeout(() => foodTab('maker'), 100);
   toast(`Imported "${r.name}" — save to keep your own copy`);
 }
 
