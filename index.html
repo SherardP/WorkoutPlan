@@ -9361,25 +9361,154 @@ const EX_DB = [
   {id:'pil_bridge',      name:'Pilates Bridge',           muscles:['glutes','hamstrings','core'],        eq:[],              impact:'low',  goals:['pilates','tone','lowimpact'],      sets_h:'3×12',sets_s:'3×10',rest_h:30,rest_s:30,           ytId:'wPM8icPu6H8'},
   {id:'pil_legpull',     name:'Leg Pull Front/Back',      muscles:['core','glutes','shoulders'],         eq:[],              impact:'low',  goals:['pilates','strength','tone'],       sets_h:'3×8/side',sets_s:'3×6',rest_h:45,rest_s:45,        ytId:'ASdvN_XEl_c'},
 
+
   // ── CALISTHENICS — progressive bodyweight ───────────────
-  {id:'cal_pushup',      name:'Push-Up (Standard)',        muscles:['chest','triceps','shoulders','core'], eq:[],              impact:'low',  goals:['calisthenics','tone','strength'],   sets_h:'4×max',   sets_s:'5×max',  rest_h:90, rest_s:120, ytId:'IODxDxX7oi4'},
-  {id:'cal_diamond_pu',  name:'Diamond Push-Up',           muscles:['triceps','chest'],                   eq:[],              impact:'low',  goals:['calisthenics','tone','strength'],   sets_h:'4×max',   sets_s:'4×max',  rest_h:90, rest_s:120, ytId:'J0DXcc8W4h8'},
-  {id:'cal_archer_pu',   name:'Archer Push-Up',            muscles:['chest','triceps','shoulders'],        eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×6/side',sets_s:'4×6',   rest_h:120,rest_s:150, ytId:'IODxDxX7oi4'},
-  {id:'cal_pseudo_planch',name:'Pseudo Planche Push-Up',   muscles:['chest','shoulders','core'],           eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×5–8',   sets_s:'4×5',    rest_h:120,rest_s:180, ytId:'IODxDxX7oi4'},
-  {id:'cal_pullup',      name:'Pull-Up',                   muscles:['lats','biceps','back-upper'],         eq:['rack-pullup','acc-pullbar'], impact:'low', goals:['calisthenics','strength','size'],sets_h:'4×max',   sets_s:'5×max',  rest_h:120,rest_s:150, ytId:'eGo4IYlbE5g'},
-  {id:'cal_chinup',      name:'Chin-Up',                   muscles:['biceps','lats'],                     eq:['rack-pullup','acc-pullbar'], impact:'low', goals:['calisthenics','strength','size'],sets_h:'4×max',   sets_s:'4×max',  rest_h:120,rest_s:150, ytId:'eGo4IYlbE5g'},
-  {id:'cal_archer_pu2',  name:'Archer Pull-Up',            muscles:['lats','biceps'],                     eq:['rack-pullup'],  impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×4/side',sets_s:'4×4',   rest_h:150,rest_s:180, ytId:'eGo4IYlbE5g'},
-  {id:'cal_dip',         name:'Dip (Bodyweight)',           muscles:['triceps','chest','shoulders'],        eq:['rack-dip','acc-dipbar'], impact:'low',  goals:['calisthenics','strength','size'],sets_h:'4×max',   sets_s:'4×max',  rest_h:120,rest_s:150, ytId:'0326dy_-CzM'},
-  {id:'cal_bw_squat',    name:'Bodyweight Squat',          muscles:['quads','glutes'],                    eq:[],              impact:'low',  goals:['calisthenics','tone','lowimpact'],  sets_h:'4×20–30', sets_s:'5×20',   rest_h:60, rest_s:90,  ytId:'aclHkVaku9U'},
-  {id:'cal_pistol',      name:'Pistol Squat',              muscles:['quads','glutes','core'],             eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×5/side',sets_s:'4×5',   rest_h:120,rest_s:150, ytId:'qDcniqddTeE'},
-  {id:'cal_shrimp_squat',name:'Shrimp Squat',              muscles:['quads','glutes','hamstrings'],        eq:[],              impact:'low',  goals:['calisthenics','strength','tone'],   sets_h:'3×6/side',sets_s:'4×6',   rest_h:90, rest_s:120, ytId:'qDcniqddTeE'},
-  {id:'cal_lunge',       name:'Walking Lunge',             muscles:['quads','glutes','hamstrings'],        eq:[],              impact:'low',  goals:['calisthenics','tone','lowimpact'],  sets_h:'3×15/leg',sets_s:'4×12', rest_h:60, rest_s:90,  ytId:'D7KaRcUTQeE'},
-  {id:'cal_nordic',      name:'Nordic Curl',               muscles:['hamstrings'],                        eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×5–8',   sets_s:'4×5',    rest_h:120,rest_s:180, ytId:'L7raxhEh73Y'},
-  {id:'cal_l_sit',       name:'L-Sit Hold',                muscles:['core','triceps'],                    eq:[],              impact:'low',  goals:['calisthenics','strength','tone'],   sets_h:'4×10–20s',sets_s:'5×15s', rest_h:60, rest_s:90,  ytId:'ASdvN_XEl_c'},
-  {id:'cal_hollow',      name:'Hollow Body Hold',          muscles:['core'],                              eq:[],              impact:'low',  goals:['calisthenics','strength','tone'],   sets_h:'4×20–30s',sets_s:'5×25s', rest_h:45, rest_s:60,  ytId:'LlDNef_Lcbd'},
-  {id:'cal_muscle_up',   name:'Muscle-Up (advanced)',      muscles:['lats','chest','triceps','shoulders'], eq:['rack-pullup'], impact:'low',  goals:['calisthenics','strength'],          sets_h:'3×3–5',   sets_s:'4×3',    rest_h:180,rest_s:240, ytId:'eGo4IYlbE5g'},
-  {id:'cal_handstand',   name:'Handstand / Wall Handstand',muscles:['shoulders','core','triceps'],         eq:[],              impact:'low',  goals:['calisthenics','strength'],          sets_h:'4×20–30s',sets_s:'4×20s', rest_h:90, rest_s:120, ytId:'qEwKCR5JCog'},
-  {id:'cal_burpee',      name:'Burpee',                    muscles:['chest','quads','core','shoulders'],   eq:[],              impact:'high', goals:['calisthenics','fat','endurance'],   sets_h:'5×10',    sets_s:'5×15',   rest_h:60, rest_s:60,  ytId:'IODxDxX7oi4'},
+  // Each exercise includes a progressions[] ladder: beginner → advanced.
+  // The workout renderer shows the user's current step and what comes next.
+  {id:'cal_pushup', name:'Push-Up (Standard)', muscles:['chest','triceps','shoulders','core'], eq:[], impact:'low', goals:['calisthenics','tone','strength'], sets_h:'4×max', sets_s:'5×max', rest_h:90, rest_s:120, ytId:'IODxDxX7oi4',
+   progressions:[
+    {step:1, name:'Wall Push-Up',            cue:'Can do 3×20 comfortably',  detail:'Stand arm-length from wall. Hands flat on wall. Bend elbows until nose nearly touches wall.'},
+    {step:2, name:'Incline Push-Up',         cue:'Can do 3×15 comfortably',  detail:'Hands on a bench, table, or step. Body in a straight line. More upright = easier.'},
+    {step:3, name:'Knee Push-Up',            cue:'Can do 3×12 comfortably',  detail:'Knees on floor, hips forward, body straight from knees to head. Full range of motion.'},
+    {step:4, name:'Push-Up (Standard)',      cue:'Can do 3×10 comfortably',  detail:'Toes on floor, hands shoulder-width, body rigid. Lower until chest nearly touches floor.'},
+    {step:5, name:'Slow Push-Up (3-1-3)',    cue:'3-sec down, 1-sec pause, 3-sec up. 3×8', detail:'Time under tension builds strength faster. Use a 3-count down, 1-second pause at bottom, 3-count push up.'},
+  ]},
+  {id:'cal_diamond_pu', name:'Diamond Push-Up', muscles:['triceps','chest'], eq:[], impact:'low', goals:['calisthenics','tone','strength'], sets_h:'4×max', sets_s:'4×max', rest_h:90, rest_s:120, ytId:'J0DXcc8W4h8',
+   progressions:[
+    {step:1, name:'Close-Grip Knee Push-Up', cue:'Can do 3×12',              detail:'Hands narrow (thumb and forefinger touching), knees on floor. Elbows stay close to body.'},
+    {step:2, name:'Close-Grip Push-Up',      cue:'Can do 3×10',              detail:'Full push-up with hands close together. Elbows track back, not flared.'},
+    {step:3, name:'Diamond Push-Up',         cue:'Can do 3×8 with good form',detail:'Index fingers and thumbs form a diamond shape. Intense tricep and inner chest work.'},
+    {step:4, name:'Weighted Diamond Push-Up',cue:'3×10 with backpack weight', detail:'Add a loaded backpack for extra resistance once diamonds are solid.'},
+  ]},
+  {id:'cal_archer_pu', name:'Archer Push-Up', muscles:['chest','triceps','shoulders'], eq:[], impact:'low', goals:['calisthenics','strength'], sets_h:'3×6/side', sets_s:'4×6', rest_h:120, rest_s:150, ytId:'IODxDxX7oi4',
+   progressions:[
+    {step:1, name:'Wide Push-Up',            cue:'Can do 3×15 wide-grip',    detail:'Hands wider than shoulders. Shifts load toward the one-arm side.'},
+    {step:2, name:'Uneven Push-Up',          cue:'Can do 3×8/side',          detail:'One hand on floor, other on a book/block. Alternate sides each set.'},
+    {step:3, name:'Assisted Archer Push-Up', cue:'Can do 3×5/side',          detail:'Extended arm bent slightly for assistance. Gradually straighten it each session.'},
+    {step:4, name:'Archer Push-Up',          cue:'Can do 3×6/side strict',   detail:'One arm fully extended to side, one arm doing the push-up. The extended arm helps minimally.'},
+  ]},
+  {id:'cal_pseudo_planch', name:'Pseudo Planche Push-Up', muscles:['chest','shoulders','core'], eq:[], impact:'low', goals:['calisthenics','strength'], sets_h:'3×5–8', sets_s:'4×5', rest_h:120, rest_s:180, ytId:'IODxDxX7oi4',
+   progressions:[
+    {step:1, name:'Plank Hold',              cue:'Can hold 3×45 sec',        detail:'Straight arm plank. Build shoulder and core endurance first.'},
+    {step:2, name:'Tuck Planche Lean',       cue:'Can hold 3×20 sec',        detail:'Lean forward in push-up position, weight over wrists. Fingers point to sides/back.'},
+    {step:3, name:'Pseudo Planche Lean',     cue:'Can hold 3×30 sec',        detail:'Full lean forward, straight legs, fingers pointing backward. Core and shoulders screaming — that is normal.'},
+    {step:4, name:'Pseudo Planche Push-Up',  cue:'Can do 3×5 full ROM',      detail:'From the leaned position, perform a push-up while maintaining the forward lean throughout.'},
+  ]},
+  {id:'cal_pullup', name:'Pull-Up', muscles:['lats','biceps','back-upper'], eq:['rack-pullup','acc-pullbar'], impact:'low', goals:['calisthenics','strength','size'], sets_h:'4×max', sets_s:'5×max', rest_h:120, rest_s:150, ytId:'eGo4IYlbE5g',
+   progressions:[
+    {step:1, name:'Dead Hang',               cue:'Can hang 3×30 sec',        detail:'Just hang from the bar with straight arms. Builds grip, shoulder health, and lat activation.'},
+    {step:2, name:'Scapular Pull-Up',        cue:'Can do 3×10',              detail:'From a dead hang, depress and retract your shoulder blades without bending the elbows. Tiny movement, huge activation.'},
+    {step:3, name:'Assisted Pull-Up (band)', cue:'Can do 3×8 with band',     detail:'Loop a resistance band around the bar and your foot/knee. Band removes 20–60 lbs of your bodyweight.'},
+    {step:4, name:'Negative Pull-Up',        cue:'Can do 3×5 slow 5-sec descent', detail:'Jump or step to the top position. Lower yourself as slowly as possible. Builds the same muscles as the full movement.'},
+    {step:5, name:'Pull-Up',                 cue:'Can do 3×5 unassisted',    detail:'Full pull-up from dead hang to chin over bar. Overhand grip, shoulder-width.'},
+    {step:6, name:'Weighted Pull-Up',        cue:'Can do 3×8 bodyweight',    detail:'Add weight via belt, backpack, or vest. Progress as you would with any weighted exercise.'},
+  ]},
+  {id:'cal_chinup', name:'Chin-Up', muscles:['biceps','lats'], eq:['rack-pullup','acc-pullbar'], impact:'low', goals:['calisthenics','strength','size'], sets_h:'4×max', sets_s:'4×max', rest_h:120, rest_s:150, ytId:'eGo4IYlbE5g',
+   progressions:[
+    {step:1, name:'Dead Hang (underhand)',   cue:'Can hang 3×20 sec',        detail:'Underhand grip (palms toward you). Easier on bicep tendons.'},
+    {step:2, name:'Assisted Chin-Up (band)', cue:'Can do 3×8 with band',     detail:'Band assistance. Chin-up grip (underhand). Easier than pull-ups for most beginners — great starting point.'},
+    {step:3, name:'Negative Chin-Up',        cue:'Can do 3×5 slow descent',  detail:'Jump to top, lower for 5 seconds. Builds bicep and lat strength through the full range.'},
+    {step:4, name:'Chin-Up',                 cue:'Can do 3×5 unassisted',    detail:'Underhand grip, full hang to chin over bar.'},
+  ]},
+  {id:'cal_archer_pu2', name:'Archer Pull-Up', muscles:['lats','biceps'], eq:['rack-pullup'], impact:'low', goals:['calisthenics','strength'], sets_h:'3×4/side', sets_s:'4×4', rest_h:150, rest_s:180, ytId:'eGo4IYlbE5g',
+   progressions:[
+    {step:1, name:'Wide-Grip Pull-Up',       cue:'Can do 3×6 wide',          detail:'Hands wider than shoulders. Shifts work toward the primary side of an archer pull-up.'},
+    {step:2, name:'Assisted Archer Pull-Up', cue:'Can do 3×4/side with band',detail:'One arm pulls, other arm has a band assist. Gradually reduce band assistance.'},
+    {step:3, name:'Archer Pull-Up',          cue:'Can do 3×4/side',          detail:'One arm pulls, other arm nearly straight pointing to the side. Minimal assistance from extended arm.'},
+  ]},
+  {id:'cal_dip', name:'Dip (Bodyweight)', muscles:['triceps','chest','shoulders'], eq:['rack-dip','acc-dipbar'], impact:'low', goals:['calisthenics','strength','size'], sets_h:'4×max', sets_s:'4×max', rest_h:120, rest_s:150, ytId:'0326dy_-CzM',
+   progressions:[
+    {step:1, name:'Bench Dip',               cue:'Can do 3×15',              detail:'Hands on bench behind you, feet on floor. Bend elbows to 90° then push up.'},
+    {step:2, name:'Elevated Bench Dip',      cue:'Can do 3×12 with feet on box', detail:'Feet elevated on a second bench or box. Increases depth and shoulder load.'},
+    {step:3, name:'Assisted Dip (band)',     cue:'Can do 3×8 with band',     detail:'Band from bar to your knees removes 30–50 lbs of load.'},
+    {step:4, name:'Negative Dip',            cue:'Can do 3×5 slow descent',  detail:'Jump to top position, lower for 4 seconds. Full range of motion.'},
+    {step:5, name:'Dip (Bodyweight)',        cue:'Can do 3×8 unassisted',    detail:'Full bodyweight parallel bar dip. Slight forward lean hits chest; upright hits triceps.'},
+    {step:6, name:'Weighted Dip',            cue:'Can do 3×10 bodyweight',   detail:'Add weight via belt or backpack. Treat like bench press progression.'},
+  ]},
+  {id:'cal_bw_squat', name:'Bodyweight Squat', muscles:['quads','glutes'], eq:[], impact:'low', goals:['calisthenics','tone','lowimpact'], sets_h:'4×20–30', sets_s:'5×20', rest_h:60, rest_s:90, ytId:'aclHkVaku9U',
+   progressions:[
+    {step:1, name:'Chair Squat (sit and stand)', cue:'3×15 pain-free',       detail:'Use a chair as a depth guide. Sit down slowly, stand back up. No bouncing off the seat.'},
+    {step:2, name:'Box Squat',                cue:'3×15 with box depth',     detail:'Squat to a box or bench, pause without relaxing, stand. Teaches depth without mobility issues.'},
+    {step:3, name:'Bodyweight Squat',         cue:'3×20 full depth',         detail:'Feet shoulder-width, toes slightly out. Break parallel. Chest tall throughout.'},
+    {step:4, name:'Pause Squat',              cue:'3×12 with 2-sec pause',   detail:'3-count down, 2-second pause at the bottom, 1-count up. Eliminates the bounce reflex.'},
+    {step:5, name:'Jump Squat',               cue:'3×10 explosive',          detail:'Full squat then explode upward. Land soft with bent knees. Builds power.'},
+  ]},
+  {id:'cal_pistol', name:'Pistol Squat', muscles:['quads','glutes','core'], eq:[], impact:'low', goals:['calisthenics','strength'], sets_h:'3×5/side', sets_s:'4×5', rest_h:120, rest_s:150, ytId:'qDcniqddTeE',
+   progressions:[
+    {step:1, name:'Supported Single-Leg Squat', cue:'3×8/side holding a pole', detail:'Hold a pole, TRX, or door frame. Lower on one leg. Use arms to assist on the way up.'},
+    {step:2, name:'Box Pistol Squat',          cue:'3×6/side to a box',      detail:'Lower on one leg to a box or bench. The box limits depth and reduces difficulty.'},
+    {step:3, name:'Counterweight Pistol',      cue:'3×5/side arms forward',  detail:'Arms extended forward for balance. Progressively less arm counterbalance needed.'},
+    {step:4, name:'Shrimp Squat',              cue:'Can do 3×6/side',        detail:'Slightly easier than pistol for most. Rear foot held up behind you instead of in front.'},
+    {step:5, name:'Assisted Pistol Squat',     cue:'3×5/side with fingers on wall', detail:'Fingertips lightly touching a wall for balance only — not pushing through the arm.'},
+    {step:6, name:'Pistol Squat',              cue:'3×5/side unassisted',    detail:'Free-standing single-leg squat to full depth. Extended leg stays off the floor throughout.'},
+  ]},
+  {id:'cal_shrimp_squat', name:'Shrimp Squat', muscles:['quads','glutes','hamstrings'], eq:[], impact:'low', goals:['calisthenics','strength','tone'], sets_h:'3×6/side', sets_s:'4×6', rest_h:90, rest_s:120, ytId:'qDcniqddTeE',
+   progressions:[
+    {step:1, name:'Rear-Foot Elevated Split Squat', cue:'3×10/side',        detail:'Rear foot on bench, front foot far forward. A lunge with more quad emphasis and balance challenge.'},
+    {step:2, name:'Assisted Shrimp Squat',    cue:'3×6/side with support',  detail:'Hold something for balance. Bend rear knee toward floor, keeping torso upright.'},
+    {step:3, name:'Shrimp Squat (above floor)', cue:'3×6/side rear knee above floor', detail:'Do not let rear knee touch. The additional inch of range makes it significantly harder.'},
+    {step:4, name:'Full Shrimp Squat',        cue:'3×6/side knee to floor', detail:'Rear knee briefly touches floor at the bottom. High quad demand.'},
+  ]},
+  {id:'cal_lunge', name:'Walking Lunge', muscles:['quads','glutes','hamstrings'], eq:[], impact:'low', goals:['calisthenics','tone','lowimpact'], sets_h:'3×15/leg', sets_s:'4×12', rest_h:60, rest_s:90, ytId:'D7KaRcUTQeE',
+   progressions:[
+    {step:1, name:'Stationary Lunge (short)',  cue:'3×10/leg no knee pain',  detail:'Step forward, lower back knee toward floor, return to standing. Short stride if knee hurts.'},
+    {step:2, name:'Reverse Lunge',             cue:'3×10/leg',               detail:'Step backward instead of forward. Easier on the knee than forward lunges.'},
+    {step:3, name:'Walking Lunge',             cue:'3×12/leg',               detail:'Step forward, lower, push forward into the next step. Continuous motion.'},
+    {step:4, name:'Weighted Walking Lunge',    cue:'Add dumbbells or backpack', detail:'Hold weights at sides or wear a loaded backpack. Progresses like any loaded exercise.'},
+  ]},
+  {id:'cal_nordic', name:'Nordic Curl', muscles:['hamstrings'], eq:[], impact:'low', goals:['calisthenics','strength'], sets_h:'3×5–8', sets_s:'4×5', rest_h:120, rest_s:180, ytId:'L7raxhEh73Y',
+   progressions:[
+    {step:1, name:'Lying Leg Curl (machine)', cue:'3×12 before attempting Nordic', detail:'Build hamstring strength on a machine or with a resistance band before Nordic curls.'},
+    {step:2, name:'Glute-Ham Bridge',         cue:'3×15',                   detail:'Lying on floor, bridge up using hamstrings. Builds the same hip-to-knee hamstring chain.'},
+    {step:3, name:'Assisted Nordic Curl',     cue:'3×5 with hand push-off', detail:'Use hands to push off floor at the bottom. Reduces the eccentric load so you can complete the rep.'},
+    {step:4, name:'Nordic Curl (eccentric only)', cue:'3×5 slow 5-sec descent', detail:'Lower for 5 seconds, then use hands and momentum to get back to start. This builds the strength needed for full reps.'},
+    {step:5, name:'Nordic Curl',              cue:'3×5 full reps',          detail:'Full concentric and eccentric. One of the most powerful exercises for hamstring injury prevention.'},
+  ]},
+  {id:'cal_l_sit', name:'L-Sit Hold', muscles:['core','triceps'], eq:[], impact:'low', goals:['calisthenics','strength','tone'], sets_h:'4×10–20s', sets_s:'5×15s', rest_h:60, rest_s:90, ytId:'ASdvN_XEl_c',
+   progressions:[
+    {step:1, name:'Seated Leg Compression',   cue:'3×10 reps pulling knees to chest', detail:'Sit on floor, hands beside hips. Lean back, pull knees to chest. Builds hip flexor strength for the L-sit.'},
+    {step:2, name:'Support Hold',             cue:'3×30 sec straight-arm support', detail:'Hands on parallettes or chairs, straight arms, just hold yourself up. No leg raise yet.'},
+    {step:3, name:'Tuck L-Sit',              cue:'3×10 sec',               detail:'Both knees raised to chest. Ankles below knees. This is the most accessible L-sit progression.'},
+    {step:4, name:'One-Leg L-Sit',           cue:'3×10 sec/leg',           detail:'One leg extended, one knee tucked. Alternate legs.'},
+    {step:5, name:'L-Sit Hold',              cue:'3×10 sec both legs extended', detail:'Both legs horizontal, fully extended. The full skill.'},
+    {step:6, name:'L-Sit 20+ seconds',       cue:'Work toward 3×20 sec',   detail:'The benchmark for solid L-sit. Once there, progress to V-sit.'},
+  ]},
+  {id:'cal_hollow', name:'Hollow Body Hold', muscles:['core'], eq:[], impact:'low', goals:['calisthenics','strength','tone'], sets_h:'4×20–30s', sets_s:'5×25s', rest_h:45, rest_s:60, ytId:'LlDNef_Lcbd',
+   progressions:[
+    {step:1, name:'Dead Bug (arms only)',     cue:'3×10 reps',              detail:'Lie on back. Arms up, lower back pressed to floor. Lower and raise arms only. Learn to brace.'},
+    {step:2, name:'Dead Bug (full)',          cue:'3×10/side',              detail:'Opposite arm and leg extend toward floor simultaneously. Lower back stays flat.'},
+    {step:3, name:'Tuck Hollow Hold',         cue:'3×20 sec',               detail:'Knees tucked to chest, lower back pressed to floor, arms overhead. Hold. The foundation.'},
+    {step:4, name:'Half-Hollow Body Hold',    cue:'3×20 sec',               detail:'One leg extended, other knee tucked. Alternate. Builds toward full extension.'},
+    {step:5, name:'Hollow Body Hold',         cue:'3×20 sec full extension', detail:'Both legs extended and raised, arms overhead, lower back pressed flat to floor. The full shape.'},
+    {step:6, name:'Hollow Body Rock',         cue:'3×10 rocks',             detail:'Rock forward and back while maintaining the hollow position. Teaches dynamic tension.'},
+  ]},
+  {id:'cal_muscle_up', name:'Muscle-Up (advanced)', muscles:['lats','chest','triceps','shoulders'], eq:['rack-pullup'], impact:'low', goals:['calisthenics','strength'], sets_h:'3×3–5', sets_s:'4×3', rest_h:180, rest_s:240, ytId:'eGo4IYlbE5g',
+   progressions:[
+    {step:1, name:'Pull-Up (10+ reps)',       cue:'Need 3×10 strict pull-ups first', detail:'Build to 10 solid pull-ups before attempting muscle-ups. This is non-negotiable.'},
+    {step:2, name:'High Pull-Up',             cue:'3×5 chest-to-bar',       detail:'Pull until the bar reaches your chest. This builds the high-pull needed to transition.'},
+    {step:3, name:'Bar Dip (3×10)',           cue:'Solid bar dips first',    detail:'The push portion of a muscle-up is a bar dip. Ensure this is solid before combining.'},
+    {step:4, name:'Band-Assisted Muscle-Up',  cue:'3×3 with band',          detail:'A thick band removes enough weight to feel the transition. Learn the movement pattern.'},
+    {step:5, name:'Negative Muscle-Up',       cue:'3×3 slow descent from top', detail:'Jump or press to the top position. Lower slowly through the transition — the hardest part.'},
+    {step:6, name:'Kipping Muscle-Up',        cue:'Use momentum to learn',  detail:'A small swing generates momentum through the transition. Not cheating — it is a different skill.'},
+    {step:7, name:'Strict Muscle-Up',         cue:'3×3 without momentum',   detail:'From a dead hang, pull and transition over the bar without any kip. Genuine strength requirement.'},
+  ]},
+  {id:'cal_handstand', name:'Handstand / Wall Handstand', muscles:['shoulders','core','triceps'], eq:[], impact:'low', goals:['calisthenics','strength'], sets_h:'4×20–30s', sets_s:'4×20s', rest_h:90, rest_s:120, ytId:'qEwKCR5JCog',
+   progressions:[
+    {step:1, name:'Pike Push-Up',             cue:'3×10',                   detail:'Hips high, hands and feet on floor in an inverted V. Press head toward floor then push back up. Builds overhead pressing strength.'},
+    {step:2, name:'Elevated Pike Push-Up',    cue:'3×8 feet on bench',      detail:'Feet on a box or bench, hips high. Harder version of pike push-up — closer to the actual handstand angle.'},
+    {step:3, name:'Wall Kick-Up (stomach to wall)', cue:'3×20 sec holds',   detail:'Kick up facing the wall. Stomach faces the wall. This is safer and easier to learn balance against.'},
+    {step:4, name:'Wall Handstand (back to wall)', cue:'3×20 sec holds',    detail:'Back faces wall. Walk hands in until nearly freestanding. Teaches proper hollow body position.'},
+    {step:5, name:'Chest-to-Wall Handstand HSPU', cue:'3×3 push-ups against wall', detail:'Handstand push-up with stomach facing wall. Full shoulder strength builder.'},
+    {step:6, name:'Freestanding Handstand',   cue:'3×10 sec balance',       detail:'No wall. Finger tips control balance. Start with a spotter or near a wall for safety.'},
+  ]},
+  {id:'cal_burpee', name:'Burpee', muscles:['chest','quads','core','shoulders'], eq:[], impact:'high', goals:['calisthenics','fat','endurance'], sets_h:'5×10', sets_s:'5×15', rest_h:60, rest_s:60, ytId:'IODxDxX7oi4',
+   progressions:[
+    {step:1, name:'Half Burpee (no jump)',     cue:'3×10 no jump no push-up', detail:'Squat, step back to plank, step forward, stand. No jump, no push-up. Low impact version.'},
+    {step:2, name:'Step-Back Burpee',          cue:'3×8',                   detail:'Squat, step (not jump) back to plank, step forward, stand with a small hop. One step easier than full.'},
+    {step:3, name:'Burpee (no push-up)',       cue:'3×10',                  detail:'Full jump down to plank, jump feet back to hands, jump up with arms overhead. Just no push-up.'},
+    {step:4, name:'Burpee',                    cue:'3×10 full form',        detail:'Full movement: squat → plank → push-up → jump forward → jump up with arms overhead.'},
+    {step:5, name:'Burpee with Pull-Up',       cue:'3×8 with bar',          detail:'After the jump, grab the bar above and do a pull-up. Full body compound movement.'},
+  ]},
 
   // ── MILITARY / TACTICAL ─────────────────────────────────
   {id:'mil_pushup_max',  name:'Push-Up Max Set (AFT)',     muscles:['chest','triceps','shoulders','core'], eq:[],              impact:'low',  goals:['military','endurance','strength'],  sets_h:'5×max',   sets_s:'5×max',  rest_h:60, rest_s:90,  ytId:'IODxDxX7oi4'},
@@ -9679,6 +9808,7 @@ function exerciseToWorkoutItem(ex, dayKey, idx, isStrength, defaultSets) {
     ytId: ex.ytId || '',
     desc: `Targets: ${ex.muscles.join(', ')}. ${sets} · ${restStr ? restStr + ' rest' : 'minimal rest'}.`,
     generated: true,
+    progressions: ex.progressions || null, // carry the progression ladder
   };
 }
 
@@ -10277,8 +10407,9 @@ const DAY_IDS = ['mon','tue','wed','thu','fri','sat'];
 const DAY_NAMES = {mon:'MON',tue:'TUE',wed:'WED',thu:'THU',fri:'FRI',sat:'SAT',sun:'SUN'};
 
 // Track checked items in memory (saved to Firebase)
-let workoutChecks = {}; // { exerciseId: true/false }
+let workoutChecks   = {}; // { exerciseId: true/false }
 let exerciseActuals = {}; // { exerciseId: { sets: [{reps, weight}], notes } }
+let exerciseProgressions = {}; // { exId: stepNumber } — user's current progression level
 
 function buildDayTabs() {
   const jsDay = new Date().getDay();
@@ -10309,6 +10440,13 @@ async function showWorkoutDay(dayId) {
     workoutChecks   = doc.exists ? (doc.data().checks  || {}) : {};
     exerciseActuals = doc.exists ? (doc.data().actuals || {}) : {};
   } catch(e) { workoutChecks = {}; exerciseActuals = {}; }
+
+  // Load progression levels (stored separately — user-level, not date-specific)
+  try {
+    const progDoc = await db.collection('userdata').doc(SESSION.username)
+      .collection('progressions').doc('levels').get();
+    exerciseProgressions = progDoc.exists ? (progDoc.data() || {}) : {};
+  } catch(e) { exerciseProgressions = {}; }
 
   // Update tab highlights
   DAY_IDS.forEach(id => {
@@ -10374,6 +10512,77 @@ async function showWorkoutDay(dayId) {
         <button class="btn btn-p" onclick="markWorkoutComplete('${dayId}')" style="font-size:0.68rem;">✓ MARK SESSION COMPLETE</button>
       </div>
     </div>`;
+}
+
+// ─── Progression ladder system ────────────────────────────
+async function saveProgressionLevel(exId, step) {
+  exerciseProgressions[exId] = step;
+  try {
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('progressions').doc('levels').set(exerciseProgressions);
+    toast(`✓ Progression saved — now on step ${step}`);
+  } catch(e) { toast('Error saving progression: ' + e.message); }
+}
+
+function renderProgressionLadder(exId, progressions) {
+  if (!progressions || progressions.length < 2) return '';
+  const currentStep = exerciseProgressions[exId] || 1;
+
+  const steps = progressions.map(p => {
+    const isCurrent = p.step === currentStep;
+    const isDone    = p.step < currentStep;
+    const isLocked  = p.step > currentStep;
+
+    const borderColor = isDone ? '#4caf50' : isCurrent ? 'var(--accent2)' : 'var(--border)';
+    const bgColor     = isDone ? '#4caf5010' : isCurrent ? 'var(--accent-dim)' : 'var(--bg3)';
+    const textColor   = isDone ? '#4caf50' : isCurrent ? 'var(--accent2)' : 'var(--text-dim)';
+
+    const badge = isDone
+      ? `<span style="font-family:var(--font-mono);font-size:0.5rem;padding:1px 6px;background:#4caf5022;color:#4caf50;border:1px solid #4caf5044;">✓ DONE</span>`
+      : isCurrent
+        ? `<span style="font-family:var(--font-mono);font-size:0.5rem;padding:1px 6px;background:var(--accent)22;color:var(--accent2);border:1px solid var(--accent)44;">▶ CURRENT</span>`
+        : `<span style="font-family:var(--font-mono);font-size:0.5rem;padding:1px 6px;background:var(--bg2);color:var(--border2);border:1px solid var(--border);">🔒 NEXT</span>`;
+
+    const buttons = isCurrent
+      ? `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+          ${p.step > 1
+            ? `<button onclick="saveProgressionLevel('${exId}',${p.step-1})" class="btn btn-s"
+                style="font-size:0.58rem;padding:3px 8px;">← STEP BACK</button>`
+            : ''}
+          ${p.step < progressions.length
+            ? `<button onclick="saveProgressionLevel('${exId}',${p.step+1})" class="btn btn-p"
+                style="font-size:0.58rem;padding:3px 10px;">I GOT THIS → ADVANCE</button>`
+            : '<span style="font-family:var(--font-mono);font-size:0.6rem;color:#4caf50;">🏆 MAXIMUM LEVEL</span>'}
+        </div>`
+      : '';
+
+    return `<div style="padding:10px 12px;margin-bottom:6px;border:1px solid ${borderColor};background:${bgColor};">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${(isCurrent&&p.detail)?'6px':'0'};">
+        <span style="font-family:var(--font-display);font-size:1rem;color:${textColor};min-width:24px;">
+          ${p.step}
+        </span>
+        <div style="flex:1;">
+          <div style="font-family:var(--font-mono);font-size:0.68rem;color:${textColor};font-weight:${isCurrent?'bold':'normal'};">
+            ${p.name}
+          </div>
+          <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);margin-top:2px;">
+            Advance when: ${p.cue}
+          </div>
+        </div>
+        ${badge}
+      </div>
+      ${isCurrent && p.detail ? `<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text);
+        line-height:1.6;padding:6px 10px;background:var(--bg2);border-left:3px solid var(--accent2);margin-bottom:4px;">
+        ${p.detail}</div>` : ''}
+      ${buttons}
+    </div>`;
+  }).join('');
+
+  return `<div style="margin-top:12px;padding:12px;background:var(--bg2);border:1px solid var(--accent2)22;">
+    <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);
+      letter-spacing:.12em;margin-bottom:10px;">📈 PROGRESSION LADDER — YOUR PATH FORWARD</div>
+    ${steps}
+  </div>`;
 }
 
 function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = false) {
@@ -10459,6 +10668,7 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = f
             <tr><td style="color:var(--border2)">PHASE 3</td><td>${item.phase3||'—'}</td></tr>
           </table>` : ''}
           ${item.hotel ? `<div class="hotel-alt">🏨 <strong>HOTEL VARIANT:</strong> ${item.hotel}</div>` : ''}
+          ${item.progressions ? renderProgressionLadder(item.id, item.progressions) : ''}
 
 
           <!-- ── SET TRACKER ── -->
