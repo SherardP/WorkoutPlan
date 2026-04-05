@@ -9220,7 +9220,14 @@ function setDefaultDates() {
 // eq: [] means bodyweight — no equipment needed
 const EX_DB = [
   // ── CHEST ──────────────────────────────────────────────
-  {id:'push_up',         name:'Push-Up',                    muscles:['chest','triceps','shoulders'],       eq:[],                              impact:'low',  goals:['tone','fat','recomp','general'],  sets_h:'3×10–15', sets_s:'3×5–8',  rest_h:60,  rest_s:90,  ytId:'IODxDxX7oi4'},
+  {id:'push_up', name:'Push-Up', muscles:['chest','triceps','shoulders'], eq:[], impact:'low', goals:['tone','fat','recomp','general'], sets_h:'3×10–15', sets_s:'3×5–8', rest_h:60, rest_s:90, ytId:'IODxDxX7oi4',
+   progressions:[
+    {step:1, name:'Wall Push-Up',       cue:'3×20 comfortably',  detail:'Stand arm-length from wall. Hands flat on wall. Bend elbows until nose nearly touches wall.'},
+    {step:2, name:'Incline Push-Up',    cue:'3×15 comfortably',  detail:'Hands on a bench or table. Body in a straight line. More upright = easier.'},
+    {step:3, name:'Knee Push-Up',       cue:'3×12 comfortably',  detail:'Knees on floor, hips forward, body straight from knees to head.'},
+    {step:4, name:'Push-Up',            cue:'3×10 full ROM',     detail:'Toes on floor, hands shoulder-width, body rigid. Lower until chest nearly touches floor.'},
+    {step:5, name:'Slow Push-Up (3-1-3)',cue:'3×8 with tempo',  detail:'3-sec down, 1-sec pause at bottom, 3-sec push up. Builds strength faster than fast reps.'},
+  ]},
   {id:'decline_push',    name:'Decline Push-Up',            muscles:['chest','triceps'],                   eq:[],                              impact:'low',  goals:['tone','fat','recomp'],            sets_h:'3×10–15', sets_s:'3×8',    rest_h:60,  rest_s:90,  ytId:'T3N-TO4rqEk'},
   {id:'diamond_push',    name:'Diamond Push-Up',            muscles:['triceps','chest'],                   eq:[],                              impact:'low',  goals:['tone','size'],                    sets_h:'3×10',    sets_s:'3×8',    rest_h:60,  rest_s:90,  ytId:'J0DXcc8W4h8'},
   {id:'db_bench',        name:'Dumbbell Bench Press',       muscles:['chest','triceps','shoulders'],       eq:['db'],                          impact:'low',  goals:['size','strength','recomp'],       sets_h:'4×8–12',  sets_s:'4×4–6',  rest_h:90,  rest_s:150, ytId:'VmB1G1K7v0c'},
@@ -9274,7 +9281,14 @@ const EX_DB = [
   {id:'close_grip_push', name:'Close-Grip Push-Up',        muscles:['triceps','chest'],                   eq:[],                              impact:'low',  goals:['tone','general'],                 sets_h:'3×12',    sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'J0DXcc8W4h8'},
 
   // ── CORE / ABS ──────────────────────────────────────────
-  {id:'plank',           name:'Plank',                     muscles:['core'],                              eq:[],                              impact:'low',  goals:['tone','fat','general','lowimpact'],sets_h:'3×30–60s',sets_s:'3×30s',  rest_h:45,  rest_s:60,  ytId:'ASdvN_XEl_c'},
+  {id:'plank', name:'Plank', muscles:['core'], eq:[], impact:'low', goals:['tone','fat','general','lowimpact'], sets_h:'3×30–60s', sets_s:'3×30s', rest_h:45, rest_s:60, ytId:'ASdvN_XEl_c',
+   progressions:[
+    {step:1, name:'Dead Bug',           cue:'3×10/side without lower back lifting', detail:'Lie on back. Press lower back to floor. Extend opposite arm and leg. Learn to brace.'},
+    {step:2, name:'Forearm Plank (15s)',cue:'3×15 sec with flat back',  detail:'Elbows under shoulders, toes on floor. Hips level. No sagging or piking.'},
+    {step:3, name:'Forearm Plank (30s)',cue:'3×30 sec',                 detail:'Same position, longer hold. Focus on breathing while braced.'},
+    {step:4, name:'Plank (60 sec)',     cue:'3×60 sec solid',           detail:'Full 60-second hold with straight line from head to heels.'},
+    {step:5, name:'RKC Plank',         cue:'3×30 sec intense brace',   detail:'Squeeze EVERYTHING — fists, abs, glutes, quads — as hard as possible. Harder than a standard plank held twice as long.'},
+  ]},
   {id:'dead_bug',        name:'Dead Bug',                  muscles:['core'],                              eq:[],                              impact:'low',  goals:['general','lowimpact','posture'],  sets_h:'3×10/side',sets_s:'3×8',   rest_h:45,  rest_s:60,  ytId:'4XLEnBss230'},
   {id:'hollow_hold',     name:'Hollow Body Hold',          muscles:['core'],                              eq:[],                              impact:'low',  goals:['tone','strength'],                sets_h:'3×20–30s',sets_s:'3×20s',  rest_h:45,  rest_s:60,  ytId:'LlDNef_Lcbd'},
   {id:'crunch',          name:'Crunch / Sit-Up',           muscles:['core'],                              eq:[],                              impact:'low',  goals:['fat','tone'],                     sets_h:'3×20',    sets_s:'3×15',   rest_h:45,  rest_s:60,  ytId:'MKmrqckCjpI'},
@@ -10668,7 +10682,18 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = f
             <tr><td style="color:var(--border2)">PHASE 3</td><td>${item.phase3||'—'}</td></tr>
           </table>` : ''}
           ${item.hotel ? `<div class="hotel-alt">🏨 <strong>HOTEL VARIANT:</strong> ${item.hotel}</div>` : ''}
-          ${item.progressions ? renderProgressionLadder(item.id, item.progressions) : ''}
+          ${(() => {
+            // Progressions: use item.progressions if present, else look up EX_DB by name
+            const prog = item.progressions || (() => {
+              const normalizedName = item.name?.toUpperCase().trim();
+              const match = EX_DB.find(e =>
+                e.name.toUpperCase() === normalizedName ||
+                normalizedName?.includes(e.name.toUpperCase().split(' ')[0])
+              );
+              return match?.progressions || null;
+            })();
+            return prog ? renderProgressionLadder(item.id, prog) : '';
+          })()}
 
 
           <!-- ── SET TRACKER ── -->
