@@ -9747,11 +9747,14 @@ function userHasEquipment(req, eq) {
   return req.every(r => eq[r]);
 }
 
-function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, count, sessionType, goalPriority) {
+function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, count, sessionType, goalPriority, glutesIsPriority, alreadyUsed) {
   // Mode-exclusive filtering: yoga/pilates/calisthenics/military sessions
   // must ONLY draw from their own exercise pool, never from weighted exercises
   const exclusiveModes = ['yoga','pilates','calisthenics','military'];
   const isExclusiveMode = exclusiveModes.includes(sessionType);
+
+  // Pure glute isolation exercises — get a hard priority boost when glutes are the goal
+  const PURE_GLUTE_IDS = new Set(['glute_bridge','hip_thrust_db','hip_thrust_bb','fire_hydrant','donkey_kick','cable_kickback','hip_abduct_mach']);
 
   const scored = EX_DB
     .filter(e => {
@@ -9759,7 +9762,6 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
       if (isLowImpact && e.impact === 'high') return false;
 
       if (isExclusiveMode) {
-        // Only include exercises that belong to this session type
         return e.goals.includes(sessionType);
       }
 
@@ -9773,29 +9775,61 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
     })
     .map(e => {
       let score = 0;
-      // Muscle priority scoring
-      score += e.muscles.filter(m => musclePriority.includes(m)).length * 3;
-      // Goal matching — weighted by priority if provided
+
+      // Muscle priority scoring — position in priority list matters
+      e.muscles.forEach((m, mIdx) => {
+        const priorityIdx = musclePriority.indexOf(m);
+        if (priorityIdx >= 0) {
+          // Higher score for muscles earlier in the priority list
+          score += (3 + Math.max(0, 5 - priorityIdx));
+        }
+      });
+
+      // Goal matching — weighted by priority
       e.goals.forEach(g => {
         if (goalIds.includes(g)) {
           const priorityBoost = goalPriority ? (goalPriority[g] || 1) : 1;
           score += 2 * priorityBoost;
         }
       });
+
       if (isStrength && e.goals.includes('strength')) score += 4;
+
+      // Glute isolation boost: when glutes are the #1 body-part priority,
+      // pure glute exercises (muscles[0]==='glutes') get a strong bonus
+      // so they beat compound quad-dominant exercises that also hit glutes secondarily
+      if (glutesIsPriority && PURE_GLUTE_IDS.has(e.id)) {
+        score += 8;
+      }
+      if (glutesIsPriority && e.muscles[0] === 'glutes') {
+        score += 4;
+      }
+
+      // Downgrade exercises already used on a prior day of the same session type
+      // so Upper A and Upper B workouts actually differ
+      if (alreadyUsed && alreadyUsed.has(e.id)) {
+        score -= 10;
+      }
+
       return { ...e, score };
     })
     .sort((a,b) => b.score - a.score);
 
   // De-duplicate overlapping muscles — pick top-scored, avoid repeating same primary muscle
+  // When glutes are priority, allow multiple glute-primary exercises (up to 3)
   const chosen = [];
-  const usedPrimary = new Set();
+  const usedPrimary = {};
+  const maxPerMuscle = glutesIsPriority ? { glutes: 3 } : {};
+
   for (const ex of scored) {
     if (chosen.length >= count) break;
     const primary = ex.muscles[0] || '_none';
-    if (usedPrimary.has(primary) && chosen.length >= Math.ceil(count * 0.7)) continue;
+    const currentCount = usedPrimary[primary] || 0;
+    const limit = maxPerMuscle[primary] || 1;
+    // Allow up to limit for priority muscles, otherwise 70% rule
+    if (currentCount >= limit && chosen.length >= Math.ceil(count * 0.7)) continue;
     chosen.push(ex);
-    usedPrimary.add(primary);
+    usedPrimary[primary] = currentCount + 1;
   }
   return chosen;
 }
@@ -9993,10 +10027,24 @@ function generateProgram() {
 
   // Build per-day workout
   const programDays = {};
+
+  // Determine if glutes are a priority body-part goal
+  const glutePriority = bpg['bp-glutes'];
+  const glutesIsPriority = glutePriority === 'size' || glutePriority === 'strengthen';
+
+  // If glutes are a priority, reorder legs muscle set to lead with glutes + ham, not quads
+  if (glutesIsPriority) {
+    muscleSets.legs  = ['glutes','hamstrings','quads','calves'];
+    muscleSets.lower = ['glutes','hamstrings','quads','calves','core'];
+  }
+
+  // Track which exercises were used per session type for Upper/Lower variation
+  const usedExerciseIds = {};
+
   daySchedule.forEach((ds, idx) => {
     const muscles = muscleSets[ds.type] || muscleSets.fullbody;
 
-    // Boost muscles that have SIZE/STRONG body-part goals
+    // Boost muscles that have SIZE/STRONG body-part goals — move to front of priority
     const boostedMuscles = [...muscles];
     Object.entries(bpg).forEach(([bpId, goal]) => {
       const bpMuscle = bpId.replace('bp-','').replace('-upper','').replace('-lower','');
@@ -10005,7 +10053,19 @@ function generateProgram() {
       }
     });
 
-    const exercises = pickExercises(boostedMuscles, goalIds, eq, isLowImpact, isStrength, exCount, ds.type, goalPriorityMap);
+    // For Upper/Lower splits: on the second Upper or Lower day, exclude exercises
+    // already used on the first day of that type so workouts actually vary
+    const sessionKey = ds.type; // 'upper' or 'lower' etc.
+    const alreadyUsed = usedExerciseIds[sessionKey] || new Set();
+
+    const exercises = pickExercises(
+      boostedMuscles, goalIds, eq, isLowImpact, isStrength, exCount,
+      ds.type, goalPriorityMap, glutesIsPriority, alreadyUsed
+    );
+
+    // Record used exercise ids for this session type
+    usedExerciseIds[sessionKey] = alreadyUsed;
+    exercises.forEach(e => alreadyUsed.add(e.id));
 
     // Add cardio finisher on some days for fat loss
     if ((isFatLoss || isEndurance) && cardioFinisher.length > 0 && idx % 2 === 0) {
@@ -10683,16 +10743,31 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = f
           </table>` : ''}
           ${item.hotel ? `<div class="hotel-alt">🏨 <strong>HOTEL VARIANT:</strong> ${item.hotel}</div>` : ''}
           ${(() => {
-            // Progressions: use item.progressions if present, else look up EX_DB by name
-            const prog = item.progressions || (() => {
+            // Progressions: use item.progressions if present (generated exercises),
+            // else look up EX_DB by name (static exercises).
+            // Always key by the BASE exercise id so progress persists across program regenerations.
+            let prog = item.progressions || null;
+            let baseId = item.id; // default
+
+            if (!prog) {
               const normalizedName = item.name?.toUpperCase().trim();
               const match = EX_DB.find(e =>
                 e.name.toUpperCase() === normalizedName ||
                 normalizedName?.includes(e.name.toUpperCase().split(' ')[0])
               );
-              return match?.progressions || null;
-            })();
-            return prog ? renderProgressionLadder(item.id, prog) : '';
+              if (match?.progressions) {
+                prog   = match.progressions;
+                baseId = match.id; // use stable EX_DB id
+              }
+            } else {
+              // Generated item: extract base ex id from generated id "gen_day_idx_exId"
+              const parts = item.id.split('_');
+              // The base id is everything after "gen_day_idx_" — rejoin with underscore
+              if (parts[0] === 'gen' && parts.length >= 4) {
+                baseId = parts.slice(3).join('_');
+              }
+            }
+            return prog ? renderProgressionLadder(baseId, prog) : '';
           })()}
 
 
