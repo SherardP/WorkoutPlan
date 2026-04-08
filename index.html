@@ -8160,13 +8160,14 @@ function toggleTrainingFocus(id) {
     if (pidx >= 0) userGoals.focusPriority.splice(pidx, 1);
   } else {
     userGoals.trainingFocus.push(id);
-    userGoals.focusPriority.push(id); // added at lowest priority by default
+    userGoals.focusPriority.push(id);
   }
   renderTrainingFocus();
   renderGoalCoachCard();
   renderStepRecommendation();
   renderStepsTabRecommendation();
   renderRepRecommendation();
+  autoSaveGoals('TRAINING FOCUS SAVED');
 }
 
 function moveFocusPriority(id, direction) {
@@ -8182,6 +8183,7 @@ function moveFocusPriority(id, direction) {
   renderStepRecommendation();
   renderStepsTabRecommendation();
   renderRepRecommendation();
+  autoSaveGoals('PRIORITY ORDER SAVED');
 }
 
 function renderSpecialFlags() {
@@ -8210,6 +8212,7 @@ function toggleSpecialFlag(id) {
   if (idx >= 0) userGoals.specialFlags.splice(idx, 1);
   else userGoals.specialFlags.push(id);
   renderSpecialFlags();
+  autoSaveGoals('SPECIAL FLAG SAVED');
 }
 
 function renderBodyPartGoals() {
@@ -8247,28 +8250,52 @@ function renderBodyPartGoals() {
   }).join('');
 
   el.innerHTML = `
-    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;">
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
       ${legend}
     </div>
-    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:10px;">
+    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:6px;">
       SIZE = grow bigger &nbsp;|&nbsp; TONE = defined/lean &nbsp;|&nbsp; FAT = reduce fat here &nbsp;|&nbsp; STRONG = functional strength &nbsp;|&nbsp; MAINTAIN = keep as-is
     </div>
+    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--accent2);padding:6px 10px;background:var(--accent-dim);border:1px solid var(--accent2);margin-bottom:12px;">
+      ✓ Changes save automatically · After updating, go to PROGRAM tab and regenerate your workout
+    </div>
     ${rows}`;
+}
+
+// Debounced goal auto-save — prevents spamming Firebase on rapid clicks
+let _goalSaveTimer = null;
+function autoSaveGoals(label) {
+  clearTimeout(_goalSaveTimer);
+  _goalSaveTimer = setTimeout(async () => {
+    try {
+      await db.collection('userdata').doc(SESSION.username).collection('goals').doc('settings').set(userGoals);
+      const msg = document.getElementById('goalsSaveMsg');
+      if (msg) {
+        msg.style.color = '#4caf50';
+        msg.textContent = `✓ ${label || 'SAVED'}`;
+        setTimeout(() => { if (msg.textContent.startsWith('✓')) msg.textContent = ''; }, 2500);
+      }
+    } catch(e) {
+      const msg = document.getElementById('goalsSaveMsg');
+      if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'SAVE ERROR'; }
+    }
+  }, 600);
 }
 
 function setBpGoal(bpId, goalId) {
   if (!userGoals.bodyPartGoals) userGoals.bodyPartGoals = {};
   userGoals.bodyPartGoals[bpId] = goalId;
-  // Update just the affected row's buttons without full re-render
+  // Update button UI
   BP_GOAL_TYPES.forEach(g => {
     const btn = document.getElementById(`bpbtn-${bpId}-${g.id}`);
     if (!btn) return;
     const active = g.id === goalId;
-    btn.style.background = active ? g.color : 'var(--bg3)';
-    btn.style.color = active ? '#000' : 'var(--text-dim)';
-    btn.style.borderColor = active ? g.color : 'var(--border)';
-    btn.style.fontWeight = active ? 'bold' : 'normal';
+    btn.style.background  = active ? g.color : 'var(--bg3)';
+    btn.style.color       = active ? '#000'   : 'var(--text-dim)';
+    btn.style.borderColor = active ? g.color  : 'var(--border)';
+    btn.style.fontWeight  = active ? 'bold'   : 'normal';
   });
+  autoSaveGoals('BODY PART GOAL SAVED');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -8338,6 +8365,7 @@ function renderSetsGoalCards() {
 function selectSetsGoal(n) {
   userGoals.defaultSets = n;
   renderSetsGoalCards();
+  autoSaveGoals('DEFAULT SETS SAVED');
 }
 
 function renderSetsGoalDetail(n) {
@@ -8468,6 +8496,7 @@ function setStepPreset(n) {
   [8000,10000,12000,16000,20000].forEach(x => { const el=document.getElementById('gstep-'+x); if(el) el.classList.toggle('active', x===n); });
   const ci = document.getElementById('goalStepCustom'); if(ci) ci.value = n;
   renderStepGoalBreakdown(n);
+  autoSaveGoals('STEP GOAL SAVED');
 }
 
 function applyCustomStepGoal() {
@@ -8476,6 +8505,7 @@ function applyCustomStepGoal() {
   userGoals.stepGoal = val;
   [8000,10000,12000,16000,20000].forEach(x => { const el=document.getElementById('gstep-'+x); if(el) el.classList.remove('active'); if(el&&x===val) el.classList.add('active'); });
   renderStepGoalBreakdown(val);
+  autoSaveGoals('STEP GOAL SAVED');
 }
 
 function renderStepGoalBreakdown(total) {
@@ -9056,6 +9086,7 @@ function renderLogStepRecommendation() {
       userGoals.stepGoal = rec.steps;
       updateLogStepProgress();
       renderLogStepRecommendation();
+      autoSaveGoals('STEP GOAL SAVED');
       applyBtn.textContent = '✓ APPLIED';
       setTimeout(()=>applyBtn.textContent=`⭐ SET GOAL TO ${rec.steps.toLocaleString()} STEPS`,2500);
     };
