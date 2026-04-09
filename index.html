@@ -769,6 +769,130 @@ body.theme-female .goal-chip{border-radius:20px;}
     <div id="workoutContent"></div>
   </div>
 
+  <!-- ── PROGRAM WIZARD MODAL ── -->
+  <div id="program-wizard-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.88);z-index:1000;overflow-y:auto;padding:20px;box-sizing:border-box;">
+    <div style="max-width:540px;margin:0 auto;background:var(--bg2);border:2px solid var(--accent2);padding:24px;position:relative;">
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);letter-spacing:.15em;margin-bottom:4px;">⚡ PROGRAM BUILDER</div>
+      <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--text-bright);margin-bottom:6px;">BUILD YOUR PROGRAM</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:20px;">Answer a few questions and we'll generate a science-backed program matched to your goals. Answers are saved — regenerating keeps your same structure.</div>
+
+      <!-- Q1: Days per week -->
+      <div class="wiz-q" id="wiz-q1">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 1 OF 5</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">How many days per week can you train?</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Be realistic — 3–4 consistent days beats 6 days you can't sustain.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${[2,3,4,5,6].map(n => `<button class="wiz-opt" id="wiz-days-${n}" onclick="wizSelect('days',${n})"
+            style="font-family:var(--font-display);font-size:1.2rem;padding:12px 20px;border:2px solid var(--border);
+            background:var(--bg3);color:var(--text);cursor:pointer;min-width:60px;">${n}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Q2: Split style -->
+      <div class="wiz-q" id="wiz-q2" style="display:none;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 2 OF 5</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">How do you want to structure your workouts?</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Upper/Lower is the most proven split for most people — it lets each muscle group recover while you keep training.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="wiz-opt" id="wiz-split-auto" onclick="wizSelect('split','auto')"
+            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">🤖 LET THE APP DECIDE</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Picks the best split for your frequency and goals automatically</div>
+          </button>
+          <button class="wiz-opt" id="wiz-split-upper_lower" onclick="wizSelect('split','upper_lower')"
+            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">⬆⬇ UPPER / LOWER (RECOMMENDED)</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Upper body one day, lower body next — best recovery and balance. Great for glutes, legs, and upper body growth.</div>
+          </button>
+          <button class="wiz-opt" id="wiz-split-ppl" onclick="wizSelect('split','ppl')"
+            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">💪 PUSH / PULL / LEGS</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Chest+shoulders+triceps / Back+biceps / Legs+glutes — best for 5–6 days/week</div>
+          </button>
+          <button class="wiz-opt" id="wiz-split-fullbody" onclick="wizSelect('split','fullbody')"
+            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">🔄 FULL BODY</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Every muscle every session — best for 2–3 days/week or beginners</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Q3: Session length -->
+      <div class="wiz-q" id="wiz-q3" style="display:none;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 3 OF 5</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">How long can each session be?</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Include warm-up and cool-down. A consistent 45-min session every time beats a 90-min session you skip.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${[[30,'Express — 30 min','4–5 exercises, minimal rest. High intensity.'],
+             [45,'Standard — 45 min','5–6 exercises. Good balance of volume and time.'],
+             [60,'Full Session — 60 min','6–7 exercises. Optimal for most goals.'],
+             [90,'Extended — 90 min','8+ exercises. Maximum volume, best results.']].map(([mins,label,desc]) =>
+            `<button class="wiz-opt" id="wiz-dur-${mins}" onclick="wizSelect('duration',${mins})"
+              style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+              <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">${label}</div>
+              <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">${desc}</div>
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Q4: Experience level -->
+      <div class="wiz-q" id="wiz-q4" style="display:none;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 4 OF 5</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">What's your current training experience?</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Honest answer gives better results — beginners get more from simpler programs.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="wiz-opt" id="wiz-exp-beginner" onclick="wizSelect('experience','beginner')"
+            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">🌱 JUST STARTING OUT</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Less than 6 months consistent training. Simpler movements, building the habit first.</div>
+          </button>
+          <button class="wiz-opt" id="wiz-exp-intermediate" onclick="wizSelect('experience','intermediate')"
+            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">💪 SOME EXPERIENCE</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">6 months to 3 years. Know the basics, ready for progressive overload.</div>
+          </button>
+          <button class="wiz-opt" id="wiz-exp-advanced" onclick="wizSelect('experience','advanced')"
+            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">🏋️ ADVANCED</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">3+ years consistent training. Higher volume, heavier loads, complex movements.</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Q5: Limitations -->
+      <div class="wiz-q" id="wiz-q5" style="display:none;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 5 OF 5</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">Any physical limitations to work around?</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Select all that apply. These filter out exercises that could aggravate issues.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="wiz-limits-list">
+          ${[['none','✅ No limitations — give me everything',''],
+             ['lowimpact','🦵 Low impact required','Joint pain, high body weight, or injury history'],
+             ['knees','🦿 Knee issues','Avoid deep squats and heavy lunges'],
+             ['back','🔙 Lower back issues','Avoid heavy deadlifts and loaded flexion'],
+             ['shoulders','🙆 Shoulder issues','Modify overhead pressing movements']].map(([id,label,desc]) =>
+            `<button class="wiz-opt wiz-limit" id="wiz-lim-${id}" onclick="wizToggleLimit('${id}')"
+              style="text-align:left;padding:10px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+              <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);">${label}</div>
+              ${desc ? `<div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);margin-top:2px;">${desc}</div>` : ''}
+            </button>`).join('')}
+        </div>
+        <button onclick="wizFinish()" class="btn btn-p" style="width:100%;margin-top:16px;font-size:0.75rem;padding:14px;">
+          ⚡ GENERATE MY PROGRAM
+        </button>
+      </div>
+
+      <!-- Navigation -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;" id="wiz-nav">
+        <button onclick="wizBack()" id="wiz-back-btn" class="btn btn-s" style="font-size:0.65rem;display:none;">← BACK</button>
+        <div id="wiz-progress-dots" style="display:flex;gap:6px;margin:0 auto;">
+          ${[1,2,3,4,5].map(n => `<div id="wiz-dot-${n}" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s;"></div>`).join('')}
+        </div>
+        <button onclick="wizCancel()" class="btn btn-s" style="font-size:0.65rem;">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── STEPS ── -->
   <div class="section" id="sec-steps">
     <div class="page-title">STEP<br><span>TRACKER</span></div>
@@ -8385,11 +8509,149 @@ function renderSetsGoalDetail(n) {
 }
 
 // ── Generate program button handler ─────────────────────
+// ─── Program Wizard ────────────────────────────────────────
+const wizState = { step: 1, days: null, split: null, duration: null, experience: null, limits: new Set() };
+
 async function confirmGenerateProgram() {
-  const existing = await getOrLoadProgram();
-  if (existing) {
-    if (!confirm('This will replace your current program. Your logged workout data will not be affected.\n\nGenerate a new program based on your current goals and equipment?')) return;
+  // Pre-fill wizard from saved goals so regenerating keeps same answers
+  await loadGoals();
+  wizState.step       = 1;
+  wizState.days       = userGoals.workoutFreq       || null;
+  wizState.split      = userGoals.preferredSplit    || null;
+  wizState.duration   = userGoals.sessionDuration   || null;
+  wizState.limits     = new Set();
+
+  // Pre-populate experience from flags
+  if ((userGoals.specialFlags||[]).includes('flag-beginner')) wizState.experience = 'beginner';
+  else if ((userGoals.specialFlags||[]).includes('flag-advanced')) wizState.experience = 'advanced';
+  else wizState.experience = (userGoals.specialFlags||[]).length === 0 ? null : 'intermediate';
+
+  // Pre-populate limits from flags
+  ['lowimpact','knees','back','shoulders'].forEach(k => {
+    if ((userGoals.specialFlags||[]).includes('flag-'+k)) wizState.limits.add(k);
+  });
+
+  wizShowStep(1);
+  document.getElementById('program-wizard-modal').style.display = 'block';
+}
+
+function wizShowStep(n) {
+  wizState.step = n;
+  [1,2,3,4,5].forEach(i => {
+    const q = document.getElementById('wiz-q'+i);
+    if (q) q.style.display = i === n ? 'block' : 'none';
+    const dot = document.getElementById('wiz-dot-'+i);
+    if (dot) dot.style.background = i === n ? 'var(--accent2)' : i < n ? '#4caf50' : 'var(--border)';
+  });
+  const backBtn = document.getElementById('wiz-back-btn');
+  if (backBtn) backBtn.style.display = n > 1 ? 'inline-block' : 'none';
+
+  // Restore selections visually
+  if (n === 1 && wizState.days)       wizHighlight('days', wizState.days);
+  if (n === 2 && wizState.split)      wizHighlight('split', wizState.split);
+  if (n === 3 && wizState.duration)   wizHighlight('dur', wizState.duration);
+  if (n === 4 && wizState.experience) wizHighlight('exp', wizState.experience);
+  if (n === 5) wizRestoreLimits();
+}
+
+function wizHighlight(group, value) {
+  // Deactivate all in group then activate selected
+  document.querySelectorAll(`[id^="wiz-${group}-"]`).forEach(btn => {
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background  = 'var(--bg3)';
+    btn.style.color       = 'var(--text)';
+  });
+  const active = document.getElementById(`wiz-${group}-${value}`);
+  if (active) {
+    active.style.borderColor = 'var(--accent2)';
+    active.style.background  = 'var(--accent-dim)';
+    active.style.color       = 'var(--accent2)';
   }
+}
+
+function wizRestoreLimits() {
+  document.querySelectorAll('.wiz-limit').forEach(btn => {
+    const id = btn.id.replace('wiz-lim-','');
+    const active = wizState.limits.has(id) || (id === 'none' && wizState.limits.size === 0);
+    btn.style.borderColor = active ? 'var(--accent2)' : 'var(--border)';
+    btn.style.background  = active ? 'var(--accent-dim)' : 'var(--bg3)';
+    btn.style.color       = active ? 'var(--accent2)' : 'var(--text)';
+  });
+}
+
+function wizSelect(field, value) {
+  wizState[field === 'dur' ? 'duration' : field] = value;
+
+  const groupMap = { days:'days', split:'split', duration:'dur', experience:'exp' };
+  const grp = { days:'days', split:'split', duration:'dur', experience:'exp' }[field] || field;
+  wizHighlight(grp, value);
+
+  // Auto-advance after short delay so selection is visible
+  setTimeout(() => wizNext(), 300);
+}
+
+function wizToggleLimit(id) {
+  if (id === 'none') {
+    wizState.limits.clear();
+  } else {
+    wizState.limits.delete('none');
+    if (wizState.limits.has(id)) wizState.limits.delete(id);
+    else wizState.limits.add(id);
+  }
+  wizRestoreLimits();
+}
+
+function wizNext() {
+  if (wizState.step < 5) wizShowStep(wizState.step + 1);
+}
+
+function wizBack() {
+  if (wizState.step > 1) wizShowStep(wizState.step - 1);
+}
+
+function wizCancel() {
+  document.getElementById('program-wizard-modal').style.display = 'none';
+}
+
+async function wizFinish() {
+  document.getElementById('program-wizard-modal').style.display = 'none';
+
+  // Apply wizard answers to userGoals
+  if (wizState.days)     userGoals.workoutFreq      = wizState.days;
+  if (wizState.split)    userGoals.preferredSplit   = wizState.split;
+  if (wizState.duration) userGoals.sessionDuration  = wizState.duration;
+
+  // Set days array to match frequency (pick sensible defaults)
+  const daysByFreq = {
+    2: ['mon','thu'],
+    3: ['mon','wed','fri'],
+    4: ['mon','tue','thu','fri'],
+    5: ['mon','tue','wed','thu','fri'],
+    6: ['mon','tue','wed','thu','fri','sat'],
+  };
+  if (wizState.days) {
+    userGoals.workoutDays = daysByFreq[wizState.days] || userGoals.workoutDays;
+    userGoals.workoutFreq = wizState.days;
+  }
+
+  // Apply experience level to special flags
+  if (!userGoals.specialFlags) userGoals.specialFlags = [];
+  userGoals.specialFlags = userGoals.specialFlags.filter(f => !['flag-beginner','flag-advanced'].includes(f));
+  if (wizState.experience === 'beginner') userGoals.specialFlags.push('flag-beginner');
+  if (wizState.experience === 'advanced') userGoals.specialFlags.push('flag-advanced');
+
+  // Apply limitations to special flags
+  const limFlagMap = { lowimpact:'flag-lowimpact', knees:'flag-knees', back:'flag-back', shoulders:'flag-shoulders' };
+  Object.keys(limFlagMap).forEach(k => {
+    userGoals.specialFlags = userGoals.specialFlags.filter(f => f !== limFlagMap[k]);
+  });
+  wizState.limits.forEach(k => {
+    if (limFlagMap[k]) userGoals.specialFlags.push(limFlagMap[k]);
+  });
+
+  // Save answers to Firebase before generating
+  await db.collection('userdata').doc(SESSION.username).collection('goals').doc('settings').set(userGoals);
+
   await doGenerateProgram();
 }
 
@@ -10009,30 +10271,67 @@ function generateProgram() {
     splitType  = 'fullbody';
     splitLabel = 'Full Body Split';
     daySchedule = activeDays.map((d,i) => ({ day:d, type:'fullbody', label:`FULL BODY ${i+1}`, sub:'Complete training stimulus' }));
-  } else if (freq === 3) {
-    splitType  = 'fullbody';
-    splitLabel = 'Full Body 3×/Week';
-    daySchedule = activeDays.map((d,i) => ({ day:d, type:'fullbody', label:`FULL BODY ${i+1}`, sub:'All major muscle groups' }));
-  } else if (freq === 4) {
-    splitType  = 'upper_lower';
-    splitLabel = 'Upper / Lower Split';
-    const types = ['upper','lower','upper','lower'];
-    const subs  = ['Chest · Back · Shoulders · Arms','Quads · Hamstrings · Glutes · Calves','Upper Variation B','Lower Variation B'];
-    daySchedule = activeDays.map((d,i) => ({ day:d, type:types[i]||'upper', label:i%2===0?'UPPER BODY':'LOWER BODY', sub:subs[i]||'' }));
-  } else if (freq === 5) {
-    splitType  = 'ppl_ul';
-    splitLabel = 'PPL + Upper/Lower (5-Day)';
-    const types5 = ['push','pull','legs','upper','lower'];
-    const labs5  = ['PUSH','PULL','LEGS','UPPER','LOWER'];
-    const subs5  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Full Upper Body','Full Lower Body'];
-    daySchedule = activeDays.map((d,i) => ({ day:d, type:types5[i]||'push', label:labs5[i]||'', sub:subs5[i]||'' }));
   } else {
-    splitType  = 'ppl';
-    splitLabel = 'Push / Pull / Legs (6×)';
-    const types6 = ['push','pull','legs','push','pull','legs'];
-    const labs6  = ['PUSH A','PULL A','LEGS A','PUSH B','PULL B','LEGS B'];
-    const subs6  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Push Variation B','Pull Variation B','Legs Variation B'];
-    daySchedule = activeDays.map((d,i) => ({ day:d, type:types6[i%6], label:labs6[i%6], sub:subs6[i%6] }));
+    // Honor the user's preferred split from the wizard, or auto-select
+    const preferredSplit = goals.preferredSplit || 'auto';
+
+    // Determine effective split: wizard override (if compatible) or auto by freq
+    let effectiveSplit = preferredSplit;
+    if (preferredSplit === 'auto' || preferredSplit === null) {
+      if (freq === 3) effectiveSplit = 'fullbody';
+      else if (freq === 4) effectiveSplit = 'upper_lower';
+      else if (freq === 5) effectiveSplit = 'ppl_ul';
+      else effectiveSplit = 'ppl';
+    }
+    // If user chose upper_lower but only has 3 days, use it as A/B/A
+    // If user chose ppl but only has 3 days, use PPL once through
+    if (effectiveSplit === 'upper_lower') {
+      splitType  = 'upper_lower';
+      splitLabel = 'Upper / Lower Split';
+      const ulTypes = ['upper','lower','upper','lower','upper','lower'];
+      const ulSubs  = ['Chest · Back · Shoulders · Arms','Quads · Hamstrings · Glutes · Calves',
+                       'Upper Body — Variation B','Lower Body — Variation B','Upper Body — Variation C','Lower Body — Variation C'];
+      daySchedule = activeDays.map((d,i) => ({
+        day:d, type:ulTypes[i%2], label:i%2===0?'UPPER BODY':'LOWER BODY', sub:ulSubs[i]||ulSubs[i%2]
+      }));
+    } else if (effectiveSplit === 'fullbody') {
+      splitType  = 'fullbody';
+      splitLabel = 'Full Body';
+      daySchedule = activeDays.map((d,i) => ({ day:d, type:'fullbody', label:`FULL BODY ${i+1}`, sub:'All major muscle groups' }));
+    } else if (effectiveSplit === 'ppl' || effectiveSplit === 'ppl_ul') {
+      if (freq >= 5) {
+        splitType  = 'ppl_ul';
+        splitLabel = 'Push / Pull / Legs + Upper/Lower (5-Day)';
+        const types5 = ['push','pull','legs','upper','lower'];
+        const labs5  = ['PUSH','PULL','LEGS','UPPER','LOWER'];
+        const subs5  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Full Upper Body','Full Lower Body'];
+        daySchedule = activeDays.map((d,i) => ({ day:d, type:types5[i%5], label:labs5[i%5], sub:subs5[i%5] }));
+        if (freq >= 6) {
+          splitType  = 'ppl';
+          splitLabel = 'Push / Pull / Legs (6×)';
+          const types6 = ['push','pull','legs','push','pull','legs'];
+          const labs6  = ['PUSH A','PULL A','LEGS A','PUSH B','PULL B','LEGS B'];
+          const subs6  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Push Variation B','Pull Variation B','Legs Variation B'];
+          daySchedule = activeDays.map((d,i) => ({ day:d, type:types6[i%6], label:labs6[i%6], sub:subs6[i%6] }));
+        }
+      } else {
+        // PPL with 3–4 days: go through PPL cycle once
+        splitType  = 'ppl';
+        splitLabel = 'Push / Pull / Legs';
+        const types3 = ['push','pull','legs','push'];
+        const labs3  = ['PUSH','PULL','LEGS','PUSH B'];
+        const subs3  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Push Variation B'];
+        daySchedule = activeDays.map((d,i) => ({ day:d, type:types3[i%3], label:labs3[i%3], sub:subs3[i%3] }));
+      }
+    } else {
+      // Fallback
+      splitType  = 'upper_lower';
+      splitLabel = 'Upper / Lower Split';
+      daySchedule = activeDays.map((d,i) => ({
+        day:d, type:i%2===0?'upper':'lower', label:i%2===0?'UPPER BODY':'LOWER BODY',
+        sub:i%2===0?'Chest · Back · Shoulders · Arms':'Quads · Hamstrings · Glutes · Calves'
+      }));
+    }
   }
 
   // Muscle groups per session type
