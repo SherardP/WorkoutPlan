@@ -772,121 +772,122 @@ body.theme-female .goal-chip{border-radius:20px;}
   <!-- ── PROGRAM WIZARD MODAL ── -->
   <div id="program-wizard-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
     background:rgba(0,0,0,0.88);z-index:1000;overflow-y:auto;padding:20px;box-sizing:border-box;">
-    <div style="max-width:540px;margin:0 auto;background:var(--bg2);border:2px solid var(--accent2);padding:24px;position:relative;">
-      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);letter-spacing:.15em;margin-bottom:4px;">⚡ PROGRAM BUILDER</div>
+    <div style="max-width:540px;margin:0 auto;background:var(--bg2);border:2px solid var(--accent2);padding:24px;">
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);letter-spacing:.15em;margin-bottom:4px;">&#9889; PROGRAM BUILDER</div>
       <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--text-bright);margin-bottom:6px;">BUILD YOUR PROGRAM</div>
-      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:20px;">Answer a few questions and we'll generate a science-backed program matched to your goals. Answers are saved — regenerating keeps your same structure.</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:20px;">4 quick questions &#8212; answers are saved so regenerating keeps your same structure.</div>
 
-      <!-- Q1: Days per week -->
+      <!-- Q1: Time of day -->
       <div class="wiz-q" id="wiz-q1">
-        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 1 OF 5</div>
-        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">How many days per week can you train?</div>
-        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Be realistic — 3–4 consistent days beats 6 days you can't sustain.</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          ${[2,3,4,5,6].map(n => `<button class="wiz-opt" id="wiz-days-${n}" onclick="wizSelect('days',${n})"
-            style="font-family:var(--font-display);font-size:1.2rem;padding:12px 20px;border:2px solid var(--border);
-            background:var(--bg3);color:var(--text);cursor:pointer;min-width:60px;">${n}</button>`).join('')}
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 1 OF 4</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">What time of day do you usually work out?</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Your body&#39;s hormones and energy levels shift throughout the day &#8212; this tailors the program to when you actually train.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="wiz-opt" id="wiz-time-morning" onclick="wizSelect('time','morning')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#127749; MORNING &#8212; BEFORE 10AM</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Cortisol naturally peaks here &#8212; program favors moderate intensity and a longer warm-up. Avoid heavy HIIT circuits that spike cortisol further.</div>
+          </button>
+          <button class="wiz-opt" id="wiz-time-midday" onclick="wizSelect('time','midday')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#9728;&#65039; MIDDAY &#8212; 10AM TO 2PM</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Peak physical performance window for most people. Best time for heavy compound lifts and high volume.</div>
+          </button>
+          <button class="wiz-opt" id="wiz-time-evening" onclick="wizSelect('time','evening')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#127758; EVENING &#8212; AFTER 5PM</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Cortisol is low &#8212; great for strength. Program avoids stimulant-heavy circuits that could disrupt sleep.</div>
+          </button>
+          <button class="wiz-opt" id="wiz-time-varies" onclick="wizSelect('time','varies')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#128260; IT VARIES</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Balanced program with no time-specific adjustments &#8212; works any time of day.</div>
+          </button>
         </div>
       </div>
 
-      <!-- Q2: Split style -->
+      <!-- Q2: Training consistency history -->
       <div class="wiz-q" id="wiz-q2" style="display:none;">
-        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 2 OF 5</div>
-        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">How do you want to structure your workouts?</div>
-        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Upper/Lower is the most proven split for most people — it lets each muscle group recover while you keep training.</div>
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 2 OF 4</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">How consistently have you been training lately?</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Not about skill level &#8212; about habit. Someone training 6 months without missing a session is different from 3 years of stopping and starting.</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <button class="wiz-opt" id="wiz-split-auto" onclick="wizSelect('split','auto')"
-            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
-            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">🤖 LET THE APP DECIDE</div>
-            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Picks the best split for your frequency and goals automatically</div>
+          <button class="wiz-opt" id="wiz-habit-new" onclick="wizSelect('habit','new')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#127807; JUST GETTING STARTED &#8212; UNDER 3 MONTHS</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Habit is not locked in yet. Program keeps sessions shorter and simpler to build the routine first.</div>
           </button>
-          <button class="wiz-opt" id="wiz-split-upper_lower" onclick="wizSelect('split','upper_lower')"
-            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
-            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">⬆⬇ UPPER / LOWER (RECOMMENDED)</div>
-            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Upper body one day, lower body next — best recovery and balance. Great for glutes, legs, and upper body growth.</div>
+          <button class="wiz-opt" id="wiz-habit-onoff" onclick="wizSelect('habit','onoff')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#8652; ON AND OFF FOR A WHILE</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">You know the movements but keep falling off. Program adds variety and shorter sessions to stay engaging.</div>
           </button>
-          <button class="wiz-opt" id="wiz-split-ppl" onclick="wizSelect('split','ppl')"
-            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
-            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">💪 PUSH / PULL / LEGS</div>
-            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Chest+shoulders+triceps / Back+biceps / Legs+glutes — best for 5–6 days/week</div>
+          <button class="wiz-opt" id="wiz-habit-solid" onclick="wizSelect('habit','solid')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#128170; PRETTY CONSISTENT &#8212; 6+ MONTHS</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">The habit is solid. Program focuses on progressive overload and building on what you have.</div>
           </button>
-          <button class="wiz-opt" id="wiz-split-fullbody" onclick="wizSelect('split','fullbody')"
-            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
-            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">🔄 FULL BODY</div>
-            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Every muscle every session — best for 2–3 days/week or beginners</div>
+          <button class="wiz-opt" id="wiz-habit-locked" onclick="wizSelect('habit','locked')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#127941; YEARS OF CONSISTENT TRAINING</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Fully locked in. Full advanced program &#8212; higher volume, more variation, heavier compound emphasis.</div>
           </button>
         </div>
       </div>
 
-      <!-- Q3: Session length -->
+      <!-- Q3: Recovery -->
       <div class="wiz-q" id="wiz-q3" style="display:none;">
-        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 3 OF 5</div>
-        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">How long can each session be?</div>
-        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Include warm-up and cool-down. A consistent 45-min session every time beats a 90-min session you skip.</div>
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 3 OF 4</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">How would you describe your recovery between sessions?</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Recovery is as important as the workout itself &#8212; honest answer prevents overtraining and injury.</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          ${[[30,'Express — 30 min','4–5 exercises, minimal rest. High intensity.'],
-             [45,'Standard — 45 min','5–6 exercises. Good balance of volume and time.'],
-             [60,'Full Session — 60 min','6–7 exercises. Optimal for most goals.'],
-             [90,'Extended — 90 min','8+ exercises. Maximum volume, best results.']].map(([mins,label,desc]) =>
-            `<button class="wiz-opt" id="wiz-dur-${mins}" onclick="wizSelect('duration',${mins})"
-              style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
-              <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">${label}</div>
-              <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">${desc}</div>
-            </button>`).join('')}
+          <button class="wiz-opt" id="wiz-rec-fresh" onclick="wizSelect('recovery','fresh')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#9889; I RECOVER WELL &#8212; READY EACH SESSION</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Sleep well, low stress, rarely sore going in. Full volume program with standard rest days.</div>
+          </button>
+          <button class="wiz-opt" id="wiz-rec-sore" onclick="wizSelect('recovery','sore')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#128137; I GET SORE AND STAY SORE</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Muscles sore 2&#8211;3 days after training. Program reduces sets per session and adds more rest days between muscle groups.</div>
+          </button>
+          <button class="wiz-opt" id="wiz-rec-tired" onclick="wizSelect('recovery','tired')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#128564; I AM OFTEN TIRED OR STRESSED</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">High life stress, poor sleep, or low energy. Program lowers cortisol-spiking work and adds decompression sessions.</div>
+          </button>
         </div>
       </div>
 
-      <!-- Q4: Experience level -->
+      <!-- Q4: Biggest struggle -->
       <div class="wiz-q" id="wiz-q4" style="display:none;">
-        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 4 OF 5</div>
-        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">What's your current training experience?</div>
-        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Honest answer gives better results — beginners get more from simpler programs.</div>
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 4 OF 4</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">What is your biggest struggle with working out?</div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">This shapes how the program is structured &#8212; not just what exercises, but how the week is built around you.</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <button class="wiz-opt" id="wiz-exp-beginner" onclick="wizSelect('experience','beginner')"
-            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
-            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">🌱 JUST STARTING OUT</div>
-            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Less than 6 months consistent training. Simpler movements, building the habit first.</div>
+          <button class="wiz-opt" id="wiz-str-consistency" onclick="wizSelect('struggle','consistency')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#128197; STAYING CONSISTENT</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">I start strong then fall off. Shorter sessions, fewer required days, simpler movements to lower the barrier.</div>
           </button>
-          <button class="wiz-opt" id="wiz-exp-intermediate" onclick="wizSelect('experience','intermediate')"
-            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
-            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">💪 SOME EXPERIENCE</div>
-            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">6 months to 3 years. Know the basics, ready for progressive overload.</div>
+          <button class="wiz-opt" id="wiz-str-results" onclick="wizSelect('struggle','results')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#128200; NOT SEEING RESULTS</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">I train but my body is not changing. Progressive overload emphasis, higher volume, built-in variation so the body never adapts.</div>
           </button>
-          <button class="wiz-opt" id="wiz-exp-advanced" onclick="wizSelect('experience','advanced')"
-            style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
-            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">🏋️ ADVANCED</div>
-            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">3+ years consistent training. Higher volume, heavier loads, complex movements.</div>
+          <button class="wiz-opt" id="wiz-str-intensity" onclick="wizSelect('struggle','intensity')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#128170; NOT PUSHING HARD ENOUGH</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">I go through the motions. More heavy compound lifts, strength-focused sets, and fewer isolation movements.</div>
           </button>
-        </div>
-      </div>
-
-      <!-- Q5: Limitations -->
-      <div class="wiz-q" id="wiz-q5" style="display:none;">
-        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:4px;">QUESTION 5 OF 5</div>
-        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;">Any physical limitations to work around?</div>
-        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:14px;">Select all that apply. These filter out exercises that could aggravate issues.</div>
-        <div style="display:flex;flex-direction:column;gap:8px;" id="wiz-limits-list">
-          ${[['none','✅ No limitations — give me everything',''],
-             ['lowimpact','🦵 Low impact required','Joint pain, high body weight, or injury history'],
-             ['knees','🦿 Knee issues','Avoid deep squats and heavy lunges'],
-             ['back','🔙 Lower back issues','Avoid heavy deadlifts and loaded flexion'],
-             ['shoulders','🙆 Shoulder issues','Modify overhead pressing movements']].map(([id,label,desc]) =>
-            `<button class="wiz-opt wiz-limit" id="wiz-lim-${id}" onclick="wizToggleLimit('${id}')"
-              style="text-align:left;padding:10px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
-              <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);">${label}</div>
-              ${desc ? `<div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);margin-top:2px;">${desc}</div>` : ''}
-            </button>`).join('')}
+          <button class="wiz-opt" id="wiz-str-injury" onclick="wizSelect('struggle','injury')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#129657; GETTING HURT OR HAVING PAIN</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Injuries keep setting me back. Extended warm-up, progression ladders, lower impact exercise selection.</div>
+          </button>
+          <button class="wiz-opt" id="wiz-str-time" onclick="wizSelect('struggle','time')" style="text-align:left;padding:12px 14px;border:2px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text);">&#9201; NOT ENOUGH TIME</div>
+            <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-top:3px;">Life keeps getting in the way. Shorter denser sessions, compound-only movements, no isolation fluff.</div>
+          </button>
         </div>
         <button onclick="wizFinish()" class="btn btn-p" style="width:100%;margin-top:16px;font-size:0.75rem;padding:14px;">
-          ⚡ GENERATE MY PROGRAM
+          &#9889; GENERATE MY PROGRAM
         </button>
       </div>
 
-      <!-- Navigation -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;" id="wiz-nav">
-        <button onclick="wizBack()" id="wiz-back-btn" class="btn btn-s" style="font-size:0.65rem;display:none;">← BACK</button>
-        <div id="wiz-progress-dots" style="display:flex;gap:6px;margin:0 auto;">
-          ${[1,2,3,4,5].map(n => `<div id="wiz-dot-${n}" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s;"></div>`).join('')}
+      <!-- Nav / progress dots -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;">
+        <button onclick="wizBack()" id="wiz-back-btn" class="btn btn-s" style="font-size:0.65rem;display:none;">&#8592; BACK</button>
+        <div style="display:flex;gap:6px;margin:0 auto;">
+          <div id="wiz-dot-1" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s;"></div>
+          <div id="wiz-dot-2" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s;"></div>
+          <div id="wiz-dot-3" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s;"></div>
+          <div id="wiz-dot-4" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s;"></div>
         </div>
         <button onclick="wizCancel()" class="btn btn-s" style="font-size:0.65rem;">CANCEL</button>
       </div>
@@ -8510,34 +8511,22 @@ function renderSetsGoalDetail(n) {
 
 // ── Generate program button handler ─────────────────────
 // ─── Program Wizard ────────────────────────────────────────
-const wizState = { step: 1, days: null, split: null, duration: null, experience: null, limits: new Set() };
+const wizState = { step:1, time:null, habit:null, recovery:null, struggle:null };
 
 async function confirmGenerateProgram() {
-  // Pre-fill wizard from saved goals so regenerating keeps same answers
   await loadGoals();
-  wizState.step       = 1;
-  wizState.days       = userGoals.workoutFreq       || null;
-  wizState.split      = userGoals.preferredSplit    || null;
-  wizState.duration   = userGoals.sessionDuration   || null;
-  wizState.limits     = new Set();
-
-  // Pre-populate experience from flags
-  if ((userGoals.specialFlags||[]).includes('flag-beginner')) wizState.experience = 'beginner';
-  else if ((userGoals.specialFlags||[]).includes('flag-advanced')) wizState.experience = 'advanced';
-  else wizState.experience = (userGoals.specialFlags||[]).length === 0 ? null : 'intermediate';
-
-  // Pre-populate limits from flags
-  ['lowimpact','knees','back','shoulders'].forEach(k => {
-    if ((userGoals.specialFlags||[]).includes('flag-'+k)) wizState.limits.add(k);
-  });
-
+  wizState.step     = 1;
+  wizState.time     = userGoals.wizTime     || null;
+  wizState.habit    = userGoals.wizHabit    || null;
+  wizState.recovery = userGoals.wizRecovery || null;
+  wizState.struggle = userGoals.wizStruggle || null;
   wizShowStep(1);
   document.getElementById('program-wizard-modal').style.display = 'block';
 }
 
 function wizShowStep(n) {
   wizState.step = n;
-  [1,2,3,4,5].forEach(i => {
+  [1,2,3,4].forEach(i => {
     const q = document.getElementById('wiz-q'+i);
     if (q) q.style.display = i === n ? 'block' : 'none';
     const dot = document.getElementById('wiz-dot-'+i);
@@ -8545,23 +8534,20 @@ function wizShowStep(n) {
   });
   const backBtn = document.getElementById('wiz-back-btn');
   if (backBtn) backBtn.style.display = n > 1 ? 'inline-block' : 'none';
-
-  // Restore selections visually
-  if (n === 1 && wizState.days)       wizHighlight('days', wizState.days);
-  if (n === 2 && wizState.split)      wizHighlight('split', wizState.split);
-  if (n === 3 && wizState.duration)   wizHighlight('dur', wizState.duration);
-  if (n === 4 && wizState.experience) wizHighlight('exp', wizState.experience);
-  if (n === 5) wizRestoreLimits();
+  // Restore prior selection
+  if (n===1 && wizState.time)     wizHighlight('time', wizState.time);
+  if (n===2 && wizState.habit)    wizHighlight('habit', wizState.habit);
+  if (n===3 && wizState.recovery) wizHighlight('rec',   wizState.recovery);
+  if (n===4 && wizState.struggle) wizHighlight('str',   wizState.struggle);
 }
 
 function wizHighlight(group, value) {
-  // Deactivate all in group then activate selected
-  document.querySelectorAll(`[id^="wiz-${group}-"]`).forEach(btn => {
+  document.querySelectorAll('[id^="wiz-'+group+'-"]').forEach(btn => {
     btn.style.borderColor = 'var(--border)';
     btn.style.background  = 'var(--bg3)';
     btn.style.color       = 'var(--text)';
   });
-  const active = document.getElementById(`wiz-${group}-${value}`);
+  const active = document.getElementById('wiz-'+group+'-'+value);
   if (active) {
     active.style.borderColor = 'var(--accent2)';
     active.style.background  = 'var(--accent-dim)';
@@ -8569,40 +8555,19 @@ function wizHighlight(group, value) {
   }
 }
 
-function wizRestoreLimits() {
-  document.querySelectorAll('.wiz-limit').forEach(btn => {
-    const id = btn.id.replace('wiz-lim-','');
-    const active = wizState.limits.has(id) || (id === 'none' && wizState.limits.size === 0);
-    btn.style.borderColor = active ? 'var(--accent2)' : 'var(--border)';
-    btn.style.background  = active ? 'var(--accent-dim)' : 'var(--bg3)';
-    btn.style.color       = active ? 'var(--accent2)' : 'var(--text)';
-  });
-}
-
 function wizSelect(field, value) {
-  wizState[field === 'dur' ? 'duration' : field] = value;
-
-  const groupMap = { days:'days', split:'split', duration:'dur', experience:'exp' };
-  const grp = { days:'days', split:'split', duration:'dur', experience:'exp' }[field] || field;
-  wizHighlight(grp, value);
-
-  // Auto-advance after short delay so selection is visible
-  setTimeout(() => wizNext(), 300);
+  wizState[field] = value;
+  const groupMap = { time:'time', habit:'habit', recovery:'rec', struggle:'str' };
+  wizHighlight(groupMap[field] || field, value);
+  if (wizState.step < 4) setTimeout(() => wizShowStep(wizState.step + 1), 320);
 }
 
 function wizToggleLimit(id) {
-  if (id === 'none') {
-    wizState.limits.clear();
-  } else {
-    wizState.limits.delete('none');
-    if (wizState.limits.has(id)) wizState.limits.delete(id);
-    else wizState.limits.add(id);
-  }
-  wizRestoreLimits();
+  // kept for any legacy calls — no-op in new wizard
 }
 
 function wizNext() {
-  if (wizState.step < 5) wizShowStep(wizState.step + 1);
+  if (wizState.step < 4) wizShowStep(wizState.step + 1);
 }
 
 function wizBack() {
@@ -8616,42 +8581,87 @@ function wizCancel() {
 async function wizFinish() {
   document.getElementById('program-wizard-modal').style.display = 'none';
 
-  // Apply wizard answers to userGoals
-  if (wizState.days)     userGoals.workoutFreq      = wizState.days;
-  if (wizState.split)    userGoals.preferredSplit   = wizState.split;
-  if (wizState.duration) userGoals.sessionDuration  = wizState.duration;
+  // Save raw answers for pre-filling next time
+  if (wizState.time)     userGoals.wizTime     = wizState.time;
+  if (wizState.habit)    userGoals.wizHabit    = wizState.habit;
+  if (wizState.recovery) userGoals.wizRecovery = wizState.recovery;
+  if (wizState.struggle) userGoals.wizStruggle = wizState.struggle;
 
-  // Set days array to match frequency (pick sensible defaults)
-  const daysByFreq = {
-    2: ['mon','thu'],
-    3: ['mon','wed','fri'],
-    4: ['mon','tue','thu','fri'],
-    5: ['mon','tue','wed','thu','fri'],
-    6: ['mon','tue','wed','thu','fri','sat'],
-  };
-  if (wizState.days) {
-    userGoals.workoutDays = daysByFreq[wizState.days] || userGoals.workoutDays;
-    userGoals.workoutFreq = wizState.days;
+  if (!userGoals.specialFlags) userGoals.specialFlags = [];
+
+  // ── Q1: Time of day ──────────────────────────────────────
+  // Remove any prior time flags then apply new one
+  userGoals.specialFlags = userGoals.specialFlags.filter(f =>
+    !['flag-morning','flag-evening','flag-cortisol-am'].includes(f));
+  if (wizState.time === 'morning') {
+    // Morning: cortisol naturally high — avoid HIIT spikes, longer warm-up
+    userGoals.specialFlags.push('flag-morning');
+  } else if (wizState.time === 'evening') {
+    // Evening: avoid stimulant circuits pre-sleep
+    userGoals.specialFlags.push('flag-evening');
+  }
+  // 'midday' and 'varies' need no special flags — full program as-is
+
+  // ── Q2: Training habit / consistency ─────────────────────
+  userGoals.specialFlags = userGoals.specialFlags.filter(f =>
+    !['flag-beginner','flag-advanced','flag-onoff'].includes(f));
+  if (wizState.habit === 'new') {
+    // Under 3 months: habit-building mode — shorter, simpler
+    userGoals.specialFlags.push('flag-beginner');
+    if (userGoals.sessionDuration > 45) userGoals.sessionDuration = 45;
+    userGoals.defaultSets = userGoals.defaultSets || 3;
+  } else if (wizState.habit === 'onoff') {
+    // On-and-off: moderate, add variety flag
+    userGoals.specialFlags.push('flag-onoff');
+  } else if (wizState.habit === 'solid') {
+    // 6+ months consistent: standard progressive overload
+    // No special flags — normal program
+  } else if (wizState.habit === 'locked') {
+    // Years of consistent training: advanced
+    userGoals.specialFlags.push('flag-advanced');
+    userGoals.defaultSets = Math.max(userGoals.defaultSets || 3, 4);
   }
 
-  // Apply experience level to special flags
-  if (!userGoals.specialFlags) userGoals.specialFlags = [];
-  userGoals.specialFlags = userGoals.specialFlags.filter(f => !['flag-beginner','flag-advanced'].includes(f));
-  if (wizState.experience === 'beginner') userGoals.specialFlags.push('flag-beginner');
-  if (wizState.experience === 'advanced') userGoals.specialFlags.push('flag-advanced');
+  // ── Q3: Recovery ─────────────────────────────────────────
+  userGoals.specialFlags = userGoals.specialFlags.filter(f =>
+    !['flag-lowvolume','flag-cortisol'].includes(f));
+  if (wizState.recovery === 'sore') {
+    // Gets sore: reduce volume, more rest between muscle groups
+    userGoals.specialFlags.push('flag-lowvolume');
+  } else if (wizState.recovery === 'tired') {
+    // High stress/fatigue: lower cortisol-spiking work
+    userGoals.specialFlags.push('flag-cortisol');
+  }
 
-  // Apply limitations to special flags
-  const limFlagMap = { lowimpact:'flag-lowimpact', knees:'flag-knees', back:'flag-back', shoulders:'flag-shoulders' };
-  Object.keys(limFlagMap).forEach(k => {
-    userGoals.specialFlags = userGoals.specialFlags.filter(f => f !== limFlagMap[k]);
-  });
-  wizState.limits.forEach(k => {
-    if (limFlagMap[k]) userGoals.specialFlags.push(limFlagMap[k]);
-  });
+  // ── Q4: Biggest struggle ─────────────────────────────────
+  userGoals.specialFlags = userGoals.specialFlags.filter(f =>
+    !['flag-hiit','flag-lowimpact','flag-struggle-results'].includes(f));
+  if (wizState.struggle === 'consistency') {
+    // Lower barrier: shorter sessions
+    if (!userGoals.sessionDuration || userGoals.sessionDuration > 45) userGoals.sessionDuration = 45;
+  } else if (wizState.struggle === 'results') {
+    // Not seeing results: force progressive overload, variation, higher volume
+    userGoals.specialFlags.push('flag-struggle-results');
+    userGoals.defaultSets = Math.max(userGoals.defaultSets || 3, 4);
+  } else if (wizState.struggle === 'intensity') {
+    // Not pushing hard: strength focus + HIIT circuits
+    userGoals.specialFlags.push('flag-hiit');
+    if (!userGoals.trainingFocus) userGoals.trainingFocus = [];
+    if (!userGoals.trainingFocus.includes('focus-strength')) {
+      userGoals.trainingFocus.unshift('focus-strength');
+      if (!userGoals.focusPriority) userGoals.focusPriority = [];
+      if (!userGoals.focusPriority.includes('focus-strength')) userGoals.focusPriority.unshift('focus-strength');
+    }
+  } else if (wizState.struggle === 'injury') {
+    // Getting hurt: low impact + extended warm-up + progression ladders
+    userGoals.specialFlags.push('flag-lowimpact');
+  } else if (wizState.struggle === 'time') {
+    // No time: short dense sessions, compound only
+    if (!userGoals.sessionDuration || userGoals.sessionDuration > 45) userGoals.sessionDuration = 45;
+  }
 
-  // Save answers to Firebase before generating
+  // Save everything to Firebase then generate
   await db.collection('userdata').doc(SESSION.username).collection('goals').doc('settings').set(userGoals);
-
   await doGenerateProgram();
 }
 
@@ -10040,7 +10050,7 @@ function userHasEquipment(req, eq) {
   return req.every(r => eq[r]);
 }
 
-function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, count, sessionType, goalPriority, glutesIsPriority, alreadyUsed) {
+function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, count, sessionType, goalPriority, glutesIsPriority, alreadyUsed, variationBoost) {
   // Mode-exclusive filtering: yoga/pilates/calisthenics/military sessions
   // must ONLY draw from their own exercise pool, never from weighted exercises
   const exclusiveModes = ['yoga','pilates','calisthenics','military'];
@@ -10099,9 +10109,9 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
       }
 
       // Downgrade exercises already used on a prior day of the same session type
-      // so Upper A and Upper B workouts actually differ
+      // variationBoost doubles the penalty for on-and-off trainers or not-seeing-results
       if (alreadyUsed && alreadyUsed.has(e.id)) {
-        score -= 10;
+        score -= variationBoost ? 20 : 10;
       }
 
       return { ...e, score };
@@ -10163,16 +10173,24 @@ function generateProgram() {
   const freq   = goals.workoutFreq   || 4;
   const days   = [...(goals.workoutDays ? goals.workoutDays : ['mon','tue','wed','thu'])];
   const dur    = goals.sessionDuration || 60;
-  const isBeginner   = flags.includes('flag-beginner');
-  const isAdvanced   = flags.includes('flag-advanced');
-  const isLowImpact  = flags.includes('flag-lowimpact');
-  const isStrength   = focus.includes('focus-strength');
-  const isFatLoss    = focus.includes('focus-fatloss') || focus.includes('focus-visceral') || focus.includes('focus-weightloss');
-  const isHypertrophy= focus.includes('focus-muscle');
-  const isTone       = focus.includes('focus-tone');
-  const isEndurance  = focus.includes('focus-endurance');
-  const isHIIT       = flags.includes('flag-hiit');
-  const isYoga       = focus.includes('focus-yoga');
+  const isBeginner      = flags.includes('flag-beginner');
+  const isAdvanced      = flags.includes('flag-advanced');
+  const isLowImpact     = flags.includes('flag-lowimpact');
+  const isStrength      = focus.includes('focus-strength');
+  const isFatLoss       = focus.includes('focus-fatloss') || focus.includes('focus-visceral') || focus.includes('focus-weightloss');
+  const isHypertrophy   = focus.includes('focus-muscle');
+  const isTone          = focus.includes('focus-tone');
+  const isEndurance     = focus.includes('focus-endurance');
+  const isHIIT          = flags.includes('flag-hiit');
+  const isYoga          = focus.includes('focus-yoga');
+
+  // Wizard flags
+  const isMorning       = flags.includes('flag-morning');       // cortisol high — avoid HIIT
+  const isEvening       = flags.includes('flag-evening');        // avoid stimulant circuits
+  const isOnOff         = flags.includes('flag-onoff');          // on/off trainer — add variety
+  const isLowVolume     = flags.includes('flag-lowvolume');      // gets sore — reduce sets
+  const isHighCortisol  = flags.includes('flag-cortisol');       // tired/stressed — lower intensity
+  const wantsResults    = flags.includes('flag-struggle-results');// not seeing results — max variation
   const isPilates    = focus.includes('focus-pilates');
   const isCalisthenics = focus.includes('focus-calisthenics');
   const isMilitary   = focus.includes('focus-military');
@@ -10223,8 +10241,19 @@ function generateProgram() {
   if (flags.includes('flag-posture')) goalIds.push('posture');
   if (goalIds.length === 0) goalIds.push('general','tone','size');
 
-  // Exercises per day based on duration (roughly 5–8 min per exercise)
-  const exCount = Math.max(4, Math.min(8, Math.floor(dur / 8)));
+  // Base exercise count from session duration
+  let exCount = Math.max(4, Math.min(8, Math.floor(dur / 8)));
+
+  // Wizard adjustments to volume
+  if (isLowVolume)    exCount = Math.max(4, exCount - 1); // sore — fewer exercises
+  if (isHighCortisol) exCount = Math.max(4, exCount - 1); // tired — lower load
+  if (isAdvanced || wantsResults) exCount = Math.min(8, exCount + 1); // advanced or not seeing results — more volume
+  if (isBeginner)     exCount = Math.max(4, Math.min(5, exCount));    // new — cap at 5
+
+  // Morning training: flag to suppress HIIT in cardio finisher
+  const suppressHIIT = isMorning || isHighCortisol || isEvening;
+  // On-off habit: force alreadyUsed penalty higher so variation is maximized
+  const variationBoost = isOnOff || wantsResults;
 
   // Pick split based on frequency — yoga/pilates override normal splits
   let splitType, splitLabel, daySchedule;
@@ -10349,7 +10378,7 @@ function generateProgram() {
   };
 
   // Build cardio finisher if fat loss / endurance goal
-  const cardioFinisher = (isFatLoss || isEndurance) ? EX_DB.filter(e => {
+  const cardioFinisher = (isFatLoss || isEndurance) && !suppressHIIT ? EX_DB.filter(e => {
     if (!userHasEquipment(e.eq, eq)) return false;
     if (isLowImpact && e.impact === 'high') return false;
     return e.goals.includes('fat') || e.goals.includes('endurance');
@@ -10390,7 +10419,7 @@ function generateProgram() {
 
     const exercises = pickExercises(
       boostedMuscles, goalIds, eq, isLowImpact, isStrength, exCount,
-      ds.type, goalPriorityMap, glutesIsPriority, alreadyUsed
+      ds.type, goalPriorityMap, glutesIsPriority, alreadyUsed, variationBoost
     );
 
     // Record used exercise ids for this session type
