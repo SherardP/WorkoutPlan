@@ -8385,18 +8385,19 @@ function toggleSpecialFlag(id) {
 
 // ─── Priority Muscles ──────────────────────────────────────
 const PRIORITY_MUSCLE_OPTIONS = [
-  { id:'glutes',     label:'Glutes',       icon:'🍑' },
-  { id:'hamstrings', label:'Hamstrings',   icon:'🦵' },
-  { id:'quads',      label:'Quads',        icon:'🦿' },
-  { id:'chest',      label:'Chest',        icon:'💪' },
-  { id:'back-upper', label:'Upper Back',   icon:'🔙' },
-  { id:'lats',       label:'Lats',         icon:'🏊' },
-  { id:'shoulders',  label:'Shoulders',    icon:'🙆' },
-  { id:'biceps',     label:'Biceps',       icon:'💪' },
-  { id:'triceps',    label:'Triceps',      icon:'↕' },
-  { id:'core',       label:'Core / Abs',   icon:'⭕' },
-  { id:'calves',     label:'Calves',       icon:'🦵' },
-  { id:'back-lower', label:'Lower Back',   icon:'🔽' },
+  { id:'glutes',     label:'Glutes',            icon:'🍑' },
+  { id:'hips',       label:'Hips / Abductors',  icon:'🔄' },
+  { id:'hamstrings', label:'Hamstrings',         icon:'🦵' },
+  { id:'quads',      label:'Quads',              icon:'🦿' },
+  { id:'chest',      label:'Chest',              icon:'💪' },
+  { id:'back-upper', label:'Upper Back',         icon:'🔙' },
+  { id:'lats',       label:'Lats',               icon:'🏊' },
+  { id:'shoulders',  label:'Shoulders',          icon:'🙆' },
+  { id:'biceps',     label:'Biceps',             icon:'💪' },
+  { id:'triceps',    label:'Triceps',            icon:'↕' },
+  { id:'core',       label:'Core / Abs',         icon:'⭕' },
+  { id:'calves',     label:'Calves',             icon:'🦵' },
+  { id:'back-lower', label:'Lower Back',         icon:'🔽' },
 ];
 
 function renderMusclePriority() {
@@ -8710,6 +8711,70 @@ function wizBack()   { if (wizState.step > 1) wizShowStep(wizState.step - 1); }
 function wizCancel() { document.getElementById('program-wizard-modal').style.display = 'none'; }
 
 async function wizFinish() {
+  // ── Science-based feedback before generating ─────────────
+  const warnings = [];
+  const currentDur   = userGoals.sessionDuration || 60;
+  const currentFreq  = userGoals.workoutFreq     || 4;
+  const isNewHabit   = wizState.habit === 'new';
+  const isOnOffHabit = wizState.habit === 'onoff';
+
+  if (isNewHabit && currentDur > 45) {
+    warnings.push({
+      icon:'⏱',
+      title:'SESSION LENGTH: Consider Starting Shorter',
+      body:`Science shows beginners get the same muscle growth from 30–45 min sessions as longer ones (Schoenfeld, J Strength Cond Res 2017). At 2 hours you risk burnout and inconsistency — the #1 reason beginners quit. We will generate your program with your chosen duration, but 45 min is the evidence-based sweet spot for building the habit.`
+    });
+  }
+  if (isNewHabit && currentFreq >= 6) {
+    warnings.push({
+      icon:'📅',
+      title:'6 DAYS/WEEK: Not Recommended for Beginners',
+      body:`Research consistently shows 3–4 days/week produces equal or better results for beginners compared to 6 days, because the muscles need time to repair and grow (ACSM Position Stand 2009). Six-day programs are designed for intermediate+ lifters with adapted connective tissue. Your program will use the 6-day schedule you set, but consider dropping to 4 days if recovery feels tough.`
+    });
+  }
+  if (wizState.recovery === 'sore' && currentFreq >= 5) {
+    warnings.push({
+      icon:'💪',
+      title:'HIGH FREQUENCY + POOR RECOVERY',
+      body:`You said you stay sore between sessions. Training a muscle before it has recovered limits growth and increases injury risk. The program will reduce sets per session, but you may want to drop to 3–4 days/week in your Goals to let each muscle group fully recover.`
+    });
+  }
+  if (wizState.recovery === 'tired' && currentDur > 60) {
+    warnings.push({
+      icon:'😴',
+      title:'HIGH STRESS + LONG SESSIONS',
+      body:`Training over 60 minutes when chronically stressed elevates cortisol long enough to impair fat loss and muscle growth. Shorter sessions (30–45 min) with adequate rest are more effective under high life stress (Kraemer & Ratamess, Sports Med 2005). Your duration is set but the program will prioritize lower-cortisol exercise selections.`
+    });
+  }
+
+  // Show warnings if any, then generate
+  if (warnings.length > 0) {
+    const modal = document.getElementById('program-wizard-modal');
+    const content = modal.querySelector('div');
+    content.innerHTML = `
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);letter-spacing:.15em;margin-bottom:4px;">&#9889; PROGRAM BUILDER</div>
+      <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--text-bright);margin-bottom:4px;">BEFORE WE GENERATE...</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:16px;">Science-based feedback on your settings. We will still build exactly what you asked for.</div>
+      ${warnings.map(w => `
+        <div style="padding:12px 14px;border:1px solid var(--accent2);background:var(--accent-dim);margin-bottom:10px;">
+          <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--accent2);margin-bottom:6px;">${w.icon} ${w.title}</div>
+          <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text);line-height:1.7;">${w.body}</div>
+        </div>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="wizApplyAndGenerate()" class="btn btn-p" style="flex:1;font-size:0.72rem;padding:12px;">
+          &#9889; GENERATE ANYWAY &#8212; I UNDERSTAND
+        </button>
+        <button onclick="wizCancel()" class="btn btn-s" style="font-size:0.68rem;padding:12px;white-space:nowrap;">
+          GO BACK
+        </button>
+      </div>`;
+    return; // Wait for user to confirm
+  }
+
+  await wizApplyAndGenerate();
+}
+
+async function wizApplyAndGenerate() {
   document.getElementById('program-wizard-modal').style.display = 'none';
 
   // Save raw answers for pre-filling next time
@@ -9740,10 +9805,10 @@ const EX_DB = [
   {id:'hip_thrust_bb',   name:'Barbell Hip Thrust',        muscles:['glutes','hamstrings'],               eq:['bar-olympic','bench-flat'],    impact:'low',  goals:['size','strength'],                sets_h:'4×10–12', sets_s:'4×6–8',  rest_h:120, rest_s:150, ytId:'SEdqd6lZKyk'},
   {id:'rdl_db',          name:'Romanian Deadlift (DB)',    muscles:['hamstrings','glutes','back-lower'],  eq:['db'],                          impact:'low',  goals:['size','strength','tone'],         sets_h:'4×10–12', sets_s:'4×5–6',  rest_h:90,  rest_s:150, ytId:'JCXUYuzwNrM'},
   {id:'rdl_bb',          name:'Romanian Deadlift (Bar)',   muscles:['hamstrings','glutes','back-lower'],  eq:['bar-olympic'],                 impact:'low',  goals:['size','strength'],                sets_h:'4×8–10',  sets_s:'5×4–6',  rest_h:120, rest_s:180, ytId:'JCXUYuzwNrM'},
-  {id:'hip_abduct_mach', name:'Hip Abduction Machine',    muscles:['glutes'],                            eq:['mach-hipabduct'],              impact:'low',  goals:['tone','size','fat'],              sets_h:'3×15–20', sets_s:'3×12',   rest_h:60,  rest_s:90,  ytId:'jNvzBdHwCBs'},
-  {id:'fire_hydrant',    name:'Fire Hydrant',              muscles:['glutes'],                            eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×15/side',sets_s:'3×12', rest_h:45,  rest_s:60,  ytId:'la-bz6yYIIA'},
-  {id:'donkey_kick',     name:'Donkey Kick',               muscles:['glutes'],                            eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×15/side',sets_s:'3×12', rest_h:45,  rest_s:60,  ytId:'SJ1iR_0Srew'},
-  {id:'cable_kickback',  name:'Cable Glute Kickback',      muscles:['glutes'],                            eq:['mach-cable','acc-anklestrap'], impact:'low',  goals:['tone','size','fat'],              sets_h:'3×15/side',sets_s:'3×12', rest_h:60,  rest_s:90,  ytId:'SJ1iR_0Srew'},
+  {id:'hip_abduct_mach', name:'Hip Abduction Machine',    muscles:['hips','glutes'],                     eq:['mach-hipabduct'],              impact:'low',  goals:['tone','size','fat'],              sets_h:'3×15–20', sets_s:'3×12',   rest_h:60,  rest_s:90,  ytId:'jNvzBdHwCBs'},
+  {id:'fire_hydrant',    name:'Fire Hydrant',              muscles:['hips','glutes'],                     eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×15/side',sets_s:'3×12', rest_h:45,  rest_s:60,  ytId:'la-bz6yYIIA'},
+  {id:'donkey_kick',     name:'Donkey Kick',               muscles:['hips','glutes'],                     eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×15/side',sets_s:'3×12', rest_h:45,  rest_s:60,  ytId:'SJ1iR_0Srew'},
+  {id:'cable_kickback',  name:'Cable Glute Kickback',      muscles:['hips','glutes'],                     eq:['mach-cable','acc-anklestrap'], impact:'low',  goals:['tone','size','fat'],              sets_h:'3×15/side',sets_s:'3×12', rest_h:60,  rest_s:90,  ytId:'SJ1iR_0Srew'},
 
   // ── QUADS ───────────────────────────────────────────────
   {id:'goblet_squat',    name:'Goblet Squat',              muscles:['quads','glutes','core'],             eq:['db'],                          impact:'low',  goals:['size','strength','tone','fat'],   sets_h:'4×10–12', sets_s:'4×5–6',  rest_h:90,  rest_s:150, ytId:'MxsFDhcyFyE'},
@@ -10394,111 +10459,108 @@ function generateProgram() {
   // On-off habit: force alreadyUsed penalty higher so variation is maximized
   const variationBoost = isOnOff || wantsResults;
 
-  // Pick split based on frequency — yoga/pilates override normal splits
+  // Pick split based on frequency and user preference
+  // Science: Upper/Lower hits each muscle 2-3x/week — optimal for hypertrophy (Schoenfeld 2016)
+  // 6-day upper/lower = 3 upper + 3 lower — only appropriate for intermediate/advanced
+  // Beginners: 3-4 days optimal; 6 days workable only with shorter sessions (8-14 sets/day)
   let splitType, splitLabel, daySchedule;
   const activeDays = days.slice(0, freq).filter(d => d !== 'sun');
+  const preferredSplit = goals.preferredSplit || 'auto';
 
-  if (isMilitary && isCalisthenics) {
+  // Mode-exclusive sessions (yoga/pilates/calisthenics/military) ONLY override
+  // if the user has NOT explicitly chosen a split in the wizard
+  const userChoseSplit = preferredSplit && preferredSplit !== 'auto';
+
+  if (!userChoseSplit && isMilitary && isCalisthenics) {
     splitType  = 'military_cal';
     splitLabel = 'Military & Calisthenics';
     const types = ['military','calisthenics','military','calisthenics','military'];
     const subs  = ['PT Circuit — Push/Run/Carry','Bodyweight Strength Progressions','Conditioning & Sprint Work','Pull & Core Progressions','Full Military PT Test Prep'];
     daySchedule = activeDays.map((d,i) => ({ day:d, type:types[i%5], label:types[i%5]==='military'?'MILITARY PT':'CALISTHENICS', sub:subs[i%5] }));
-  } else if (isMilitary) {
+  } else if (!userChoseSplit && isMilitary) {
     splitType  = 'military';
     splitLabel = 'Military / Tactical Fitness';
     const milSubs = ['Push Circuit & Endurance','Sprint-Drag-Carry','Pull & Core Strength','Conditioning — AMRAP','Full PT Test Simulation'];
     daySchedule = activeDays.map((d,i) => ({ day:d, type:'military', label:'MILITARY PT', sub:milSubs[i%milSubs.length] }));
-  } else if (isCalisthenics) {
+  } else if (!userChoseSplit && isCalisthenics) {
     splitType  = 'calisthenics';
     splitLabel = 'Calisthenics Program';
     const calSubs = ['Push Progressions','Pull Progressions','Legs & Core','Skill Work — Handstand / L-Sit','Full Body Circuit'];
     daySchedule = activeDays.map((d,i) => ({ day:d, type:'calisthenics', label:'CALISTHENICS', sub:calSubs[i%calSubs.length] }));
-  } else if (isYoga && isPilates) {
-    // Alternating yoga + pilates days
+  } else if (!userChoseSplit && isYoga && isPilates) {
     splitType  = 'yoga_pilates';
     splitLabel = 'Yoga & Pilates Program';
     daySchedule = activeDays.map((d,i) => i % 2 === 0
       ? { day:d, type:'yoga',    label:'YOGA SESSION',    sub:'Flow · Strength · Mobility' }
       : { day:d, type:'pilates', label:'PILATES SESSION', sub:'Core · Precision · Posture' });
-  } else if (isYoga) {
+  } else if (!userChoseSplit && isYoga) {
     splitType  = 'yoga';
     splitLabel = 'Yoga Program';
     const yogaStyles = ['Vinyasa Flow','Power Yoga','Yin / Restorative','Hatha Fundamentals','Ashtanga','Yoga & Core'];
-    daySchedule = activeDays.map((d,i) => ({
-      day:d, type:'yoga', label:'YOGA SESSION', sub: yogaStyles[i % yogaStyles.length]
-    }));
-  } else if (isPilates) {
+    daySchedule = activeDays.map((d,i) => ({ day:d, type:'yoga', label:'YOGA SESSION', sub: yogaStyles[i % yogaStyles.length] }));
+  } else if (!userChoseSplit && isPilates) {
     splitType  = 'pilates';
     splitLabel = 'Pilates Program';
     const pilStyles = ['Mat Pilates — Core Focus','Pilates — Glutes & Legs','Pilates — Upper Body','Full Body Pilates','Pilates — Spine & Posture'];
-    daySchedule = activeDays.map((d,i) => ({
-      day:d, type:'pilates', label:'PILATES SESSION', sub: pilStyles[i % pilStyles.length]
-    }));
+    daySchedule = activeDays.map((d,i) => ({ day:d, type:'pilates', label:'PILATES SESSION', sub: pilStyles[i % pilStyles.length] }));
   } else if (freq <= 2) {
     splitType  = 'fullbody';
     splitLabel = 'Full Body Split';
     daySchedule = activeDays.map((d,i) => ({ day:d, type:'fullbody', label:`FULL BODY ${i+1}`, sub:'Complete training stimulus' }));
   } else {
-    // Honor the user's preferred split from the wizard, or auto-select
-    const preferredSplit = goals.preferredSplit || 'auto';
-
-    // Determine effective split: wizard override (if compatible) or auto by freq
+    // Honor wizard split preference, fall back to science-based auto-selection
     let effectiveSplit = preferredSplit;
-    if (preferredSplit === 'auto' || preferredSplit === null) {
+    if (preferredSplit === 'auto' || !preferredSplit) {
+      // Science-based defaults: Upper/Lower is optimal for 4 days (Schoenfeld 2016)
       if (freq === 3) effectiveSplit = 'fullbody';
       else if (freq === 4) effectiveSplit = 'upper_lower';
       else if (freq === 5) effectiveSplit = 'ppl_ul';
       else effectiveSplit = 'ppl';
     }
-    // If user chose upper_lower but only has 3 days, use it as A/B/A
-    // If user chose ppl but only has 3 days, use PPL once through
+
     if (effectiveSplit === 'upper_lower') {
       splitType  = 'upper_lower';
-      splitLabel = 'Upper / Lower Split';
+      splitLabel = freq >= 6 ? 'Upper / Lower Split (6-Day)' : 'Upper / Lower Split';
+      // Science: strict alternation, never two of same type back-to-back
+      // 6-day: U-L-U-L-U-L, 4-day: U-L-U-L, 3-day: U-L-U
       const ulTypes = ['upper','lower','upper','lower','upper','lower'];
-      const ulSubs  = ['Chest · Back · Shoulders · Arms','Quads · Hamstrings · Glutes · Calves',
-                       'Upper Body — Variation B','Lower Body — Variation B','Upper Body — Variation C','Lower Body — Variation C'];
+      const ulSubsA = 'Chest · Back · Shoulders · Arms';
+      const ulSubsB = `${glutesIsPriority ? 'Glutes · Hamstrings · Quads' : 'Quads · Hamstrings · Glutes'} · Calves`;
       daySchedule = activeDays.map((d,i) => ({
-        day:d, type:ulTypes[i%2], label:i%2===0?'UPPER BODY':'LOWER BODY', sub:ulSubs[i]||ulSubs[i%2]
+        day: d,
+        type:  ulTypes[i%2],
+        label: i%2===0 ? 'UPPER BODY' : 'LOWER BODY',
+        sub:   i%2===0
+          ? (i<2 ? ulSubsA : i<4 ? 'Upper Body — Variation B' : 'Upper Body — Variation C')
+          : (i<2 ? ulSubsB : i<4 ? 'Lower Body — Variation B' : 'Lower Body — Variation C'),
       }));
     } else if (effectiveSplit === 'fullbody') {
       splitType  = 'fullbody';
       splitLabel = 'Full Body';
       daySchedule = activeDays.map((d,i) => ({ day:d, type:'fullbody', label:`FULL BODY ${i+1}`, sub:'All major muscle groups' }));
-    } else if (effectiveSplit === 'ppl' || effectiveSplit === 'ppl_ul') {
+    } else {
+      // PPL
       if (freq >= 5) {
-        splitType  = 'ppl_ul';
-        splitLabel = 'Push / Pull / Legs + Upper/Lower (5-Day)';
+        splitType  = freq >= 6 ? 'ppl' : 'ppl_ul';
+        splitLabel = freq >= 6 ? 'Push / Pull / Legs (6-Day)' : 'Push / Pull / Legs + Upper/Lower';
+        const types6 = ['push','pull','legs','push','pull','legs'];
+        const labs6  = ['PUSH A','PULL A','LEGS A','PUSH B','PULL B','LEGS B'];
+        const subs6  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Push Variation B','Pull Variation B','Legs Variation B'];
         const types5 = ['push','pull','legs','upper','lower'];
         const labs5  = ['PUSH','PULL','LEGS','UPPER','LOWER'];
         const subs5  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Full Upper Body','Full Lower Body'];
-        daySchedule = activeDays.map((d,i) => ({ day:d, type:types5[i%5], label:labs5[i%5], sub:subs5[i%5] }));
-        if (freq >= 6) {
-          splitType  = 'ppl';
-          splitLabel = 'Push / Pull / Legs (6×)';
-          const types6 = ['push','pull','legs','push','pull','legs'];
-          const labs6  = ['PUSH A','PULL A','LEGS A','PUSH B','PULL B','LEGS B'];
-          const subs6  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Push Variation B','Pull Variation B','Legs Variation B'];
-          daySchedule = activeDays.map((d,i) => ({ day:d, type:types6[i%6], label:labs6[i%6], sub:subs6[i%6] }));
-        }
+        const t = freq >= 6 ? types6 : types5;
+        const l = freq >= 6 ? labs6  : labs5;
+        const s = freq >= 6 ? subs6  : subs5;
+        daySchedule = activeDays.map((d,i) => ({ day:d, type:t[i%t.length], label:l[i%t.length], sub:s[i%t.length] }));
       } else {
-        // PPL with 3–4 days: go through PPL cycle once
         splitType  = 'ppl';
         splitLabel = 'Push / Pull / Legs';
-        const types3 = ['push','pull','legs','push'];
-        const labs3  = ['PUSH','PULL','LEGS','PUSH B'];
-        const subs3  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Push Variation B'];
+        const types3 = ['push','pull','legs'];
+        const labs3  = ['PUSH','PULL','LEGS'];
+        const subs3  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes'];
         daySchedule = activeDays.map((d,i) => ({ day:d, type:types3[i%3], label:labs3[i%3], sub:subs3[i%3] }));
       }
-    } else {
-      // Fallback
-      splitType  = 'upper_lower';
-      splitLabel = 'Upper / Lower Split';
-      daySchedule = activeDays.map((d,i) => ({
-        day:d, type:i%2===0?'upper':'lower', label:i%2===0?'UPPER BODY':'LOWER BODY',
-        sub:i%2===0?'Chest · Back · Shoulders · Arms':'Quads · Hamstrings · Glutes · Calves'
-      }));
     }
   }
 
@@ -10506,12 +10568,12 @@ function generateProgram() {
   const muscleSets = {
     push:     ['chest','shoulders','triceps'],
     pull:     ['back-upper','lats','biceps','back-lower'],
-    legs:     ['quads','hamstrings','glutes','calves'],
+    legs:     ['quads','hamstrings','glutes','hips','calves'],
     upper:    ['chest','back-upper','lats','shoulders','biceps','triceps'],
-    lower:    ['quads','hamstrings','glutes','calves','core'],
-    fullbody: ['chest','back-upper','lats','shoulders','quads','hamstrings','glutes','biceps','triceps','core'],
-    yoga:     ['core','glutes','hamstrings','shoulders','back-upper'],
-    pilates:  ['core','back-lower','glutes','shoulders'],
+    lower:    ['quads','hamstrings','glutes','hips','calves','core'],
+    fullbody: ['chest','back-upper','lats','shoulders','quads','hamstrings','glutes','hips','biceps','triceps','core'],
+    yoga:     ['core','glutes','hips','hamstrings','shoulders','back-upper'],
+    pilates:  ['core','back-lower','glutes','hips','shoulders'],
     calisthenics: ['chest','back-upper','lats','core','quads','glutes','triceps','biceps'],
     military: ['chest','core','quads','back-upper','shoulders'],
   };
