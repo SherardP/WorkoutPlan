@@ -1148,29 +1148,18 @@ body.theme-female .goal-chip{border-radius:20px;}
       <div style="display:flex;flex-direction:column;gap:8px;" id="specialFlagCards"></div>
     </div>
 
-    <!-- ── PRIORITY MUSCLES ── -->
+    <!-- ── MUSCLE GOALS (merged Priority + Body Part Goals) ── -->
     <div class="card mb16">
-      <div class="card-label">PRIORITY MUSCLES</div>
-      <div class="card-title">WHICH MUSCLES SHOULD THE PROGRAM FOCUS ON?</div>
-      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:12px;">
-        Tap muscles to prioritize them. The program gives more exercises and sets to your top picks.
-        Drag or use ▲▼ to rank them. Top 3 get the biggest boost.
+      <div class="card-label">MUSCLE GOALS</div>
+      <div class="card-title">PRIORITIES &amp; GOALS PER MUSCLE GROUP</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:6px;">
+        Set a goal for each muscle and tap the star to prioritize it. Ranked muscles get more exercises.
       </div>
-      <!-- Muscle tap grid -->
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;" id="musclePriorityTapGrid"></div>
-      <!-- Ranked list -->
-      <div id="musclePriorityRanked" style="display:none;">
-        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:8px;">YOUR PRIORITY ORDER — TOP = MOST EXERCISES</div>
-        <div id="musclePriorityList" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--accent2);padding:5px 10px;
+        background:var(--accent-dim);border:1px solid var(--accent2);margin-bottom:14px;">
+        ✓ Changes save automatically · Regenerate your program after updating
       </div>
-    </div>
-
-    <!-- ── PER BODY PART GOALS ── -->
-    <div class="card mb16">
-      <div class="card-label">BODY PART GOALS</div>
-      <div class="card-title">SET A GOAL FOR EACH MUSCLE GROUP</div>
-      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:14px;">Tap a goal type for each body part. You can set different priorities for different areas.</div>
-      <div id="bodyPartGoalGrid"></div>
+      <div id="muscleGoalsGrid"></div>
     </div>
 
     <!-- Save button -->
@@ -7793,19 +7782,20 @@ const SPECIAL_FLAG_OPTIONS = [
 ];
 
 const BODY_PARTS = [
-  { id:'bp-chest',      label:'Chest',           sub:'Pectorals',                  icon:'◈' },
-  { id:'bp-back-upper', label:'Upper Back',       sub:'Traps, Rhomboids, Rear Delts', icon:'◈' },
-  { id:'bp-back-lower', label:'Lower Back',       sub:'Erector Spinae',            icon:'◈' },
-  { id:'bp-lats',       label:'Lats',             sub:'Latissimus Dorsi',          icon:'◈' },
-  { id:'bp-shoulders',  label:'Shoulders',        sub:'Front, Side & Rear Delts',  icon:'◈' },
-  { id:'bp-biceps',     label:'Biceps',           sub:'Upper Arm (front)',          icon:'◈' },
-  { id:'bp-triceps',    label:'Triceps',          sub:'Upper Arm (back)',           icon:'◈' },
-  { id:'bp-forearms',   label:'Forearms',         sub:'Grip & Wrist Flexors',      icon:'◈' },
-  { id:'bp-core',       label:'Core / Abs',       sub:'Rectus Abdominis, Obliques', icon:'◈' },
-  { id:'bp-glutes',     label:'Glutes',           sub:'Gluteus Maximus, Medius',   icon:'◈' },
-  { id:'bp-quads',      label:'Quads',            sub:'Front Thigh',               icon:'◈' },
-  { id:'bp-hamstrings', label:'Hamstrings',       sub:'Back Thigh',                icon:'◈' },
-  { id:'bp-calves',     label:'Calves',           sub:'Gastrocnemius, Soleus',     icon:'◈' },
+  { id:'bp-chest',      label:'Chest',              sub:'Pectorals',                    icon:'◈' },
+  { id:'bp-back-upper', label:'Upper Back',          sub:'Traps, Rhomboids, Rear Delts', icon:'◈' },
+  { id:'bp-back-lower', label:'Lower Back',          sub:'Erector Spinae',               icon:'◈' },
+  { id:'bp-lats',       label:'Lats',                sub:'Latissimus Dorsi',             icon:'◈' },
+  { id:'bp-shoulders',  label:'Shoulders',           sub:'Front, Side & Rear Delts',     icon:'◈' },
+  { id:'bp-biceps',     label:'Biceps',              sub:'Upper Arm (front)',             icon:'◈' },
+  { id:'bp-triceps',    label:'Triceps',             sub:'Upper Arm (back)',              icon:'◈' },
+  { id:'bp-forearms',   label:'Forearms',            sub:'Grip & Wrist Flexors',         icon:'◈' },
+  { id:'bp-core',       label:'Core / Abs',          sub:'Rectus Abdominis, Obliques',   icon:'◈' },
+  { id:'bp-glutes',     label:'Glutes',              sub:'Gluteus Maximus, Medius',       icon:'◈' },
+  { id:'bp-hips',       label:'Hips / Abductors',    sub:'Hip Abductors, Gluteus Medius', icon:'◈' },
+  { id:'bp-quads',      label:'Quads',               sub:'Front Thigh',                  icon:'◈' },
+  { id:'bp-hamstrings', label:'Hamstrings',          sub:'Back Thigh',                   icon:'◈' },
+  { id:'bp-calves',     label:'Calves',              sub:'Gastrocnemius, Soleus',         icon:'◈' },
 ];
 
 // Goal types per body part — user picks ONE per body part
@@ -8384,89 +8374,133 @@ function toggleSpecialFlag(id) {
 }
 
 // ─── Priority Muscles ──────────────────────────────────────
-const PRIORITY_MUSCLE_OPTIONS = [
-  { id:'glutes',     label:'Glutes',            icon:'🍑' },
-  { id:'hips',       label:'Hips / Abductors',  icon:'🔄' },
-  { id:'hamstrings', label:'Hamstrings',         icon:'🦵' },
-  { id:'quads',      label:'Quads',              icon:'🦿' },
-  { id:'chest',      label:'Chest',              icon:'💪' },
-  { id:'back-upper', label:'Upper Back',         icon:'🔙' },
-  { id:'lats',       label:'Lats',               icon:'🏊' },
-  { id:'shoulders',  label:'Shoulders',          icon:'🙆' },
-  { id:'biceps',     label:'Biceps',             icon:'💪' },
-  { id:'triceps',    label:'Triceps',            icon:'↕' },
-  { id:'core',       label:'Core / Abs',         icon:'⭕' },
-  { id:'calves',     label:'Calves',             icon:'🦵' },
-  { id:'back-lower', label:'Lower Back',         icon:'🔽' },
-];
+// ── Unified Muscle Goals (Priority + Body Part Goal) ──────
+// Single source: BODY_PARTS drives both priority ranking and goal type per muscle
+// musclePriority = ordered array of muscle ids  (e.g. ['glutes','hips','hamstrings'])
+// bodyPartGoals  = { 'bp-glutes':'size', 'bp-hips':'tone', ... }
 
-function renderMusclePriority() {
-  const tapGrid   = document.getElementById('musclePriorityTapGrid');
-  const ranked    = document.getElementById('musclePriorityRanked');
-  const rankedList= document.getElementById('musclePriorityList');
-  if (!tapGrid) return;
+function renderMuscleGoals() {
+  const el = document.getElementById('muscleGoalsGrid');
+  if (!el) return;
+  const bpGoals  = userGoals.bodyPartGoals  || {};
+  const priority = userGoals.musclePriority || [];
 
-  const priority = userGoals.musclePriority || []; // ordered array of muscle ids
+  // Legend row
+  const legend = BP_GOAL_TYPES.filter(g => g.id !== 'none').map(g =>
+    `<span style="font-family:var(--font-mono);font-size:0.52rem;color:${g.color};
+      background:var(--bg3);border:1px solid ${g.color};padding:2px 7px;white-space:nowrap;">${g.label}: ${g.desc}</span>`
+  ).join('');
 
-  // Tap grid — all muscles as chips
-  tapGrid.innerHTML = PRIORITY_MUSCLE_OPTIONS.map(m => {
-    const idx = priority.indexOf(m.id);
-    const active = idx >= 0;
-    const rank = active ? idx + 1 : null;
-    return `<button onclick="toggleMusclePriority('${m.id}')" id="mptap-${m.id}"
-      style="display:flex;align-items:center;gap:5px;padding:6px 11px;
-      border:2px solid ${active ? 'var(--accent2)' : 'var(--border)'};
-      background:${active ? 'var(--accent-dim)' : 'var(--bg3)'};
-      color:${active ? 'var(--accent2)' : 'var(--text-dim)'};
-      font-family:var(--font-mono);font-size:0.62rem;cursor:pointer;transition:all .15s;white-space:nowrap;">
-      ${active ? `<span style="font-family:var(--font-display);font-size:0.85rem;color:var(--accent2);">${rank}</span>` : ''}
-      ${m.icon} ${m.label}
-    </button>`;
-  }).join('');
-
-  // Ranked list
-  if (priority.length === 0) {
-    if (ranked) ranked.style.display = 'none';
-    return;
-  }
-  if (ranked) ranked.style.display = 'block';
-  if (!rankedList) return;
-
-  rankedList.innerHTML = priority.map((muscleId, idx) => {
-    const m = PRIORITY_MUSCLE_OPTIONS.find(x => x.id === muscleId);
-    if (!m) return '';
+  const rows = BODY_PARTS.map(bp => {
+    const muscleId = bp.id.replace('bp-','');
+    const current  = bpGoals[bp.id] || 'none';
+    const rankIdx  = priority.indexOf(muscleId);
+    const ranked   = rankIdx >= 0;
+    const rankNum  = rankIdx + 1;
     const rankColors = ['#ff9800','#ffb74d','#4caf50'];
-    const rankColor  = rankColors[idx] || 'var(--border2)';
-    const isTop = idx < 3;
-    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
-      border:1px solid ${isTop ? rankColor : 'var(--border)'};
-      background:${isTop ? rankColor+'18' : 'var(--bg3)'};">
-      <span style="font-family:var(--font-display);font-size:1.1rem;color:${rankColor};min-width:20px;text-align:center;">${idx+1}</span>
-      <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text);flex:1;">${m.icon} ${m.label}</span>
-      ${isTop ? `<span style="font-family:var(--font-mono);font-size:0.5rem;color:${rankColor};padding:1px 6px;border:1px solid ${rankColor};">PRIORITY ${idx===0?'#1 BOOST':'BOOST'}</span>` : ''}
-      <div style="display:flex;gap:4px;">
-        <button onclick="moveMuscleRank('${muscleId}',-1)"
-          style="background:var(--bg2);border:1px solid var(--border);color:var(--text-dim);
-          font-size:0.7rem;padding:2px 7px;cursor:pointer;">▲</button>
-        <button onclick="moveMuscleRank('${muscleId}',1)"
-          style="background:var(--bg2);border:1px solid var(--border);color:var(--text-dim);
-          font-size:0.7rem;padding:2px 7px;cursor:pointer;">▼</button>
-        <button onclick="toggleMusclePriority('${muscleId}')"
-          style="background:none;border:none;color:var(--danger);font-size:0.8rem;cursor:pointer;padding:2px 6px;">✕</button>
+    const rankColor  = rankColors[rankIdx] || 'var(--text-dim)';
+
+    // Goal buttons
+    const btns = BP_GOAL_TYPES.map(g => {
+      const active = current === g.id;
+      return `<button type="button" onclick="setMuscleGoal('${bp.id}','${g.id}')" id="mgbtn-${bp.id}-${g.id}"
+        style="font-family:var(--font-mono);font-size:0.56rem;padding:4px 7px;cursor:pointer;
+        background:${active ? g.color : 'var(--bg3)'};
+        color:${active ? '#000' : 'var(--text-dim)'};
+        border:1px solid ${active ? g.color : 'var(--border)'};
+        font-weight:${active ? 'bold' : 'normal'};transition:all .1s;">${g.label}</button>`;
+    }).join('');
+
+    // Priority star/rank badge
+    const starBtn = `<button onclick="toggleMusclePriority('${muscleId}')"
+      title="${ranked ? 'Remove from priority' : 'Add to priority'}"
+      style="font-size:${ranked ? '0.9rem' : '1rem'};padding:3px 7px;cursor:pointer;
+      background:${ranked ? rankColor+'22' : 'var(--bg3)'};
+      border:1px solid ${ranked ? rankColor : 'var(--border)'};
+      color:${ranked ? rankColor : 'var(--border2)'};transition:all .15s;white-space:nowrap;">
+      ${ranked ? `<strong style="font-family:var(--font-display);font-size:0.9rem;">#${rankNum}</strong>` : '★'}
+    </button>`;
+
+    // Rank move buttons (only if ranked)
+    const movebtns = ranked ? `
+      <button onclick="moveMuscleRank('${muscleId}',-1)"
+        style="background:var(--bg2);border:1px solid var(--border);color:var(--text-dim);
+        font-size:0.65rem;padding:2px 6px;cursor:pointer;">▲</button>
+      <button onclick="moveMuscleRank('${muscleId}',1)"
+        style="background:var(--bg2);border:1px solid var(--border);color:var(--text-dim);
+        font-size:0.65rem;padding:2px 6px;cursor:pointer;">▼</button>` : '';
+
+    return `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;
+      border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;">
+      <!-- Muscle label -->
+      <div style="flex:0 0 130px;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:${ranked ? rankColor : 'var(--text)'};
+          font-weight:${ranked ? 'bold' : 'normal'};">${bp.label}</div>
+        <div style="font-family:var(--font-mono);font-size:0.52rem;color:var(--text-dim);">${bp.sub}</div>
+      </div>
+      <!-- Goal buttons -->
+      <div style="display:flex;flex-wrap:wrap;gap:3px;flex:1;">${btns}</div>
+      <!-- Priority controls -->
+      <div style="display:flex;gap:3px;align-items:center;flex-shrink:0;">
+        ${movebtns}
+        ${starBtn}
       </div>
     </div>`;
   }).join('');
+
+  // Priority summary at top if any muscles ranked
+  const prioritySummary = priority.length > 0
+    ? `<div style="padding:8px 12px;background:var(--bg3);border:1px solid var(--accent2);margin-bottom:10px;">
+        <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:6px;">
+          PRIORITY ORDER — TOP RANKED MUSCLES GET THE MOST EXERCISES
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${priority.map((mid, i) => {
+            const bp = BODY_PARTS.find(b => b.id === 'bp-'+mid) || { label: mid };
+            const colors = ['#ff9800','#ffb74d','#4caf50'];
+            const c = colors[i] || 'var(--border2)';
+            return `<span style="font-family:var(--font-mono);font-size:0.6rem;padding:2px 8px;
+              border:1px solid ${c};color:${c};">#${i+1} ${bp.label}</span>`;
+          }).join('')}
+        </div>
+       </div>`
+    : '';
+
+  el.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${legend}</div>
+    <div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-bottom:10px;">
+      ★ = tap to set as a priority muscle (gets more exercises) &nbsp;·&nbsp; #1 = highest priority
+    </div>
+    ${prioritySummary}
+    ${rows}`;
 }
+
+// Unified setter: updates goal type for a muscle
+function setMuscleGoal(bpId, goalId) {
+  if (!userGoals.bodyPartGoals) userGoals.bodyPartGoals = {};
+  userGoals.bodyPartGoals[bpId] = goalId;
+  // Update button UI without full re-render
+  BP_GOAL_TYPES.forEach(g => {
+    const btn = document.getElementById(`mgbtn-${bpId}-${g.id}`);
+    if (!btn) return;
+    const active = g.id === goalId;
+    btn.style.background  = active ? g.color : 'var(--bg3)';
+    btn.style.color       = active ? '#000'   : 'var(--text-dim)';
+    btn.style.borderColor = active ? g.color  : 'var(--border)';
+    btn.style.fontWeight  = active ? 'bold'   : 'normal';
+  });
+  autoSaveGoals('MUSCLE GOAL SAVED');
+}
+
+// Keep setBpGoal as alias for any legacy calls
+function setBpGoal(bpId, goalId) { setMuscleGoal(bpId, goalId); }
 
 function toggleMusclePriority(muscleId) {
   if (!userGoals.musclePriority) userGoals.musclePriority = [];
   const idx = userGoals.musclePriority.indexOf(muscleId);
-  if (idx >= 0) {
-    userGoals.musclePriority.splice(idx, 1);
-  } else {
-    userGoals.musclePriority.push(muscleId);
-  }
-  renderMusclePriority();
+  if (idx >= 0) userGoals.musclePriority.splice(idx, 1);
+  else userGoals.musclePriority.push(muscleId);
+  renderMuscleGoals();
   autoSaveGoals('MUSCLE PRIORITY SAVED');
 }
 
@@ -8478,92 +8512,14 @@ function moveMuscleRank(muscleId, direction) {
   const newIdx = idx + direction;
   if (newIdx < 0 || newIdx >= arr.length) return;
   [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
-  renderMusclePriority();
+  renderMuscleGoals();
   autoSaveGoals('MUSCLE PRIORITY SAVED');
 }
 
-function renderBodyPartGoals() {
-  const el = document.getElementById('bodyPartGoalGrid');
-  if (!el) return;
-  const bpGoals = userGoals.bodyPartGoals || {};
+// Legacy stubs — kept so any existing calls don't break
+function renderMusclePriority() { renderMuscleGoals(); }
+function renderBodyPartGoals()  { renderMuscleGoals(); }
 
-  // Legend
-  const legend = BP_GOAL_TYPES.map(g =>
-    `<span style="font-family:var(--font-mono);font-size:0.55rem;color:${g.color};
-    background:var(--bg3);border:1px solid ${g.color};padding:2px 7px;white-space:nowrap;">${g.label}</span>`
-  ).join('');
-
-  const rows = BODY_PARTS.map(bp => {
-    const current = bpGoals[bp.id] || 'none';
-    const btns = BP_GOAL_TYPES.map(g => {
-      const active = current === g.id;
-      return `<button type="button" onclick="setBpGoal('${bp.id}','${g.id}')" id="bpbtn-${bp.id}-${g.id}"
-        style="font-family:var(--font-mono);font-size:0.58rem;padding:4px 8px;cursor:pointer;
-        background:${active?g.color:'var(--bg3)'};
-        color:${active?'#000':'var(--text-dim)'};
-        border:1px solid ${active?g.color:'var(--border)'};
-        font-weight:${active?'bold':'normal'};
-        transition:all .1s;">${g.label}</button>`;
-    }).join('');
-
-    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;
-      border-bottom:1px solid rgba(255,255,255,0.05);">
-      <div style="flex:0 0 120px;">
-        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text);letter-spacing:.06em;">${bp.label}</div>
-        <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-dim);">${bp.sub}</div>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;">${btns}</div>
-    </div>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
-      ${legend}
-    </div>
-    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:6px;">
-      SIZE = grow bigger &nbsp;|&nbsp; TONE = defined/lean &nbsp;|&nbsp; FAT = reduce fat here &nbsp;|&nbsp; STRONG = functional strength &nbsp;|&nbsp; MAINTAIN = keep as-is
-    </div>
-    <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--accent2);padding:6px 10px;background:var(--accent-dim);border:1px solid var(--accent2);margin-bottom:12px;">
-      ✓ Changes save automatically · After updating, go to PROGRAM tab and regenerate your workout
-    </div>
-    ${rows}`;
-}
-
-// Debounced goal auto-save — prevents spamming Firebase on rapid clicks
-let _goalSaveTimer = null;
-function autoSaveGoals(label) {
-  clearTimeout(_goalSaveTimer);
-  _goalSaveTimer = setTimeout(async () => {
-    try {
-      await db.collection('userdata').doc(SESSION.username).collection('goals').doc('settings').set(userGoals);
-      const msg = document.getElementById('goalsSaveMsg');
-      if (msg) {
-        msg.style.color = '#4caf50';
-        msg.textContent = `✓ ${label || 'SAVED'}`;
-        setTimeout(() => { if (msg.textContent.startsWith('✓')) msg.textContent = ''; }, 2500);
-      }
-    } catch(e) {
-      const msg = document.getElementById('goalsSaveMsg');
-      if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'SAVE ERROR'; }
-    }
-  }, 600);
-}
-
-function setBpGoal(bpId, goalId) {
-  if (!userGoals.bodyPartGoals) userGoals.bodyPartGoals = {};
-  userGoals.bodyPartGoals[bpId] = goalId;
-  // Update button UI
-  BP_GOAL_TYPES.forEach(g => {
-    const btn = document.getElementById(`bpbtn-${bpId}-${g.id}`);
-    if (!btn) return;
-    const active = g.id === goalId;
-    btn.style.background  = active ? g.color : 'var(--bg3)';
-    btn.style.color       = active ? '#000'   : 'var(--text-dim)';
-    btn.style.borderColor = active ? g.color  : 'var(--border)';
-    btn.style.fontWeight  = active ? 'bold'   : 'normal';
-  });
-  autoSaveGoals('BODY PART GOAL SAVED');
-}
 
 // ═══════════════════════════════════════════════════════════
 // DEFAULT SETS GOAL — science-backed explanations
@@ -8952,8 +8908,7 @@ async function loadGoalsPage() {
   renderRecommendedSplit();
   renderTrainingFocus();
   renderSpecialFlags();
-  renderMusclePriority();
-  renderBodyPartGoals();
+  renderMuscleGoals();
   renderSetsGoalCards();
   renderGoalCoachCard();
   renderStepRecommendation();
@@ -10590,15 +10545,18 @@ function generateProgram() {
 
   // Determine if glutes are a priority body-part goal
   const glutePriority   = bpg['bp-glutes'];
+  const hipPriority     = bpg['bp-hips'];
   const userMusclePriorityList = goals.musclePriority || [];
-  // Glutes is priority if set via body-part goals OR if ranked in top 3 of muscle priority list
+  // Glutes/hips priority: triggered by body-part goals OR explicit muscle priority ranking
   const glutesIsPriority = glutePriority === 'size' || glutePriority === 'strengthen'
-    || userMusclePriorityList.slice(0,3).includes('glutes');
+    || hipPriority === 'size' || hipPriority === 'strengthen'
+    || userMusclePriorityList.slice(0,3).includes('glutes')
+    || userMusclePriorityList.slice(0,3).includes('hips');
 
-  // If glutes are a priority, reorder legs muscle set to lead with glutes + ham, not quads
+  // If glutes/hips are a priority, reorder legs muscle set to lead with glutes+hips, not quads
   if (glutesIsPriority) {
-    muscleSets.legs  = ['glutes','hamstrings','quads','calves'];
-    muscleSets.lower = ['glutes','hamstrings','quads','calves','core'];
+    muscleSets.legs  = ['glutes','hips','hamstrings','quads','calves'];
+    muscleSets.lower = ['glutes','hips','hamstrings','quads','calves','core'];
   }
 
   // Track which exercises were used per session type for Upper/Lower variation
