@@ -10209,6 +10209,17 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
   const exclusiveModes = ['yoga','pilates','calisthenics','military'];
   const isExclusiveMode = exclusiveModes.includes(sessionType);
 
+  // For upper/lower splits: strictly enforce muscle-group separation
+  // Upper days MUST NOT contain lower-body exercises and vice versa
+  const UPPER_MUSCLES = new Set(['chest','back-upper','back-lower','lats','shoulders','biceps','triceps','forearms']);
+  const LOWER_MUSCLES = new Set(['quads','hamstrings','glutes','hips','calves','core']);
+  const PUSH_MUSCLES  = new Set(['chest','shoulders','triceps']);
+  const PULL_MUSCLES  = new Set(['back-upper','back-lower','lats','biceps','forearms']);
+  const isUpperSession = sessionType === 'upper';
+  const isLowerSession = sessionType === 'lower' || sessionType === 'legs';
+  const isPushSession  = sessionType === 'push';
+  const isPullSession  = sessionType === 'pull';
+
   // Pure glute isolation exercises — get a hard priority boost when glutes are the goal
   const PURE_GLUTE_IDS = new Set(['glute_bridge','hip_thrust_db','hip_thrust_bb','fire_hydrant','donkey_kick','cable_kickback','hip_abduct_mach']);
 
@@ -10221,12 +10232,40 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
         return e.goals.includes(sessionType);
       }
 
-      // Standard mode: match by muscle OR goal
+      // ── STRICT UPPER/LOWER SEPARATION ────────────────────
+      // Upper sessions: only exercises whose PRIMARY muscle is an upper body muscle
+      // Lower sessions: only exercises whose PRIMARY muscle is a lower body muscle
+      // Push: chest/shoulders/triceps only. Pull: back/lats/biceps only.
+      // This prevents squats showing up on chest day, or bench press on leg day
+      if (isUpperSession) {
+        const primary = e.muscles[0];
+        if (!UPPER_MUSCLES.has(primary)) return false;
+      }
+      if (isLowerSession) {
+        const primary = e.muscles[0];
+        if (!LOWER_MUSCLES.has(primary)) return false;
+      }
+      if (isPushSession) {
+        const primary = e.muscles[0];
+        if (!PUSH_MUSCLES.has(primary)) return false;
+      }
+      if (isPullSession) {
+        const primary = e.muscles[0];
+        if (!PULL_MUSCLES.has(primary)) return false;
+      }
+
+      // Standard mode: match by muscle in session's musclePriority list
       const muscleMatch = e.muscles.some(m => musclePriority.includes(m));
-      const goalMatch   = e.goals.some(g => goalIds.includes(g));
       // Exclude mode-exclusive exercises from standard sessions
       const isExclusiveEx = exclusiveModes.some(m => e.goals.includes(m) && !goalIds.includes(m));
       if (isExclusiveEx) return false;
+
+      // For split sessions: muscle match is REQUIRED (no goal-only fallback)
+      // For fullbody: allow goal match as fallback
+      if (isUpperSession || isLowerSession || isPushSession || isPullSession) {
+        return muscleMatch;
+      }
+      const goalMatch = e.goals.some(g => goalIds.includes(g));
       return muscleMatch || goalMatch;
     })
     .map(e => {
