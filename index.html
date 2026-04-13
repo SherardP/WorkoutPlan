@@ -8789,18 +8789,12 @@ async function wizApplyAndGenerate() {
   userGoals.specialFlags = userGoals.specialFlags.filter(f =>
     !['flag-beginner','flag-advanced','flag-onoff'].includes(f));
   if (wizState.habit === 'new') {
-    // Under 3 months: habit-building mode — shorter, simpler
+    // Under 3 months: habit-building mode — add beginner flag, science warning already shown
     userGoals.specialFlags.push('flag-beginner');
-    if (userGoals.sessionDuration > 45) userGoals.sessionDuration = 45;
     userGoals.defaultSets = userGoals.defaultSets || 3;
   } else if (wizState.habit === 'onoff') {
-    // On-and-off: moderate, add variety flag
     userGoals.specialFlags.push('flag-onoff');
-  } else if (wizState.habit === 'solid') {
-    // 6+ months consistent: standard progressive overload
-    // No special flags — normal program
   } else if (wizState.habit === 'locked') {
-    // Years of consistent training: advanced
     userGoals.specialFlags.push('flag-advanced');
     userGoals.defaultSets = Math.max(userGoals.defaultSets || 3, 4);
   }
@@ -8817,17 +8811,17 @@ async function wizApplyAndGenerate() {
   }
 
   // ── Q4: Biggest struggle ─────────────────────────────────
+  // NOTE: wizard never overwrites user-set sessionDuration — science warnings already advise.
+  // Wizard only adds/removes flags to influence exercise selection and volume.
   userGoals.specialFlags = userGoals.specialFlags.filter(f =>
     !['flag-hiit','flag-lowimpact','flag-struggle-results'].includes(f));
   if (wizState.struggle === 'consistency') {
-    // Lower barrier: shorter sessions
-    if (!userGoals.sessionDuration || userGoals.sessionDuration > 45) userGoals.sessionDuration = 45;
+    // Lower barrier: add flag so generator reduces complexity, but do NOT change duration
+    userGoals.specialFlags.push('flag-lowvolume');
   } else if (wizState.struggle === 'results') {
-    // Not seeing results: force progressive overload, variation, higher volume
     userGoals.specialFlags.push('flag-struggle-results');
     userGoals.defaultSets = Math.max(userGoals.defaultSets || 3, 4);
   } else if (wizState.struggle === 'intensity') {
-    // Not pushing hard: strength focus + HIIT circuits
     userGoals.specialFlags.push('flag-hiit');
     if (!userGoals.trainingFocus) userGoals.trainingFocus = [];
     if (!userGoals.trainingFocus.includes('focus-strength')) {
@@ -8836,11 +8830,10 @@ async function wizApplyAndGenerate() {
       if (!userGoals.focusPriority.includes('focus-strength')) userGoals.focusPriority.unshift('focus-strength');
     }
   } else if (wizState.struggle === 'injury') {
-    // Getting hurt: low impact + extended warm-up + progression ladders
     userGoals.specialFlags.push('flag-lowimpact');
   } else if (wizState.struggle === 'time') {
-    // No time: short dense sessions, compound only
-    if (!userGoals.sessionDuration || userGoals.sessionDuration > 45) userGoals.sessionDuration = 45;
+    // No time: flag only — user's duration setting is respected
+    userGoals.specialFlags.push('flag-lowvolume');
   }
 
   // Save everything to Firebase then generate
