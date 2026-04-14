@@ -2,6 +2,51 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+// ── Source Protection ─────────────────────────────────────
+// Raises the effort bar for casual source copying.
+// Note: cannot prevent a determined developer — true protection requires server-side logic.
+(function(){
+  // Disable right-click context menu
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); return false; });
+
+  // Disable common keyboard shortcuts for viewing source / dev tools
+  document.addEventListener('keydown', function(e){
+    // Ctrl+U (view source), Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (DevTools)
+    // Ctrl+S (save page), Ctrl+A (select all)  Ctrl+P (print/save as PDF)
+    const blocked = (
+      (e.ctrlKey && e.key === 'u') ||
+      (e.ctrlKey && e.key === 's') ||
+      (e.ctrlKey && e.key === 'p') ||
+      (e.ctrlKey && e.shiftKey && ['i','j','c','k'].includes(e.key.toLowerCase())) ||
+      (e.key === 'F12')
+    );
+    if (blocked){ e.preventDefault(); e.stopPropagation(); return false; }
+  }, true);
+
+  // DevTools size-change detection — if window inner vs outer dimensions differ significantly
+  // a DevTools panel is likely open
+  var _devOpen = false;
+  function checkDevTools(){
+    var widthDiff  = window.outerWidth  - window.innerWidth  > 200;
+    var heightDiff = window.outerHeight - window.innerHeight > 300;
+    if ((widthDiff || heightDiff) && !_devOpen){
+      _devOpen = true;
+      document.body.style.display = 'none';
+      setTimeout(function(){ document.body.style.display = ''; _devOpen = false; }, 3000);
+    }
+  }
+  setInterval(checkDevTools, 1500);
+
+  // Disable text selection on the page body (makes scraping harder)
+  document.addEventListener('selectstart', function(e){
+    // Allow selection inside inputs and textareas
+    var t = e.target.tagName;
+    if (t === 'INPUT' || t === 'TEXTAREA') return true;
+    e.preventDefault(); return false;
+  });
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OperatorFit — Strength & Conditioning System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10547,45 +10592,93 @@ function generateProgram() {
     if (effectiveSplit === 'upper_lower') {
       splitType  = 'upper_lower';
       splitLabel = freq >= 6 ? 'Upper / Lower Split (6-Day)' : 'Upper / Lower Split';
-      // Science: strict alternation, never two of same type back-to-back
-      // 6-day: U-L-U-L-U-L, 4-day: U-L-U-L, 3-day: U-L-U
-      const ulTypes = ['upper','lower','upper','lower','upper','lower'];
+
+      // Priority-driven start: if user's top muscles are lower-body, start with lower
+      // Maps muscle → session type
+      const muscleToSplit = {
+        chest:'upper', 'back-upper':'upper', 'back-lower':'upper', lats:'upper',
+        shoulders:'upper', biceps:'upper', triceps:'upper', forearms:'upper',
+        quads:'lower', hamstrings:'lower', glutes:'lower', hips:'lower',
+        calves:'lower', core:'lower',
+      };
+      const priorityMuscleList = userMusclePriorityList.slice(0, 4);
+      const lowerScore = priorityMuscleList.filter(m => muscleToSplit[m] === 'lower').length;
+      const upperScore = priorityMuscleList.filter(m => muscleToSplit[m] === 'upper').length;
+      // Start with whichever has more priority muscles; tie → lower (common ask for glutes)
+      const startType = lowerScore >= upperScore ? 'lower' : 'upper';
+
       const ulSubsA = 'Chest · Back · Shoulders · Arms';
-      const ulSubsB = `${glutesIsPriority ? 'Glutes · Hamstrings · Quads' : 'Quads · Hamstrings · Glutes'} · Calves`;
-      daySchedule = activeDays.map((d,i) => ({
-        day: d,
-        type:  ulTypes[i%2],
-        label: i%2===0 ? 'UPPER BODY' : 'LOWER BODY',
-        sub:   i%2===0
-          ? (i<2 ? ulSubsA : i<4 ? 'Upper Body — Variation B' : 'Upper Body — Variation C')
-          : (i<2 ? ulSubsB : i<4 ? 'Lower Body — Variation B' : 'Lower Body — Variation C'),
-      }));
+      const ulSubsB = `${glutesIsPriority ? 'Glutes · Hips · Hamstrings' : 'Quads · Hamstrings · Glutes'} · Calves`;
+      const labA = startType === 'upper' ? 'UPPER BODY' : 'LOWER BODY';
+      const labB = startType === 'upper' ? 'LOWER BODY' : 'UPPER BODY';
+      const subA = startType === 'upper' ? ulSubsA : ulSubsB;
+      const subB = startType === 'upper' ? ulSubsB : ulSubsA;
+      const varLabA = (n) => startType==='upper'
+        ? ['Upper Body','Upper Body — Variation B','Upper Body — Variation C'][n]||'Upper Body'
+        : ['Lower Body','Lower Body — Variation B','Lower Body — Variation C'][n]||'Lower Body';
+      const varLabB = (n) => startType==='upper'
+        ? ['Lower Body','Lower Body — Variation B','Lower Body — Variation C'][n]||'Lower Body'
+        : ['Upper Body','Upper Body — Variation B','Upper Body — Variation C'][n]||'Upper Body';
+
+      // Strict alternation — type toggles every day
+      daySchedule = activeDays.map((d,i) => {
+        const isA = i % 2 === 0;
+        const pair = Math.floor(i/2);
+        return {
+          day: d,
+          type:  isA ? startType : (startType === 'upper' ? 'lower' : 'upper'),
+          label: isA ? labA : labB,
+          sub:   isA ? (pair===0 ? subA : varLabA(pair)) : (pair===0 ? subB : varLabB(pair)),
+        };
+      });
+
     } else if (effectiveSplit === 'fullbody') {
       splitType  = 'fullbody';
       splitLabel = 'Full Body';
       daySchedule = activeDays.map((d,i) => ({ day:d, type:'fullbody', label:`FULL BODY ${i+1}`, sub:'All major muscle groups' }));
     } else {
-      // PPL
+      // PPL — reorder push/pull/legs cycle to put highest-priority session first
+      const muscleToPpl = {
+        chest:'push', shoulders:'push', triceps:'push',
+        'back-upper':'pull', lats:'pull', biceps:'pull', 'back-lower':'pull', forearms:'pull',
+        quads:'legs', hamstrings:'legs', glutes:'legs', hips:'legs', calves:'legs', core:'legs',
+      };
+      // Score each PPL session type by priority rank
+      const pplScores = { push:0, pull:0, legs:0 };
+      userMusclePriorityList.forEach((m, rankIdx) => {
+        const s = muscleToPpl[m];
+        if (s) pplScores[s] += (5 - rankIdx); // higher rank = more points
+      });
+      // Sort sessions by score descending → highest priority goes first
+      const pplOrder = ['push','pull','legs'].sort((a,b) => pplScores[b] - pplScores[a]);
+      const pplLabels = { push:'PUSH', pull:'PULL', legs:'LEGS' };
+      const pplSubs   = {
+        push: 'Chest · Shoulders · Triceps',
+        pull: 'Back · Biceps · Rear Delts',
+        legs: glutesIsPriority ? 'Glutes · Hips · Hamstrings · Quads' : 'Quads · Hamstrings · Glutes',
+      };
+
       if (freq >= 5) {
         splitType  = freq >= 6 ? 'ppl' : 'ppl_ul';
         splitLabel = freq >= 6 ? 'Push / Pull / Legs (6-Day)' : 'Push / Pull / Legs + Upper/Lower';
-        const types6 = ['push','pull','legs','push','pull','legs'];
-        const labs6  = ['PUSH A','PULL A','LEGS A','PUSH B','PULL B','LEGS B'];
-        const subs6  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Push Variation B','Pull Variation B','Legs Variation B'];
-        const types5 = ['push','pull','legs','upper','lower'];
-        const labs5  = ['PUSH','PULL','LEGS','UPPER','LOWER'];
-        const subs5  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes','Full Upper Body','Full Lower Body'];
-        const t = freq >= 6 ? types6 : types5;
-        const l = freq >= 6 ? labs6  : labs5;
-        const s = freq >= 6 ? subs6  : subs5;
+        // 6-day: run pplOrder twice (A then B variations)
+        // 5-day: pplOrder once + upper + lower
+        const t = freq >= 6
+          ? [...pplOrder, ...pplOrder]
+          : [...pplOrder, 'upper','lower'];
+        const l = freq >= 6
+          ? [...pplOrder.map(p=>pplLabels[p]+' A'), ...pplOrder.map(p=>pplLabels[p]+' B')]
+          : [...pplOrder.map(p=>pplLabels[p]), 'UPPER', 'LOWER'];
+        const s = freq >= 6
+          ? [...pplOrder.map(p=>pplSubs[p]), ...pplOrder.map(p=>pplSubs[p]+' — Variation B')]
+          : [...pplOrder.map(p=>pplSubs[p]), 'Full Upper Body', 'Full Lower Body'];
         daySchedule = activeDays.map((d,i) => ({ day:d, type:t[i%t.length], label:l[i%t.length], sub:s[i%t.length] }));
       } else {
         splitType  = 'ppl';
         splitLabel = 'Push / Pull / Legs';
-        const types3 = ['push','pull','legs'];
-        const labs3  = ['PUSH','PULL','LEGS'];
-        const subs3  = ['Chest · Shoulders · Triceps','Back · Biceps · Rear Delts','Quads · Hamstrings · Glutes'];
-        daySchedule = activeDays.map((d,i) => ({ day:d, type:types3[i%3], label:labs3[i%3], sub:subs3[i%3] }));
+        daySchedule = activeDays.map((d,i) => ({
+          day:d, type:pplOrder[i%3], label:pplLabels[pplOrder[i%3]], sub:pplSubs[pplOrder[i%3]]
+        }));
       }
     }
   }
