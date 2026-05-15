@@ -243,9 +243,9 @@ const EX_DB = [
   {id:'yoga_plank_yog',  name:'Yoga Plank Hold',          muscles:['core','shoulders','chest'],          eq:[],              impact:'low',  goals:['yoga','strength','tone'],          sets_h:'3×45s',sets_s:'3×30s',rest_h:30,rest_s:45,         ytId:'ASdvN_XEl_c'},
   {id:'yoga_yin_strap',  name:'Yin Dragon Pose',          muscles:['quads','hamstrings','glutes'],       eq:[],              impact:'low',  goals:['yoga','mobility','lowimpact'],     sets_h:'2×3 min/side',sets_s:'1×2 min',rest_h:60,rest_s:60, ytId:'O11Md_bJCfk'},
   {id:'yoga_yin_butter', name:'Yin Butterfly Pose',       muscles:['hamstrings','glutes'],               eq:[],              impact:'low',  goals:['yoga','mobility','lowimpact'],     sets_h:'1×3 min',sets_s:'1×2 min',rest_h:60,rest_s:60,      ytId:'O11Md_bJCfk'},
-  {id:'yoga_power_flow', name:'Power Yoga Flow',          muscles:['chest','core','shoulders','quads'],  eq:[],              impact:'mod',  goals:['yoga','fat','endurance'],          sets_h:'1×20 min',sets_s:'1×15 min',rest_h:0,rest_s:0,      ytId:'eqVMAPM00GM', block_from_generator:true},
-  {id:'yoga_ashtanga',   name:'Ashtanga Primary Series',  muscles:['chest','core','back-upper','quads','hamstrings'],eq:[],  impact:'mod',  goals:['yoga','strength','endurance'],    sets_h:'1×30 min',sets_s:'1×20 min',rest_h:0,rest_s:0,      ytId:'eqVMAPM00GM', block_from_generator:true},
-  {id:'yoga_restorative',name:'Restorative Yoga Session', muscles:[],                                    eq:[],              impact:'low',  goals:['yoga','mobility','lowimpact','posture'],sets_h:'1×30 min',sets_s:'1×20 min',rest_h:0,rest_s:0, ytId:'eqVMAPM00GM', block_from_generator:true},
+  {id:'yoga_power_flow', name:'Power Yoga Flow',          muscles:['chest','core','shoulders','quads'],  eq:[],              impact:'mod',  goals:['yoga','fat','endurance'],          sets_h:'1×20 min',sets_s:'1×15 min',rest_h:0,rest_s:0,      ytId:'eqVMAPM00GM'},
+  {id:'yoga_ashtanga',   name:'Ashtanga Primary Series',  muscles:['chest','core','back-upper','quads','hamstrings'],eq:[],  impact:'mod',  goals:['yoga','strength','endurance'],    sets_h:'1×30 min',sets_s:'1×20 min',rest_h:0,rest_s:0,      ytId:'eqVMAPM00GM'},
+  {id:'yoga_restorative',name:'Restorative Yoga Session', muscles:[],                                    eq:[],              impact:'low',  goals:['yoga','mobility','lowimpact','posture'],sets_h:'1×30 min',sets_s:'1×20 min',rest_h:0,rest_s:0, ytId:'eqVMAPM00GM'},
 
   // ── PILATES ─────────────────────────────────────────────
   {id:'pil_hundred',     name:'The Hundred',              muscles:['core'],                              eq:[],              impact:'low',  goals:['pilates','tone','strength'],       sets_h:'3×100 pumps',sets_s:'2×100',rest_h:60,rest_s:60,   ytId:'ASdvN_XEl_c'},
@@ -658,10 +658,7 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
     .filter(e => {
       if (!userHasEquipment(e.eq, eq)) return false;
       if (isLowImpact && e.impact === 'high') return false;
-      if (e.block_from_generator) return false;
 
-      // Mode-exclusive sessions (yoga/pilates/calisthenics/military) only draw
-      // from their own exercise pool — match by sessionType goal tag only
       if (isExclusiveMode) {
         return e.goals.includes(sessionType);
       }
@@ -815,37 +812,6 @@ function exerciseToWorkoutItem(ex, dayKey, idx, isStrength, defaultSets) {
     desc: `Targets: ${ex.muscles.join(', ')}. ${sets} · ${restStr ? restStr + ' rest' : 'minimal rest'}.`,
     generated: true,
     progressions: ex.progressions || null, // carry the progression ladder
-  };
-}
-
-// ── Pump-specific item converter ─────────────────────────
-// Science: metabolic stress / sarcoplasmic hypertrophy protocol.
-// Schoenfeld (2013): high-rep sets at ~50-60% 1RM with short rest maximise
-// lactate, H+ ion, and GH accumulation — a distinct stimulus from the
-// mechanical tension of the core workout's heavier sets. Both stimuli
-// together produce more hypertrophy than either alone.
-// Protocol: 3 sets x 15-20 reps, 30-45 sec rest, ~50-60% working weight.
-function pumpExerciseToWorkoutItem(ex, dayKey, idx) {
-  // Push reps higher than the exercise's normal working range
-  const baseReps = ex.sets_h || '3x12';
-  const topRepMatch = baseReps.match(/[x×](\d+)/);
-  const topRep = topRepMatch ? parseInt(topRepMatch[1]) : 12;
-  const pumpReps = topRep <= 10 ? '15-20' : topRep <= 14 ? '20-25' : '25-30';
-
-  return {
-    id: `gen_${dayKey}_${idx}_${ex.id}`,
-    name: ex.name.toUpperCase(),
-    badge: 'PUMP',
-    sets: `3x${pumpReps}`,
-    rest: '30-45 sec',
-    ytId: ex.ytId || '',
-    desc: `PUMP SET — ${ex.muscles.join(', ')}. Use ~50-60% of your working weight. ` +
-          `Focus on the squeeze and the burn, not the load. ` +
-          `Short rest keeps metabolites (lactate, H+) elevated — ` +
-          `this drives the growth hormone response that complements the heavy work above.`,
-    generated: true,
-    pump: true,
-    progressions: null,
   };
 }
 
@@ -1121,7 +1087,6 @@ function generateProgram() {
   const cardioFinisher = (isFatLoss || isEndurance) && !suppressHIIT ? EX_DB.filter(e => {
     if (!userHasEquipment(e.eq, eq)) return false;
     if (isLowImpact && e.impact === 'high') return false;
-    if (e.block_from_generator) return false;
     return e.goals.includes('fat') || e.goals.includes('endurance');
   }).slice(0,1) : [];
 
@@ -1180,62 +1145,20 @@ function generateProgram() {
       exercises.push(cardioFinisher[0]);
     }
 
-    // ── PUMP WORKOUT — 2–3 lighter high-rep exercises, same muscles, different from core ──
-    // Hard-exclude core exercise EX_DB ids so there's truly zero overlap.
-    // pickExercises only penalises alreadyUsed — so we pre-filter EX_DB down to
-    // exercises NOT in the core set, run the scorer on that subset, then restore EX_DB.
-    const coreExIds = new Set(exercises.map(e => {
-      // Generated ids are "gen_day_idx_exId" — extract the base EX_DB id
-      const parts = e.id.split('_');
-      return parts.length >= 4 ? parts.slice(3).join('_') : e.id;
-    }));
-
-    // Temporarily swap EX_DB to the filtered subset for the pump pick
-    const _fullEX_DB = EX_DB.splice(0);                        // remove all items
-    const pumpPool   = _fullEX_DB.filter(e => !coreExIds.has(e.id) && !e.block_from_generator);
-    EX_DB.push(...pumpPool);                                    // only non-core exercises
-
-    const pumpExercises = pickExercises(
-      boostedMuscles, goalIds, eq, isLowImpact,
-      false,         // pump is never strength-focused — always hypertrophy/tone rep ranges
-      3,             // pick up to 3 pump exercises
-      ds.type, goalPriorityMap, glutesIsPriority,
-      new Set(),     // alreadyUsed is empty — exclusion handled by pool filter above
-      true           // maximise variation
-    );
-
-    // Restore full EX_DB
-    EX_DB.splice(0);
-    EX_DB.push(..._fullEX_DB);
-
     const wuType = ['push','pull','legs','yoga','pilates','calisthenics','military'].includes(ds.type) ? ds.type
       : ds.type === 'lower' ? 'legs' : ds.type === 'upper' ? 'upper' : 'fullbody';
     const cdType = wuType;
-
-    // ── PREVIOUS DAY STRETCH — use the PREVIOUS active workout day's session type ──
-    // This way: if today is an upper day preceded by a lower day, the opening
-    // stretches target the legs/glutes that were trained yesterday — not today's muscles.
-    const prevDs = idx > 0 ? daySchedule[idx - 1] : null;
-    const prevType = prevDs
-      ? (['push','pull','legs','yoga','pilates','calisthenics','military'].includes(prevDs.type)
-          ? prevDs.type
-          : prevDs.type === 'lower' ? 'legs' : prevDs.type === 'upper' ? 'upper' : 'fullbody')
-      : null;
-    const prevDayStretches = prevType
-      ? (PREV_DAY_STRETCH_DB[prevType] || PREV_DAY_STRETCH_DB.fullbody).map(w => ({ ...w }))
-      : []; // first day of week — no previous workout day, skip section
 
     programDays[ds.day] = {
       title: ds.label,
       sub: ds.sub,
       sessionType: ds.type,
       rest: false,
-      prevDayStretch: prevDayStretches,
-      preStretch:     (PRE_STRETCH_DB[wuType]  || PRE_STRETCH_DB.fullbody).map(w => ({ ...w })),
-      warmup:         (WARMUP_DB[wuType]        || WARMUP_DB.fullbody).map(w => ({ ...w })),
+      prevDayStretch: (PREV_DAY_STRETCH_DB[wuType] || PREV_DAY_STRETCH_DB.fullbody).map(w => ({ ...w })),
+      preStretch:     (PRE_STRETCH_DB[wuType]       || PRE_STRETCH_DB.fullbody).map(w => ({ ...w })),
+      warmup:         (WARMUP_DB[wuType]             || WARMUP_DB.fullbody).map(w => ({ ...w })),
       exercises:      exercises.map((ex, i) => exerciseToWorkoutItem(ex, ds.day + '_' + idx, i, isStrength, goals.defaultSets)),
-      pump:           pumpExercises.map((ex, i) => pumpExerciseToWorkoutItem(ex, ds.day + '_pump_' + idx, i)),
-      cooldown:       (COOLDOWN_DB[cdType]      || COOLDOWN_DB.fullbody).map(c => ({ ...c })),
+      cooldown:       (COOLDOWN_DB[cdType]           || COOLDOWN_DB.fullbody).map(c => ({ ...c })),
     };
   });
 
@@ -1244,7 +1167,7 @@ function generateProgram() {
   ALL_DAYS.forEach(d => {
     if (!programDays[d]) {
       programDays[d] = { title:'REST DAY', sub:'Recovery & Mobility', rest:true,
-        prevDayStretch:[], preStretch:[], warmup:[], exercises:[], pump:[], cooldown:[] };
+        prevDayStretch:[], preStretch:[], warmup:[], exercises:[], cooldown:[] };
     }
   });
 
@@ -1393,13 +1316,7 @@ async function getOrLoadProgram() {
 // Returns the active workout day map (generated program or static fallback)
 function getActiveWorkouts() {
   if (SESSION._program) return SESSION._program.days;
-  const raw = SESSION.gender === 'female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
-  // Ensure all days have a pump array (static data predates the pump feature)
-  const patched = {};
-  for (const [key, day] of Object.entries(raw)) {
-    patched[key] = day.pump ? day : { ...day, pump: [] };
-  }
-  return patched;
+  return SESSION.gender === 'female' ? WORKOUTS_FEMALE : WORKOUTS_MALE;
 }
 
 const WORKOUTS_MALE = {
@@ -1743,8 +1660,8 @@ async function showWorkoutDay(dayId) {
 
   exerciseWeights = {};
 
-  const totalItems  = (w.prevDayStretch||[]).length + (w.preStretch||[]).length + (w.warmup||[]).length + (w.exercises||[]).length + (w.pump||[]).length + (w.cooldown||[]).length;
-  const allItems    = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.pump||[]), ...(w.cooldown||[])];
+  const totalItems  = (w.prevDayStretch||[]).length + (w.preStretch||[]).length + (w.warmup||[]).length + (w.exercises||[]).length + (w.cooldown||[]).length;
+  const allItems    = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
   const checkedCount = allItems.filter(i => workoutChecks[i.id]).length;
   const pct = totalItems > 0 ? Math.round(checkedCount / totalItems * 100) : 0;
 
@@ -1777,13 +1694,12 @@ async function showWorkoutDay(dayId) {
 
     ${renderCalorieBurnCard(dayId, w)}
     ${(w.prevDayStretch||[]).length ? renderWorkoutSection(
-      'PREVIOUS WORKOUT STRETCHES', '😌', 'Static holds for yesterday\'s trained muscles — SKIP if not sore',
+      'PREVIOUS DAY STRETCH', '😌', 'Static release for yesterday\'s sore muscles — SKIP if not sore',
       w.prevDayStretch, dayId, true) : ''}
-    ${renderWorkoutSection('WARM-UP', '🔥', 'Raise heart rate and body temperature before loading', w.preStretch||[], dayId)}
-    ${renderWorkoutSection('MUSCLE ACTIVATION', '⚡', 'Prime today\'s target muscles before the core workout', w.warmup||[], dayId)}
-    ${renderWorkoutSection('CORE WORKOUT', '💪', 'Main Training Block — heavy compound work', w.exercises||[], dayId)}
-    ${(w.pump||[]).length ? renderWorkoutSection('PUMP WORKOUT', '🔁', 'Lighter high-rep finisher — same muscles, more blood flow, metabolic flush', w.pump||[], dayId) : ''}
-    ${renderWorkoutSection('STRETCHING TODAY\'S MUSCLES', '❄️', 'Static stretches for today\'s trained muscles — 60–90 sec holds (best post-workout timing)', w.cooldown||[], dayId)}
+    ${renderWorkoutSection('PRE-WORKOUT STRETCH', '🤸', 'Dynamic mobility for today\'s target muscles — <45 sec holds', w.preStretch||[], dayId)}
+    ${renderWorkoutSection('MUSCLE ACTIVATION', '⚡', 'Prime the right muscles before loading them', w.warmup||[], dayId)}
+    ${renderWorkoutSection('CORE WORKOUT', '💪', 'Main Training Block', w.exercises||[], dayId)}
+    ${renderWorkoutSection('COOL-DOWN STRETCH', '❄️', 'Static stretches for today\'s muscles — 60–90 sec holds (best post-workout timing)', w.cooldown||[], dayId)}
 
     <div class="card" style="margin-top:16px;border-left:4px solid var(--border2);">
       <div class="card-label">MANDATORY SESSION END</div>
@@ -1901,7 +1817,6 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = f
   if (!items || items.length === 0) return '';
   const typeColor = {stretch:'#64b5f6', activate:'#ffb74d'};
   const typeLabel = {stretch:'STRETCH', activate:'ACTIVATE'};
-  const badgeColor = {'PUMP':'#ce93d8','HYPERTROPHY':'#80cbc4','STRENGTH':'#ef9a9a','TONE':'#a5d6a7','CONDITIONING':'#90caf9'};
   const skipBadge = skippable
     ? `<span style="font-family:var(--font-mono);font-size:0.55rem;color:#ff9800;
         background:rgba(255,152,0,0.1);border:1px solid #ff9800;padding:2px 8px;margin-left:8px;">
@@ -1925,7 +1840,7 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = f
     </div>
     ${items.map(item => {
       const checked    = !!workoutChecks[item.id];
-      const typeC      = item.type ? typeColor[item.type]||'var(--border2)' : badgeColor[item.badge]||'var(--border2)';
+      const typeC      = item.type ? typeColor[item.type]||'var(--border2)' : 'var(--border2)';
       const typeL      = item.type ? typeLabel[item.type]||'' : item.badge||'';
       const isWeighted = WEIGHTED_EXERCISES.has(item.name?.toUpperCase());
       const savedLbs   = exerciseWeights[item.id] || '';
@@ -2251,7 +2166,7 @@ function syncWeightInput(itemId, fromUnit) {
 function findExerciseById(itemId) {
   const W = getActiveWorkouts();
   for (const day of Object.values(W)) {
-    for (const list of [day.prevDayStretch, day.preStretch, day.warmup, day.exercises, day.pump, day.cooldown]) {
+    for (const list of [day.prevDayStretch, day.preStretch, day.warmup, day.exercises, day.cooldown]) {
       const found = list?.find(i => i.id === itemId);
       if (found) return found;
     }
@@ -2264,7 +2179,7 @@ function updateSectionProgress(dayId) {
   const W = getActiveWorkouts();
   const w = W[dayId];
   if (!w) return;
-  const allItems = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.pump||[]), ...(w.cooldown||[])];
+  const allItems = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
   const checkedCount = allItems.filter(i => workoutChecks[i.id]).length;
   const pct = Math.round(checkedCount / allItems.length * 100);
   // Update progress bar
@@ -2461,7 +2376,7 @@ async function markWorkoutComplete(dayId) {
   const w = W[dayId];
 
   // Check all items
-  [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.pump||[]), ...(w.cooldown||[])].forEach(item => {
+  [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])].forEach(item => {
     workoutChecks[item.id] = true;
   });
 
@@ -2476,9 +2391,9 @@ async function markWorkoutComplete(dayId) {
       });
   } catch(e) {}
 
-  // Build rich exercise summary — warmup, core, pump, cooldown all included
+  // Build rich exercise summary — warmup, core, cooldown all included
   const weightLbs = SESSION.weight || 0;
-  const allItems = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.pump||[]), ...(w.cooldown||[])];
+  const allItems = [...(w.prevDayStretch||[]), ...(w.preStretch||[]), ...(w.warmup||[]), ...(w.exercises||[]), ...(w.cooldown||[])];
   let totalCalsBurned = 0;
 
   const exerciseLines = allItems.map(item => {
@@ -2510,33 +2425,17 @@ async function markWorkoutComplete(dayId) {
     return `${item.name}${bwNote}${setDetail}${calNote}`;
   });
 
-  // Section headers — slice in order: prevDayStretch, preStretch, warmup, exercises, pump, cooldown
-  const prevStretchCount = (w.prevDayStretch||[]).length;
-  const preStretchCount  = (w.preStretch||[]).length;
-  const warmupCount      = (w.warmup||[]).length;
-  const coreCount        = (w.exercises||[]).length;
-  const pumpCount        = (w.pump||[]).length;
-
-  let offset = 0;
-  const prevStretchLines = exerciseLines.slice(offset, offset += prevStretchCount);
-  const preStretchLines  = exerciseLines.slice(offset, offset += preStretchCount);
-  const warmupLines      = exerciseLines.slice(offset, offset += warmupCount);
-  const coreLines        = exerciseLines.slice(offset, offset += coreCount);
-  const pumpLines        = exerciseLines.slice(offset, offset += pumpCount);
-  const cooldownLines    = exerciseLines.slice(offset);
+  // Section headers
+  const warmupLines   = allItems.slice(0, w.warmup.length).map((_,i) => exerciseLines[i]);
+  const coreLines     = allItems.slice(w.warmup.length, w.warmup.length + w.exercises.length).map((_,i) => exerciseLines[w.warmup.length + i]);
+  const cooldownLines = allItems.slice(w.warmup.length + w.exercises.length).map((_,i) => exerciseLines[w.warmup.length + w.exercises.length + i]);
 
   const exerciseSummary = [
-    prevStretchLines.length ? '── PREVIOUS WORKOUT STRETCHES ──' : null,
-    ...prevStretchLines,
-    preStretchLines.length  ? '── WARM-UP ──' : null,
-    ...preStretchLines,
-    warmupLines.length      ? '── MUSCLE ACTIVATION ──' : null,
+    '── WARM-UP ──',
     ...warmupLines,
     '── CORE WORKOUT ──',
     ...coreLines,
-    pumpLines.length        ? '── PUMP WORKOUT ──' : null,
-    ...pumpLines,
-    cooldownLines.length    ? '── STRETCHING TODAY\'S MUSCLES ──' : null,
+    '── COOL-DOWN ──',
     ...cooldownLines,
     '',
     `TOTAL CALORIES BURNED: ~${totalCalsBurned} kcal`,
@@ -2550,7 +2449,7 @@ async function markWorkoutComplete(dayId) {
     if (s.startsWith('4×') || s.startsWith('4x')) return sum + 4;
     return sum + 3;
   }, 0);
-  const estMinutes = Math.round(totalSets * 2.5 + (w.warmup||[]).length * 3 + (w.pump||[]).length * 4 + (w.cooldown||[]).length * 2);
+  const estMinutes = Math.round(totalSets * 2.5 + w.warmup.length * 3 + w.cooldown.length * 2);
 
   // Upsert workout log entry
   const entry = {

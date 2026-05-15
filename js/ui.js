@@ -2,7 +2,6 @@
 // ui.js - Reusable UI Components, Charts, Toasts
 // =============================================
 
-let charts = {};
 
 // Destroy chart to prevent memory leaks
 function destroyChart(id) {

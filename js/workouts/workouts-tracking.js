@@ -1,13 +1,11 @@
-// =============================================
+// ═══════════════════════════════════════════════════════════
 // workouts-tracking.js - Set Tracking & Logging
-// =============================================
+// ═══════════════════════════════════════════════════════════
 
-let workoutChecks = {};
-let exerciseActuals = {};
-let exerciseWeights = {};
+{
 
 // Toggle exercise complete
-async function toggleCheck(itemId, dayId) {
+window.toggleCheck = async function(itemId, dayId) {
     workoutChecks[itemId] = !workoutChecks[itemId];
     const checked = workoutChecks[itemId];
 
@@ -22,6 +20,7 @@ async function toggleCheck(itemId, dayId) {
     await saveWorkoutProgress(dayId);
     toast(checked ? "Exercise marked complete" : "Exercise unmarked", 1200);
 }
+};
 
 // Render set tracker inside exercise body
 function renderSetTracker(itemId, dayId) {
