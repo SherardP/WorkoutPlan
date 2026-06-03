@@ -501,125 +501,104 @@ async function _renderLogSummaryInner(el) {
       </div>
     </div>
 
-    <!-- ═══ CHARTS & LISTS — all config-driven ═══ -->
-    ${isDashCardVisible('chart-heatmap') ? `
-    <div class="card mb16">
-      <div class="card-label">WORKOUT CONSISTENCY</div>
-      <div class="card-title">LAST 30 DAYS</div>
-      <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px;">
-        ${last30.map(d => '<div title="'+d+'" style="height:26px;border-radius:3px;background:'+(workoutDates.has(d)?'var(--accent2)':'var(--bg3)')+';border:1px solid '+(workoutDates.has(d)?'var(--accent)':'var(--border)')+';opacity:'+(workoutDates.has(d)?'1':'0.35')+';"></div>').join('')}
-      </div>
-      <div style="display:flex;gap:16px;margin-top:8px;font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);">
-        <span>■ <span style="color:var(--accent2);">TRAINED</span></span>
-        <span>■ <span style="opacity:0.35;">REST</span></span>
-        <span style="margin-left:auto;">${workoutDates.size} of last 30 days</span>
-      </div>
-    </div>` : ''}
+    <!-- ═══ CHARTS & LISTS — rendered in user config order ═══ -->
+    ${getChartOrder().filter(function(item){ return item.on; }).map(function(item) {
+      var chartId = item.id;
+      function noData(label, tip) {
+        return '<div class="card mb16" style="border-style:dashed;opacity:0.7;">'
+          +'<div class="card-label">'+label+'</div>'
+          +'<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim);padding:12px 0;">'+tip+'</div></div>';
+      }
+      function chartCard(label, sub, canvasId, height) {
+        return '<div class="card mb16"><div class="card-label">'+label+'</div>'
+          +(sub?'<div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-bottom:8px;">'+sub+'</div>':'')
+          +'<canvas id="'+canvasId+'" height="'+(height||100)+'"></canvas></div>';
+      }
+      switch(chartId) {
+        case 'chart-heatmap':
+          return '<div class="card mb16"><div class="card-label">WORKOUT CONSISTENCY</div><div class="card-title">LAST 30 DAYS</div>'
+            +'<div style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px;">'
+            +last30.map(function(d){ return '<div title="'+d+'" style="height:26px;border-radius:3px;background:'+(workoutDates.has(d)?'var(--accent2)':'var(--bg3)')+';border:1px solid '+(workoutDates.has(d)?'var(--accent)':'var(--border)')+';opacity:'+(workoutDates.has(d)?'1':'0.35')+'"></div>'; }).join('')
+            +'</div><div style="display:flex;gap:16px;margin-top:8px;font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);">'
+            +'<span style="color:var(--accent2);">&#9632; TRAINED</span><span style="opacity:0.4;">&#9632; REST</span>'
+            +'<span style="margin-left:auto;">'+workoutDates.size+' of last 30 days</span></div></div>';
 
-    ${isDashCardVisible('chart-steps') ? `
-    <div class="card mb16">
-      <div class="card-label">LAST 30 DAYS</div>
-      <div class="card-title">DAILY STEPS</div>
-      <canvas id="summaryStepsChart" height="110"></canvas>
-    </div>` : ''}
+        case 'chart-steps':
+          return chartCard('DAILY STEPS — LAST 30 DAYS', '', 'summaryStepsChart', 110);
 
-    ${isDashCardVisible('chart-weight') && body.filter(b=>b.weight).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">BODY WEIGHT TREND</div>
-      <div class="card-title">WEIGHT OVER TIME</div>
-      <canvas id="summaryWeightChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-weight':
+          return body.filter(function(b){return b.weight;}).length >= 1
+            ? chartCard('WEIGHT TREND', '', 'summaryWeightChart')
+            : noData('WEIGHT TREND', 'Log body weight in Log Data &rarr; Body to see this chart.');
 
-    ${isDashCardVisible('chart-waist') && body.filter(b=>b.waist).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">PRIMARY FAT LOSS INDICATOR</div>
-      <div class="card-title">WAIST TREND</div>
-      <canvas id="summaryWaistChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-waist':
+          return body.filter(function(b){return b.waist;}).length >= 1
+            ? chartCard('WAIST TREND', 'Primary fat loss indicator', 'summaryWaistChart')
+            : noData('WAIST TREND', 'Log waist measurement in Log Data &rarr; Body. Tape at narrowest point, usually 1 inch above navel.');
 
-    ${isDashCardVisible('chart-sleep') && body.filter(b=>b.sleep).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">RECOVERY</div>
-      <div class="card-title">SLEEP & STRESS — LAST 14 DAYS</div>
-      <canvas id="summarySleepChart" height="110"></canvas>
-    </div>` : ''}
+        case 'chart-arm':
+          return body.filter(function(b){return b.arm||b.arm_r||b.arm_l;}).length >= 1
+            ? chartCard('ARM SIZE — UPPER ARM CIRCUMFERENCE', 'Flexed at fullest point &nbsp;&#183;&nbsp; Bicep + tricep combined &nbsp;&#183;&nbsp; Right &amp; Left shown as separate lines when logged', 'summaryArmChart')
+            : noData('ARM SIZE — UPPER ARM CIRCUMFERENCE', 'Log arm measurement in Log Data &rarr; Body.<br>How to measure: flex your bicep, wrap tape around the fullest point of your upper arm. This single number captures both bicep and tricep — it is what tailors call arm size and how shirt sleeves are sized.');
 
-    ${isDashCardVisible('chart-chest') && body.filter(b=>b.chest).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">CHEST TREND</div>
-      <div class="card-title">CHEST OVER TIME</div>
-      <canvas id="summaryChestChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-forearm':
+          return body.filter(function(b){return b.forearm||b.forearm_r||b.forearm_l;}).length >= 1
+            ? chartCard('FOREARM CIRCUMFERENCE', 'Fist clenched &nbsp;&#183;&nbsp; Right &amp; Left shown as separate lines when logged', 'summaryForearmChart')
+            : noData('FOREARM CIRCUMFERENCE', 'Log forearm in Log Data &rarr; Body. Measure at fullest point with fist clenched.');
 
-    ${isDashCardVisible('chart-hips') && body.filter(b=>b.hips).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">HIPS TREND</div>
-      <div class="card-title">HIPS OVER TIME</div>
-      <canvas id="summaryHipsChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-chest':
+          return body.filter(function(b){return b.chest;}).length >= 1
+            ? chartCard('CHEST CIRCUMFERENCE', 'Fullest part of chest, arms at sides', 'summaryChestChart')
+            : noData('CHEST CIRCUMFERENCE', 'Log chest in Log Data &rarr; Body. Tape around fullest part of chest, arms relaxed at sides.');
 
-    ${isDashCardVisible('chart-glutes') && body.filter(b=>b.glutes).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">GLUTES TREND</div>
-      <div class="card-title">GLUTES OVER TIME</div>
-      <canvas id="summaryGlutesChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-hips':
+          return body.filter(function(b){return b.hips;}).length >= 1
+            ? chartCard('HIPS CIRCUMFERENCE', 'Fullest part of hips and seat', 'summaryHipsChart')
+            : noData('HIPS CIRCUMFERENCE', 'Log hips in Log Data &rarr; Body. Tape around fullest part of hips with feet together.');
 
-    ${isDashCardVisible('chart-thighs') && body.filter(b=>b.thighs).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">THIGHS TREND</div>
-      <div class="card-title">THIGHS OVER TIME</div>
-      <canvas id="summaryThighsChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-glutes':
+          return body.filter(function(b){return b.glutes;}).length >= 1
+            ? chartCard('GLUTES CIRCUMFERENCE', 'Fullest part of the buttocks', 'summaryGlutesChart')
+            : noData('GLUTES CIRCUMFERENCE', 'Log glutes in Log Data &rarr; Body.');
 
-    ${isDashCardVisible('chart-biceps') && body.filter(b=>b.biceps||b.biceps_r||b.biceps_l).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">MUSCLE SIZE TREND</div>
-      <div class="card-title">BICEPS OVER TIME</div>
-      <canvas id="summaryBicepsChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-thighs':
+          return body.filter(function(b){return b.thighs||b.thigh_r||b.thigh_l;}).length >= 1
+            ? chartCard('THIGH CIRCUMFERENCE', 'Fullest point of upper thigh, standing relaxed &nbsp;&#183;&nbsp; Right &amp; Left shown as separate lines when logged', 'summaryThighsChart')
+            : noData('THIGH CIRCUMFERENCE', 'Log thigh measurement in Log Data &rarr; Body. Tape around fullest part of upper thigh, standing relaxed. Log Right and Left separately to compare sides.');
 
-    ${isDashCardVisible('chart-triceps') && body.filter(b=>b.triceps).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">MUSCLE SIZE TREND</div>
-      <div class="card-title">TRICEPS OVER TIME</div>
-      <canvas id="summaryTricepsChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-calves':
+          return body.filter(function(b){return b.calves||b.calf_r||b.calf_l;}).length >= 1
+            ? chartCard('CALF CIRCUMFERENCE', 'Fullest point of calf, standing &nbsp;&#183;&nbsp; Right &amp; Left shown as separate lines when logged', 'summaryCalvesChart')
+            : noData('CALF CIRCUMFERENCE', (body.filter(function(b){return b.calves||b.calf_r||b.calf_l;}).length===1 ? '1 entry logged — log one more measurement on a different date to see your trend.' : 'Log calf measurement in Log Data → Body. Tape around fullest part of calf, standing. Log Right and Left separately to compare sides.'));
 
-    ${isDashCardVisible('chart-forearms') && body.filter(b=>b.forearms||b.forearms_r||b.forearms_l).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">MUSCLE SIZE TREND</div>
-      <div class="card-title">FOREARMS OVER TIME</div>
-      <canvas id="summaryForearmsChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-neck':
+          return body.filter(function(b){return b.neck;}).length >= 1
+            ? chartCard('NECK CIRCUMFERENCE', 'Narrowest point, just below Adam\'s apple', 'summaryNeckChart')
+            : noData('NECK CIRCUMFERENCE', 'Log neck in Log Data &rarr; Body. Tape around narrowest point of neck.');
 
-    ${isDashCardVisible('chart-calves') && body.filter(b=>b.calves||b.calves_r||b.calves_l).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">MUSCLE SIZE TREND</div>
-      <div class="card-title">CALVES OVER TIME</div>
-      <canvas id="summaryCalvesChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-sleep':
+          return body.filter(function(b){return b.sleep||b.stress;}).length >= 1
+            ? '<div class="card mb16"><div class="card-label">SLEEP &amp; STRESS — LAST 14 DAYS</div>'
+              +'<div style="font-family:var(--font-mono);font-size:0.56rem;color:var(--text-dim);margin-bottom:8px;">Blue = sleep hours (left axis) &nbsp;&#183;&nbsp; Red = stress score (right axis, 1&#8211;10)</div>'
+              +'<canvas id="summarySleepChart" height="110"></canvas></div>'
+            : noData('SLEEP &amp; STRESS', 'Log sleep and stress in Log Data &rarr; Body.');
 
-    ${isDashCardVisible('chart-shoulders') && body.filter(b=>b.shoulders).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">MUSCLE SIZE TREND</div>
-      <div class="card-title">SHOULDERS OVER TIME</div>
-      <canvas id="summaryShouldersChart" height="100"></canvas>
-    </div>` : ''}
+        case 'chart-workouts':
+          return '<div class="card mb16"><div class="card-label">RECENT ACTIVITY</div><div class="card-title">LAST 7 WORKOUTS</div>'
+            + (workouts.slice(0,7).length
+              ? workouts.slice(0,7).map(function(w){
+                  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.05);">'
+                    +'<div><div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">'+(w.day||'Session')+'</div>'
+                    +'<div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">'+(w.date||'—')+' &nbsp;·&nbsp; '+(w.location||'—')+' &nbsp;·&nbsp; '+(w.duration||'—')+' min</div></div>'
+                    +'<div style="text-align:right;"><div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);">Energy '+(w.energy||'—')+'/10</div>'
+                    +'<div style="font-family:var(--font-mono);font-size:0.55rem;color:'+(w.decomp&&w.decomp.includes('YES')?'#4caf50':'var(--text-dim)')+';">'+(w.decomp&&w.decomp.includes('YES')?'&#x2713; Decomp done':'—')+'</div></div></div>';
+                }).join('')
+              : '<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);padding:16px 0;text-align:center;">No workouts logged yet.</div>')
+            +'</div>';
 
-    ${isDashCardVisible('chart-quads') && body.filter(b=>b.quads||b.quads_r||b.quads_l).length >= 2 ? `
-    <div class="card mb16">
-      <div class="card-label">MUSCLE SIZE TREND</div>
-      <div class="card-title">QUADS OVER TIME</div>
-      <canvas id="summaryQuadsChart" height="100"></canvas>
-    </div>` : ''}
-
-    ${isDashCardVisible('chart-workouts') ? `
-    <div class="card mb16">
-      <div class="card-label">RECENT ACTIVITY</div>
-      <div class="card-title">LAST 7 WORKOUTS</div>
-      ${workouts.slice(0,7).map(w=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><div><div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">'+(w.day||'Session')+'</div><div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-dim);">'+(w.date||'—')+' · '+(w.location||'—')+' · '+(w.duration||'—')+' min</div></div><div style="text-align:right;"><div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent2);">Energy '+(w.energy||'—')+'/10</div><div style="font-family:var(--font-mono);font-size:0.55rem;color:'+(w.decomp&&w.decomp.includes('YES')?'#4caf50':'var(--text-dim)')+';">'+(w.decomp&&w.decomp.includes('YES')?'✓ Decomp done':'—')+'</div></div></div>').join('') || '<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);padding:16px 0;text-align:center;">No workouts logged yet.</div>'}
-    </div>` : ''}`;
+        default: return '';
+      }
+    }).join('')}`;
 
   setTimeout(() => {
     renderSummaryCharts(last30, stepsByDate, body, userGoals.stepGoal||10000);
@@ -767,94 +746,132 @@ function kpiCard(label, value, color, sub) {
 }
 
 function renderSummaryCharts(last30, stepsByDate, body, stepGoal) {
-  const cd = window._chartDefaults || { c1:'#ff7a1a', c2:'#d4af37' };
   if (!window._summaryCharts) window._summaryCharts = {};
+  var cd = window._chartDefaults || { c1:'#ff7a1a', c2:'#d4af37' };
 
-  // Helper: destroy old chart and create new line chart for a single measurement
-  function makeLineChart(canvasId, key, color, days, bilateral) {
-    const el = document.getElementById(canvasId);
-    if (!el) return;
-    if (window._summaryCharts[key]) { window._summaryCharts[key].destroy(); }
+  var baseOpts = {
+    responsive:true,
+    plugins:{ legend:{display:false} },
+    scales:{ x:{ticks:{font:{size:9},maxTicksLimit:8}}, y:{ticks:{font:{size:9}}} }
+  };
 
-    // Support bilateral (e.g. biceps_r + biceps_l as two datasets, or combined biceps)
-    let datasets = [];
-    if (bilateral) {
-      const rData = body.filter(b=>b[key+'_r']).sort((a,b)=>a.date.localeCompare(b.date)).slice(-days);
-      const lData = body.filter(b=>b[key+'_l']).sort((a,b)=>a.date.localeCompare(b.date)).slice(-days);
-      const combined = body.filter(b=>b[key]).sort((a,b)=>a.date.localeCompare(b.date)).slice(-days);
-      const labels = [...new Set([...combined.map(b=>b.date?.slice(5)||''), ...rData.map(b=>b.date?.slice(5)||''), ...lData.map(b=>b.date?.slice(5)||'')])].sort();
-      if (combined.length >= 2) datasets.push({ label: key, data: combined.map(b=>+b[key]), borderColor: color, backgroundColor: color+'22', tension:0.3, pointRadius:3, fill: datasets.length===0 });
-      if (rData.length >= 2)    datasets.push({ label: 'Right', data: rData.map(b=>+b[key+'_r']), borderColor: '#4caf50', backgroundColor:'#4caf5022', tension:0.3, pointRadius:3, fill:false });
-      if (lData.length >= 2)    datasets.push({ label: 'Left',  data: lData.map(b=>+b[key+'_l']), borderColor: '#ff9800', backgroundColor:'#ff980022', tension:0.3, pointRadius:3, fill:false });
-      if (!datasets.length) return;
-      const allLabels = combined.length >= 2 ? combined.map(b=>b.date?.slice(5)||'') : (rData.length >= 2 ? rData.map(b=>b.date?.slice(5)||'') : lData.map(b=>b.date?.slice(5)||''));
-      window._summaryCharts[key] = new Chart(el, {
-        type:'line',
-        data:{ labels: allLabels, datasets },
-        options:{ responsive:true, plugins:{ legend:{display:datasets.length>1, labels:{font:{size:9},color:'#aaa'}} }, scales:{ x:{ticks:{font:{size:9},maxTicksLimit:8}}, y:{ticks:{font:{size:9}}} }}
-      });
-    } else {
-      const data = body.filter(b=>b[key] !== undefined && !isNaN(+b[key])).sort((a,b)=>a.date.localeCompare(b.date)).slice(-days);
-      if (data.length < 2) return;
-      window._summaryCharts[key] = new Chart(el, {
-        type:'line',
-        data:{ labels: data.map(b=>b.date?.slice(5)||''),
-          datasets:[{ data: data.map(b=>+b[key]), borderColor:color, backgroundColor:color+'22', tension:0.3, pointRadius:3, fill:true }]},
-        options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ x:{ticks:{font:{size:9},maxTicksLimit:8}}, y:{ticks:{font:{size:9}}} }}
-      });
-    }
+  function kill(key) {
+    if (window._summaryCharts[key]) { window._summaryCharts[key].destroy(); delete window._summaryCharts[key]; }
   }
 
-  // Steps bar chart
-  const stepsEl = document.getElementById('summaryStepsChart');
-  if (stepsEl) {
-    if (window._summaryCharts.steps) window._summaryCharts.steps.destroy();
-    window._summaryCharts.steps = new Chart(stepsEl, {
-      type:'bar',
-      data:{ labels: last30.map(d=>d.slice(5)),
-        datasets:[
-          { data: last30.map(d=>stepsByDate[d]||0),
-            backgroundColor: last30.map(d=>(stepsByDate[d]||0)>=stepGoal?'#4caf5088':'var(--accent)88'),
-            borderColor: last30.map(d=>(stepsByDate[d]||0)>=stepGoal?'#4caf50':'var(--accent)'), borderWidth:1 },
-          { type:'line', data: last30.map(()=>stepGoal), borderColor:'rgba(255,255,255,0.25)', borderDash:[4,4], pointRadius:0, fill:false }
-        ]},
-      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ x:{ticks:{font:{size:9},maxTicksLimit:8}}, y:{ticks:{font:{size:9}}} }}
+  // Single-key line chart
+  function line(canvasId, key, color) {
+    var el = document.getElementById(canvasId);
+    if (!el) return;
+    kill(key);
+    var data = body.filter(function(b){ return b[key]!==undefined && !isNaN(+b[key]); })
+      .sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(-30);
+    if (data.length < 1) return;
+    window._summaryCharts[key] = new Chart(el, {
+      type:'line',
+      data:{ labels: data.map(function(b){ return (b.date||'').slice(5); }),
+        datasets:[{ data:data.map(function(b){ return +b[key]; }),
+          borderColor:color, backgroundColor:color+'22', tension:0.3,
+          pointRadius:data.length===1?8:3, pointHoverRadius:10, fill:data.length>1 }]},
+      options: Object.assign({}, baseOpts)
     });
   }
 
-  // Body composition charts
-  makeLineChart('summaryWeightChart', 'weight', cd.c1, 30, false);
-  makeLineChart('summaryWaistChart',  'waist',  cd.c2, 30, false);
-  makeLineChart('summaryChestChart',  'chest',  '#9c27b0', 30, false);
-  makeLineChart('summaryHipsChart',   'hips',   '#e91e63', 30, false);
-  makeLineChart('summaryGlutesChart', 'glutes', '#ff5722', 30, false);
-  makeLineChart('summaryThighsChart', 'thighs', '#795548', 30, false);
+  // Bilateral chart: plots combined key + _r + _l as separate lines
+  function bilateral(canvasId, chartKey, baseKey, colorMain, colorR, colorL) {
+    var el = document.getElementById(canvasId);
+    if (!el) return;
+    kill(chartKey);
+    var combined = body.filter(function(b){ return b[baseKey]!==undefined && !isNaN(+b[baseKey]); })
+      .sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(-30);
+    var rData = body.filter(function(b){ return b[baseKey+'_r']!==undefined && !isNaN(+b[baseKey+'_r']); })
+      .sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(-30);
+    var lData = body.filter(function(b){ return b[baseKey+'_l']!==undefined && !isNaN(+b[baseKey+'_l']); })
+      .sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(-30);
+    var datasets = [];
+    var labels = null;
+    // Show chart with 1+ entries — single point shows as a dot, 2+ shows trend line
+    if (combined.length >= 1) {
+      labels = combined.map(function(b){ return (b.date||'').slice(5); });
+      datasets.push({ label:'Both', data:combined.map(function(b){ return +b[baseKey]; }),
+        borderColor:colorMain, backgroundColor:colorMain+'22', tension:0.3,
+        pointRadius:combined.length===1?8:3, pointHoverRadius:10, fill:combined.length>1 });
+    }
+    if (rData.length >= 1) {
+      if (!labels) labels = rData.map(function(b){ return (b.date||'').slice(5); });
+      datasets.push({ label:'Right', data:rData.map(function(b){ return +b[baseKey+'_r']; }),
+        borderColor:colorR, backgroundColor:'transparent', tension:0.3,
+        pointRadius:rData.length===1?8:3, fill:false, borderDash:rData.length>1?[4,2]:[] });
+    }
+    if (lData.length >= 1) {
+      if (!labels) labels = lData.map(function(b){ return (b.date||'').slice(5); });
+      datasets.push({ label:'Left', data:lData.map(function(b){ return +b[baseKey+'_l']; }),
+        borderColor:colorL, backgroundColor:'transparent', tension:0.3,
+        pointRadius:lData.length===1?8:3, fill:false, borderDash:lData.length>1?[2,4]:[] });
+    }
+    if (!datasets.length || !labels) return;
+    window._summaryCharts[chartKey] = new Chart(el, {
+      type:'line',
+      data:{ labels:labels, datasets:datasets },
+      options: Object.assign({}, baseOpts, { plugins:{ legend:{ display:datasets.length>1, labels:{font:{size:9},color:'#aaa'} } } })
+    });
+  }
 
-  // Muscle size charts (bilateral support)
-  makeLineChart('summaryBicepsChart',    'biceps',    '#4caf50', 30, true);
-  makeLineChart('summaryTricepsChart',   'triceps',   '#2196f3', 30, false);
-  makeLineChart('summaryForearmsChart',  'forearms',  '#00bcd4', 30, true);
-  makeLineChart('summaryCalvesChart',    'calves',    '#8bc34a', 30, true);
-  makeLineChart('summaryShouldersChart', 'shoulders', '#ff9800', 30, false);
-  makeLineChart('summaryQuadsChart',     'quads',     '#ffc107', 30, true);
+  // Steps bar chart
+  var stepsEl = document.getElementById('summaryStepsChart');
+  if (stepsEl) {
+    kill('steps');
+    window._summaryCharts.steps = new Chart(stepsEl, {
+      type:'bar',
+      data:{ labels:last30.map(function(d){ return d.slice(5); }),
+        datasets:[
+          { data:last30.map(function(d){ return stepsByDate[d]||0; }),
+            backgroundColor:last30.map(function(d){ return (stepsByDate[d]||0)>=stepGoal?'#4caf5088':'var(--accent)88'; }),
+            borderColor:last30.map(function(d){ return (stepsByDate[d]||0)>=stepGoal?'#4caf50':'var(--accent)'; }),
+            borderWidth:1 },
+          { type:'line', data:last30.map(function(){ return stepGoal; }),
+            borderColor:'rgba(255,255,255,0.2)', borderDash:[4,4], pointRadius:0, fill:false }
+        ]},
+      options: Object.assign({}, baseOpts)
+    });
+  }
 
-  // Sleep/Stress dual-axis chart
-  const sleepEl = document.getElementById('summarySleepChart');
-  const sleepData = body.filter(b=>b.sleep).sort((a,b)=>a.date.localeCompare(b.date)).slice(-14);
-  if (sleepEl && sleepData.length >= 2) {
-    if (window._summaryCharts.sleep) window._summaryCharts.sleep.destroy();
+  // Single measurement charts
+  line('summaryWeightChart', 'weight',  cd.c1);
+  line('summaryWaistChart',  'waist',   cd.c2);
+  line('summaryChestChart',  'chest',   '#9c27b0');
+  line('summaryHipsChart',   'hips',    '#e91e63');
+  line('summaryGlutesChart', 'glutes',  '#ff5722');
+  line('summaryNeckChart',   'neck',    '#607d8b');
+
+  // Bilateral charts — each shows both/right/left as separate lines
+  bilateral('summaryArmChart',     'arm',     'arm',     '#4caf50', '#2196f3', '#ff9800');
+  bilateral('summaryForearmChart', 'forearm', 'forearm', '#00bcd4', '#0097a7', '#006064');
+  bilateral('summaryThighsChart',  'thighs',  'thighs',  '#8bc34a', '#558b2f', '#aed581');
+  bilateral('summaryCalvesChart',  'calves',  'calves',  '#795548', '#4e342e', '#a1887f');
+
+  // Sleep/Stress dual-axis
+  var sleepEl = document.getElementById('summarySleepChart');
+  var sleepData = body.filter(function(b){ return b.sleep||b.stress; })
+    .sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(-14);
+  if (sleepEl && sleepData.length >= 1) {
+    kill('sleep');
     window._summaryCharts.sleep = new Chart(sleepEl, {
       type:'line',
-      data:{ labels: sleepData.map(b=>b.date?.slice(5)||''),
+      data:{ labels:sleepData.map(function(b){ return (b.date||'').slice(5); }),
         datasets:[
-          { label:'Sleep (hrs)', data: sleepData.map(b=>+b.sleep||0), borderColor:'#64b5f6', backgroundColor:'#64b5f622', tension:0.3, pointRadius:3, yAxisID:'y' },
-          { label:'Stress (1-10)', data: sleepData.map(b=>+b.stress||0), borderColor:'#f44336', backgroundColor:'#f4433622', tension:0.3, pointRadius:3, yAxisID:'y2' }
+          { label:'Sleep (hrs)', data:sleepData.map(function(b){ return +b.sleep||0; }),
+            borderColor:'#64b5f6', backgroundColor:'#64b5f622', tension:0.3, pointRadius:3, yAxisID:'y' },
+          { label:'Stress (/10)', data:sleepData.map(function(b){ return +b.stress||0; }),
+            borderColor:'#f44336', backgroundColor:'#f4433622', tension:0.3, pointRadius:3, yAxisID:'y2' }
         ]},
-      options:{ responsive:true, plugins:{ legend:{display:true, labels:{font:{size:9},color:'#aaa'}} },
+      options:{ responsive:true,
+        plugins:{ legend:{display:true, labels:{font:{size:9},color:'#aaa'}} },
         scales:{
           x:{ticks:{font:{size:9},maxTicksLimit:8}},
           y:{ticks:{font:{size:9}}, position:'left', title:{display:true,text:'Sleep hrs',font:{size:8}}},
-          y2:{ticks:{font:{size:9}}, position:'right', min:0, max:10, title:{display:true,text:'Stress',font:{size:8}}, grid:{drawOnChartArea:false}}
+          y2:{ticks:{font:{size:9}}, position:'right', min:0, max:10,
+            title:{display:true,text:'Stress',font:{size:8}}, grid:{drawOnChartArea:false}}
         }}
     });
   }

@@ -2,95 +2,79 @@
 // workouts-utils.js - Utilities, Breathing, Calories, Steps
 // =============================================
 
+// ─── Safe helpers ────────────────────────────────────────────
+function _stepGoal() {
+  try { return (window.userGoals && window.userGoals.stepGoal) ? window.userGoals.stepGoal : 10000; }
+  catch(e) { return 10000; }
+}
+function _today() {
+  try { return typeof localDateStr === 'function' ? localDateStr() : new Date().toISOString().split('T')[0]; }
+  catch(e) { return new Date().toISOString().split('T')[0]; }
+}
+
 // ═══════════════════════════════════════════════════════════
 // DEFAULT WALK SECTIONS
-// Five cortisol-smart walks spread across the day.
-// pct  = fraction of daily step goal each walk targets.
-// star = most important walk (post-workout).
-// IDs match the keys used in saveStepSection / saveLogStepSection.
 // ═══════════════════════════════════════════════════════════
 const DEFAULT_WALK_SECTIONS = [
-  { id: 'morning', label: 'MORNING WALK',        pct: 0.20, star: false,
-    desc: 'Before breakfast. Low-intensity. Wakes the system without spiking cortisol.' },
-  { id: 'lunch',   label: 'LUNCH WALK',           pct: 0.20, star: false,
-    desc: 'Post-lunch stroll. Blunts the blood-sugar spike from your meal.' },
-  { id: 'pre',     label: 'PRE-WORKOUT WALK',     pct: 0.10, star: false,
-    desc: 'Light movement to raise body temperature before training. Keep it easy.' },
-  { id: 'post',    label: 'POST-WORKOUT WALK',    pct: 0.30, star: true,
-    desc: 'Most important walk of the day. Drives cortisol down after training. Do not skip.' },
-  { id: 'evening', label: 'EVENING WIND-DOWN',    pct: 0.20, star: false,
-    desc: 'Gentle walk after dinner. Aids digestion and prepares you for sleep.' },
+  { id:'morning', label:'MORNING WALK',        pct:0.20, star:false },
+  { id:'lunch',   label:'LUNCH WALK',           pct:0.20, star:false },
+  { id:'pre',     label:'PRE-WORKOUT WALK',     pct:0.10, star:false },
+  { id:'post',    label:'POST-WORKOUT WALK',    pct:0.30, star:true  },
+  { id:'evening', label:'EVENING WIND-DOWN',    pct:0.20, star:false },
 ];
 window.DEFAULT_WALK_SECTIONS = DEFAULT_WALK_SECTIONS;
 
-// Shared step state (used by Steps tab in workout section)
-let todayStepData = {};
-window.todayStepData = todayStepData;
+// Shared state for the workout-section Steps tab
+if (typeof window.todayStepData === 'undefined') window.todayStepData = {};
 
 // ═══════════════════════════════════════════════════════════
-// STEP PROGRESS — updates the ring + totals on the Steps tab
+// STEP PROGRESS RING — workout-section Steps tab
 // ═══════════════════════════════════════════════════════════
 function updateStepProgress() {
-  const goal  = (typeof userGoals !== 'undefined' && userGoals && userGoals.stepGoal) || 10000;
-  const total = DEFAULT_WALK_SECTIONS.reduce(
-    (sum, s) => sum + (todayStepData[s.id]?.steps || 0), 0
-  );
-  const pct = Math.min(100, Math.round(total / goal * 100));
+  try {
+    const goal  = _stepGoal();
+    const data  = window.todayStepData || {};
+    const total = DEFAULT_WALK_SECTIONS.reduce((s, w) => s + (data[w.id]?.steps || 0), 0);
+    const pct   = Math.min(100, Math.round(total / goal * 100));
+    const off   = 345.4 - (345.4 * pct / 100);
 
-  // SVG ring — circumference of r=55 ≈ 345.4
-  const ringEl = document.getElementById('stepRingFill');
-  if (ringEl) ringEl.style.strokeDashoffset = String(345.4 - (345.4 * pct / 100));
-
-  const pctEl  = document.getElementById('stepRingPct');
-  if (pctEl)  pctEl.textContent = pct + '%';
-
-  const totEl  = document.getElementById('stepTodayTotal');
-  if (totEl)  totEl.textContent = total.toLocaleString();
-
-  const goalEl = document.getElementById('stepGoalDisplay');
-  if (goalEl) goalEl.textContent = goal.toLocaleString();
+    const r = document.getElementById('stepRingFill');  if (r) r.style.strokeDashoffset = String(off);
+    const p = document.getElementById('stepRingPct');   if (p) p.textContent = pct + '%';
+    const t = document.getElementById('stepTodayTotal');if (t) t.textContent = total.toLocaleString();
+    const g = document.getElementById('stepGoalDisplay');if(g) g.textContent = goal.toLocaleString();
+  } catch(e) {}
 }
 window.updateStepProgress = updateStepProgress;
 
 // ═══════════════════════════════════════════════════════════
-// SAVE CUSTOM WALK — Steps tab in workout section
-// Uses #customWalkName and #customWalkSteps
+// SAVE CUSTOM WALK — workout-section Steps tab
 // ═══════════════════════════════════════════════════════════
 async function saveCustomWalk() {
-  const name  = document.getElementById('customWalkName')?.value?.trim()  || 'Custom Walk';
-  const steps = parseInt(document.getElementById('customWalkSteps')?.value || 0);
-  if (!steps) { if (typeof toast === 'function') toast('ENTER A STEP COUNT'); return; }
-
-  const today = typeof localDateStr === 'function' ? localDateStr() : new Date().toISOString().split('T')[0];
-  const cid   = 'custom_' + Date.now();
-  todayStepData[cid] = { steps, label: name, startSteps: null, endSteps: null };
-
-  const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (todayStepData[s.id]?.steps || 0), 0) + steps;
-
   try {
+    const name  = document.getElementById('customWalkName')?.value?.trim() || 'Custom Walk';
+    const steps = parseInt(document.getElementById('customWalkSteps')?.value || '0');
+    if (!steps) { if (typeof toast === 'function') toast('ENTER A STEP COUNT'); return; }
+
+    const today = _today();
+    window.todayStepData = window.todayStepData || {};
+    window.todayStepData['custom_' + Date.now()] = { steps, label:name };
+
+    const total = DEFAULT_WALK_SECTIONS.reduce((s,w) => s + (window.todayStepData[w.id]?.steps||0), 0) + steps;
+
     await db.collection('userdata').doc(SESSION.username)
       .collection('steplog').doc(today)
-      .set({ sections: todayStepData, total, date: today, updated: new Date().toISOString() });
+      .set({ sections: window.todayStepData, total, date: today, updated: new Date().toISOString() });
 
     const existing = await encryptedLoad('steps');
     const idx = existing.findIndex(e => e.date === today);
-    const entry = {
-      saved: new Date().toISOString(), date: today, total: String(total),
-      morning: String(todayStepData.morning?.steps || 0),
-      lunch:   String(todayStepData.lunch?.steps   || 0),
-      pre:     String(todayStepData.pre?.steps      || 0),
-      post:    String(todayStepData.post?.steps     || 0),
-      evening: String(todayStepData.evening?.steps  || 0),
-    };
+    const entry = _buildStepEntry(today, total, window.todayStepData);
     idx >= 0 ? existing[idx] = entry : existing.unshift(entry);
     await encryptedSave('steps', existing);
 
-    const nameEl  = document.getElementById('customWalkName');
-    const stepsEl = document.getElementById('customWalkSteps');
-    if (nameEl)  nameEl.value  = '';
-    if (stepsEl) stepsEl.value = '';
+    const n = document.getElementById('customWalkName');  if (n) n.value = '';
+    const s = document.getElementById('customWalkSteps'); if (s) s.value = '';
 
-    if (typeof renderStepSections  === 'function') renderStepSections();
+    if (typeof renderStepSections === 'function') renderStepSections();
     updateStepProgress();
     if (typeof loadStats === 'function') loadStats();
     if (typeof toast === 'function') toast('✓ ' + name + ' — ' + steps.toLocaleString() + ' STEPS LOGGED');
@@ -102,216 +86,222 @@ window.saveCustomWalk = saveCustomWalk;
 
 // ═══════════════════════════════════════════════════════════
 // LOG STEP SECTIONS — Log Data → Steps tab
-// Uses #logStepSections, #logStepRingFill etc.
+// Renders the five walk-section cards into #logStepSections.
+// Firebase load happens AFTER the cards are rendered so that
+// the UI is never blank even if Firebase is slow or fails.
 // ═══════════════════════════════════════════════════════════
-let _logStepDate = '';
-let _logStepData = {};
+let _logDate = '';
+let _logData = {};
 
 async function renderLogStepSections() {
+  // 1. Set the date
   const dateEl = document.getElementById('steps-log-date');
-  _logStepDate = dateEl?.value || (typeof localDateStr === 'function' ? localDateStr() : '');
+  _logDate = (dateEl && dateEl.value) ? dateEl.value : _today();
+  if (dateEl && !dateEl.value) dateEl.value = _logDate;
 
+  // 2. Render cards immediately with whatever data we have (may be empty)
+  _paintLogStepCards();
+
+  // 3. Load saved data from Firebase in the background, then repaint
   try {
     const doc = await db.collection('userdata').doc(SESSION.username)
-      .collection('steplog').doc(_logStepDate).get();
+      .collection('steplog').doc(_logDate).get();
+    _logData = {};
     if (doc.exists) {
       const raw = doc.data().sections || {};
-      _logStepData = {};
       for (const [k, v] of Object.entries(raw)) {
-        _logStepData[k] = (typeof v === 'object') ? v : { steps: v, startSteps: null, endSteps: null };
+        _logData[k] = (typeof v === 'object' && v !== null) ? v : { steps: Number(v)||0, startSteps:null, endSteps:null };
       }
-    } else {
-      _logStepData = {};
     }
   } catch(e) {
-    _logStepData = {};
+    _logData = {};
   }
 
+  // 4. Repaint with real data
+  _paintLogStepCards();
   updateLogStepRing();
+}
+window.renderLogStepSections = renderLogStepSections;
 
+// ── Renders the five walk cards into #logStepSections ────────
+function _paintLogStepCards() {
   const el = document.getElementById('logStepSections');
   if (!el) return;
 
-  const goal = (typeof userGoals !== 'undefined' && userGoals && userGoals.stepGoal) || 10000;
+  const goal = _stepGoal();
 
   el.innerHTML = DEFAULT_WALK_SECTIONS.map((s, idx) => {
-    const saved      = _logStepData[s.id] || {};
+    const saved      = _logData[s.id] || {};
     const done       = saved.steps || 0;
     const savedStart = saved.startSteps || '';
     const savedEnd   = saved.endSteps   || '';
     const target     = Math.round(goal * s.pct);
-    const pct        = Math.min(100, Math.round(done / target * 100));
-    const complete   = done >= target;
+    const pct        = target > 0 ? Math.min(100, Math.round(done / target * 100)) : 0;
+    const complete   = done >= target && target > 0;
     const prevSection = idx > 0 ? DEFAULT_WALK_SECTIONS[idx - 1] : null;
-    const prevEnd    = prevSection ? (_logStepData[prevSection.id]?.endSteps || '') : '';
-    const autoStart  = savedStart || prevEnd;
+    const autoStart  = savedStart || (prevSection ? (_logData[prevSection.id]?.endSteps || '') : '');
 
-    return `<div class="card mb16" id="logstepcard-${s.id}"
-      style="border-left:4px solid ${complete ? '#4caf50' : s.star ? 'var(--accent2)' : 'var(--border)'};">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
-        <div style="font-family:var(--font-mono);font-size:0.75rem;font-weight:700;
-          color:${s.star ? 'var(--accent2)' : 'var(--text)'};letter-spacing:.1em;">
-          ${s.star ? '⭐ ' : ''}${s.label}
-        </div>
-        <div style="font-family:var(--font-mono);font-size:0.65rem;color:${complete ? '#4caf50' : 'var(--text-dim)'};">
-          ${done.toLocaleString()} / ${target.toLocaleString()} steps
-        </div>
+    const borderColor = complete ? '#4caf50' : s.star ? 'var(--accent2)' : 'var(--border)';
+    const labelColor  = s.star ? 'var(--accent2)' : 'var(--text)';
+
+    return `
+<div class="card mb16" id="logstepcard-${s.id}" style="border-left:4px solid ${borderColor};">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+    <div style="font-family:var(--font-mono);font-size:0.75rem;font-weight:700;
+      color:${labelColor};letter-spacing:.1em;">${s.star ? '⭐ ' : ''}${s.label}</div>
+    <div style="font-family:var(--font-mono);font-size:0.65rem;color:${complete ? '#4caf50' : 'var(--text-dim)'};">
+      ${done.toLocaleString()} / ${target.toLocaleString()} steps
+    </div>
+  </div>
+  <div style="height:4px;background:var(--bg3);border-radius:2px;margin-bottom:14px;">
+    <div style="height:100%;width:${pct}%;background:${complete ? '#4caf50' : 'var(--accent2)'};
+      border-radius:2px;transition:width 0.5s;"></div>
+  </div>
+  <!-- Mode tabs -->
+  <div style="display:flex;margin-bottom:12px;border:1px solid var(--border);overflow:hidden;">
+    <button id="logmodetab-total-${s.id}" onclick="switchLogStepMode('${s.id}','total')"
+      style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:.1em;
+      cursor:pointer;border:none;border-right:1px solid var(--border);
+      background:var(--accent-dim);color:var(--accent2);">
+      TOTAL STEPS
+    </button>
+    <button id="logmodetab-range-${s.id}" onclick="switchLogStepMode('${s.id}','range')"
+      style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:.1em;
+      cursor:pointer;border:none;background:var(--bg3);color:var(--text-dim);">
+      START → END
+    </button>
+  </div>
+  <!-- Total mode -->
+  <div id="logstepmode-total-${s.id}" style="display:flex;gap:8px;align-items:center;">
+    <input type="number" id="logstepinput-${s.id}" value="${done || ''}"
+      placeholder="Steps for this walk" min="0" max="50000"
+      style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+      font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;">
+    <button class="btn btn-p" onclick="saveLogStepSection('${s.id}','total')"
+      style="white-space:nowrap;font-size:0.65rem;padding:9px 14px;">
+      ${complete ? '✓ UPDATE' : 'SAVE'}
+    </button>
+  </div>
+  <!-- Range mode -->
+  <div id="logstepmode-range-${s.id}" style="display:none;">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:8px;">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);
+          letter-spacing:.1em;margin-bottom:4px;">START STEPS</div>
+        <input type="number" id="logstepstart-${s.id}" value="${autoStart}"
+          placeholder="Watch reading at start" min="0"
+          oninput="calcLogStepDiff('${s.id}')"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">
       </div>
-      <div style="height:4px;background:var(--bg3);border-radius:2px;margin-bottom:14px;">
-        <div style="height:100%;width:${pct}%;background:${complete ? '#4caf50' : 'var(--accent2)'};border-radius:2px;transition:width 0.5s;"></div>
+      <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--border2);padding-top:20px;">→</div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);
+          letter-spacing:.1em;margin-bottom:4px;">END STEPS</div>
+        <input type="number" id="logstepend-${s.id}" value="${savedEnd || ''}"
+          placeholder="Watch reading at end" min="0"
+          oninput="calcLogStepDiff('${s.id}')"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
+          font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">
       </div>
-      <div style="display:flex;gap:0;margin-bottom:12px;border:1px solid var(--border);overflow:hidden;">
-        <button id="logmodetab-total-${s.id}" onclick="switchLogStepMode('${s.id}','total')"
-          style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:.1em;
-          cursor:pointer;border:none;background:var(--bg3);color:var(--text-dim);border-right:1px solid var(--border);">
-          TOTAL STEPS
-        </button>
-        <button id="logmodetab-range-${s.id}" onclick="switchLogStepMode('${s.id}','range')"
-          style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:.1em;
-          cursor:pointer;border:none;background:var(--bg3);color:var(--text-dim);">
-          START → END
-        </button>
-      </div>
-      <div id="logstepmode-total-${s.id}" style="display:flex;gap:8px;align-items:center;">
-        <input type="number" id="logstepinput-${s.id}" value="${done || ''}"
-          placeholder="Enter step count for this walk" min="0" max="50000"
-          style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-          font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;">
-        <button class="btn btn-p" onclick="saveLogStepSection('${s.id}','total')"
-          style="white-space:nowrap;font-size:0.65rem;padding:9px 14px;">
-          ${complete ? '✓ UPDATE' : 'SAVE'}
-        </button>
-      </div>
-      <div id="logstepmode-range-${s.id}" style="display:none;">
-        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:8px;">
-          <div>
-            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);
-              letter-spacing:.1em;margin-bottom:4px;">START STEPS</div>
-            <input type="number" id="logstepstart-${s.id}" value="${autoStart}"
-              placeholder="Watch reading at start" min="0"
-              oninput="calcLogStepDiff('${s.id}')"
-              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-              font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">
-          </div>
-          <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--border2);padding-top:20px;">→</div>
-          <div>
-            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);
-              letter-spacing:.1em;margin-bottom:4px;">END STEPS</div>
-            <input type="number" id="logstepend-${s.id}" value="${savedEnd || ''}"
-              placeholder="Watch reading at end" min="0"
-              oninput="calcLogStepDiff('${s.id}')"
-              style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);
-              font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">
-          </div>
-        </div>
-        <div id="logstepdiff-${s.id}" style="font-family:var(--font-mono);font-size:0.7rem;
-          color:var(--accent2);text-align:center;margin-bottom:8px;min-height:18px;">
-          ${savedStart && savedEnd ? '= ' + (savedEnd - savedStart).toLocaleString() + ' steps this walk' : ''}
-        </div>
-        <button class="btn btn-p" onclick="saveLogStepSection('${s.id}','range')"
-          style="width:100%;font-size:0.65rem;padding:9px;">
-          ${complete ? '✓ UPDATE' : 'SAVE WALK'}
-        </button>
-      </div>
-      ${complete ? '<div style="font-family:var(--font-mono);font-size:0.62rem;color:#4caf50;margin-top:8px;text-align:center;">✓ SECTION TARGET MET</div>' : ''}
-    </div>`;
+    </div>
+    <div id="logstepdiff-${s.id}" style="font-family:var(--font-mono);font-size:0.7rem;
+      color:var(--accent2);text-align:center;margin-bottom:8px;min-height:18px;">
+      ${(savedStart && savedEnd) ? '= ' + (savedEnd - savedStart).toLocaleString() + ' steps this walk' : ''}
+    </div>
+    <button class="btn btn-p" onclick="saveLogStepSection('${s.id}','range')"
+      style="width:100%;font-size:0.65rem;padding:9px;">
+      ${complete ? '✓ UPDATE' : 'SAVE WALK'}
+    </button>
+  </div>
+  ${complete ? '<div style="font-family:var(--font-mono);font-size:0.62rem;color:#4caf50;margin-top:8px;text-align:center;">✓ SECTION TARGET MET</div>' : ''}
+</div>`;
   }).join('');
 
-  // Restore mode tabs to correct state
+  // Restore range mode for sections that have range data
   DEFAULT_WALK_SECTIONS.forEach(s => {
-    const saved = _logStepData[s.id] || {};
-    if (saved.startSteps || saved.endSteps) switchLogStepMode(s.id, 'range', false);
-    else highlightLogModeTab(s.id, 'total');
+    const saved = _logData[s.id] || {};
+    if (saved.startSteps || saved.endSteps) {
+      switchLogStepMode(s.id, 'range', false);
+    }
   });
 }
-window.renderLogStepSections = renderLogStepSections;
 
+// ─── Update ring for Log tab ─────────────────────────────────
 function updateLogStepRing() {
-  const goal  = (typeof userGoals !== 'undefined' && userGoals && userGoals.stepGoal) || 10000;
-  const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (_logStepData[s.id]?.steps || 0), 0);
-  const pct   = Math.min(100, Math.round(total / goal * 100));
-  const today = typeof localDateStr === 'function' ? localDateStr() : '';
-  const isToday = !_logStepDate || _logStepDate === today;
+  try {
+    const goal  = _stepGoal();
+    const total = DEFAULT_WALK_SECTIONS.reduce((s, w) => s + (_logData[w.id]?.steps || 0), 0);
+    const pct   = Math.min(100, Math.round(total / goal * 100));
+    const off   = 345.4 - (345.4 * pct / 100);
+    const today = _today();
+    const isToday = !_logDate || _logDate === today;
 
-  const ringEl = document.getElementById('logStepRingFill');
-  if (ringEl) ringEl.style.strokeDashoffset = String(345.4 - (345.4 * pct / 100));
+    const r = document.getElementById('logStepRingFill');    if (r) r.style.strokeDashoffset = String(off);
+    const p = document.getElementById('logStepRingPct');     if (p) p.textContent = pct + '%';
+    const t = document.getElementById('logStepTodayTotal');  if (t) t.textContent = total.toLocaleString();
+    const g = document.getElementById('logStepGoalDisplay'); if (g) g.textContent = goal.toLocaleString();
+    const l = document.getElementById('logStepsTodayLabel'); if (l) l.textContent = isToday ? "TODAY'S STEPS" : (_logDate || 'STEPS');
 
-  const pctEl  = document.getElementById('logStepRingPct');
-  if (pctEl)  pctEl.textContent = pct + '%';
-
-  const totEl  = document.getElementById('logStepTodayTotal');
-  if (totEl)  totEl.textContent = total.toLocaleString();
-
-  const goalEl = document.getElementById('logStepGoalDisplay');
-  if (goalEl) goalEl.textContent = goal.toLocaleString();
-
-  const labelEl = document.getElementById('logStepsTodayLabel');
-  if (labelEl) labelEl.textContent = isToday ? "TODAY'S STEPS" : (_logStepDate || 'STEPS');
-
-  // Show/hide past-date banner
-  const banner = document.getElementById('steps-log-date-banner');
-  if (banner) {
-    if (!isToday && _logStepDate) {
-      const d = new Date(_logStepDate + 'T12:00:00');
-      banner.style.display = 'block';
-      banner.textContent   = '📅 LOGGING FOR ' + d.toLocaleDateString('en-US',
-        { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase();
-    } else {
-      banner.style.display = 'none';
+    const banner = document.getElementById('steps-log-date-banner');
+    if (banner) {
+      if (!isToday && _logDate) {
+        const d = new Date(_logDate + 'T12:00:00');
+        banner.style.display = 'block';
+        banner.textContent   = '📅 LOGGING FOR ' + d.toLocaleDateString('en-US',
+          { weekday:'long', month:'long', day:'numeric' }).toUpperCase();
+      } else {
+        banner.style.display = 'none';
+      }
     }
-  }
+  } catch(e) {}
 }
 window.updateLogStepRing = updateLogStepRing;
 
+// ─── Save a section ──────────────────────────────────────────
 async function saveLogStepSection(sectionId, mode) {
-  let steps = 0, startSteps = null, endSteps = null;
-
-  if (mode === 'range') {
-    startSteps = parseInt(document.getElementById('logstepstart-' + sectionId)?.value) || 0;
-    endSteps   = parseInt(document.getElementById('logstepend-'   + sectionId)?.value) || 0;
-    if (endSteps <= startSteps) {
-      if (typeof toast === 'function') toast('END STEPS MUST BE GREATER THAN START STEPS');
-      return;
-    }
-    steps = endSteps - startSteps;
-  } else {
-    steps = parseInt(document.getElementById('logstepinput-' + sectionId)?.value) || 0;
-  }
-
-  _logStepData[sectionId] = { steps, startSteps, endSteps };
-
-  // Auto-fill next section's start from this end reading
-  if (mode === 'range' && endSteps) {
-    const idx  = DEFAULT_WALK_SECTIONS.findIndex(s => s.id === sectionId);
-    const next = DEFAULT_WALK_SECTIONS[idx + 1];
-    if (next && !_logStepData[next.id]?.startSteps) {
-      const nextStartEl = document.getElementById('logstepstart-' + next.id);
-      if (nextStartEl) nextStartEl.value = endSteps;
-    }
-  }
-
-  const date  = _logStepDate || (typeof localDateStr === 'function' ? localDateStr() : '');
-  const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (_logStepData[s.id]?.steps || 0), 0);
-
   try {
+    let steps = 0, startSteps = null, endSteps = null;
+
+    if (mode === 'range') {
+      startSteps = parseInt(document.getElementById('logstepstart-' + sectionId)?.value) || 0;
+      endSteps   = parseInt(document.getElementById('logstepend-'   + sectionId)?.value) || 0;
+      if (endSteps <= startSteps) {
+        if (typeof toast === 'function') toast('END STEPS MUST BE GREATER THAN START STEPS');
+        return;
+      }
+      steps = endSteps - startSteps;
+    } else {
+      steps = parseInt(document.getElementById('logstepinput-' + sectionId)?.value) || 0;
+    }
+
+    _logData[sectionId] = { steps, startSteps, endSteps };
+
+    // Auto-fill next section start
+    if (mode === 'range' && endSteps) {
+      const idx  = DEFAULT_WALK_SECTIONS.findIndex(s => s.id === sectionId);
+      const next = DEFAULT_WALK_SECTIONS[idx + 1];
+      if (next && !_logData[next.id]?.startSteps) {
+        const nextEl = document.getElementById('logstepstart-' + next.id);
+        if (nextEl) nextEl.value = endSteps;
+      }
+    }
+
+    const date  = _logDate || _today();
+    const total = DEFAULT_WALK_SECTIONS.reduce((s, w) => s + (_logData[w.id]?.steps || 0), 0);
+
     await db.collection('userdata').doc(SESSION.username)
       .collection('steplog').doc(date)
-      .set({ sections: _logStepData, total, date, updated: new Date().toISOString() });
+      .set({ sections: _logData, total, date, updated: new Date().toISOString() });
 
     const existing = await encryptedLoad('steps');
     const idx = existing.findIndex(e => e.date === date);
-    const entry = {
-      saved: new Date().toISOString(), date, total: String(total),
-      morning: String(_logStepData.morning?.steps || 0),
-      lunch:   String(_logStepData.lunch?.steps   || 0),
-      pre:     String(_logStepData.pre?.steps      || 0),
-      post:    String(_logStepData.post?.steps     || 0),
-      evening: String(_logStepData.evening?.steps  || 0),
-    };
+    const entry = _buildStepEntry(date, total, _logData);
     idx >= 0 ? existing[idx] = entry : existing.unshift(entry);
     await encryptedSave('steps', existing);
 
-    await renderLogStepSections();
+    _paintLogStepCards();
+    updateLogStepRing();
     if (typeof loadStats === 'function') loadStats();
     const label = DEFAULT_WALK_SECTIONS.find(s => s.id === sectionId)?.label || sectionId;
     if (typeof toast === 'function') toast('✓ ' + label + ' SAVED — ' + steps.toLocaleString() + ' STEPS');
@@ -321,41 +311,31 @@ async function saveLogStepSection(sectionId, mode) {
 }
 window.saveLogStepSection = saveLogStepSection;
 
+// ─── Save custom walk (Log tab) ──────────────────────────────
 async function saveLogCustomWalk() {
-  const name  = document.getElementById('logCustomWalkName')?.value?.trim()  || 'Custom Walk';
-  const steps = parseInt(document.getElementById('logCustomWalkSteps')?.value || 0);
-  if (!steps) { if (typeof toast === 'function') toast('ENTER A STEP COUNT'); return; }
-
-  const date  = _logStepDate || (typeof localDateStr === 'function' ? localDateStr() : '');
-  const cid   = 'custom_' + Date.now();
-  _logStepData[cid] = { steps, label: name, startSteps: null, endSteps: null };
-
-  const total = DEFAULT_WALK_SECTIONS.reduce((sum, s) => sum + (_logStepData[s.id]?.steps || 0), 0) + steps;
-
   try {
+    const name  = document.getElementById('logCustomWalkName')?.value?.trim()  || 'Custom Walk';
+    const steps = parseInt(document.getElementById('logCustomWalkSteps')?.value || '0');
+    if (!steps) { if (typeof toast === 'function') toast('ENTER A STEP COUNT'); return; }
+
+    const date  = _logDate || _today();
+    _logData['custom_' + Date.now()] = { steps, label: name };
+    const total = DEFAULT_WALK_SECTIONS.reduce((s,w) => s + (_logData[w.id]?.steps||0), 0) + steps;
+
     await db.collection('userdata').doc(SESSION.username)
       .collection('steplog').doc(date)
-      .set({ sections: _logStepData, total, date, updated: new Date().toISOString() });
+      .set({ sections: _logData, total, date, updated: new Date().toISOString() });
 
     const existing = await encryptedLoad('steps');
     const idx = existing.findIndex(e => e.date === date);
-    const entry = {
-      saved: new Date().toISOString(), date, total: String(total),
-      morning: String(_logStepData.morning?.steps || 0),
-      lunch:   String(_logStepData.lunch?.steps   || 0),
-      pre:     String(_logStepData.pre?.steps      || 0),
-      post:    String(_logStepData.post?.steps     || 0),
-      evening: String(_logStepData.evening?.steps  || 0),
-    };
+    const entry = _buildStepEntry(date, total, _logData);
     idx >= 0 ? existing[idx] = entry : existing.unshift(entry);
     await encryptedSave('steps', existing);
 
-    const nameEl  = document.getElementById('logCustomWalkName');
-    const stepsEl = document.getElementById('logCustomWalkSteps');
-    if (nameEl)  nameEl.value  = '';
-    if (stepsEl) stepsEl.value = '';
+    const n = document.getElementById('logCustomWalkName');  if (n) n.value = '';
+    const s = document.getElementById('logCustomWalkSteps'); if (s) s.value = '';
 
-    await renderLogStepSections();
+    _paintLogStepCards();
     updateLogStepRing();
     if (typeof loadStats === 'function') loadStats();
     if (typeof toast === 'function') toast('✓ ' + name + ' — ' + steps.toLocaleString() + ' STEPS LOGGED');
@@ -365,67 +345,60 @@ async function saveLogCustomWalk() {
 }
 window.saveLogCustomWalk = saveLogCustomWalk;
 
-// ── Date navigation for Log Steps tab ───────────────────────
+// ─── Date navigation ─────────────────────────────────────────
 async function changeStepsLogDate() {
   const dateEl = document.getElementById('steps-log-date');
-  if (dateEl) _logStepDate = dateEl.value;
+  if (dateEl) _logDate = dateEl.value;
   await renderLogStepSections();
 }
 window.changeStepsLogDate = changeStepsLogDate;
 
 function stepsLogDateOffset(days) {
-  const today  = typeof localDateStr === 'function' ? localDateStr() : new Date().toISOString().split('T')[0];
-  const base   = _logStepDate || today;
-  const d      = new Date(base + 'T12:00:00');
+  const base = _logDate || _today();
+  const d    = new Date(base + 'T12:00:00');
   d.setDate(d.getDate() + days);
-  _logStepDate = d.toISOString().split('T')[0];
+  _logDate = d.toISOString().split('T')[0];
   const dateEl = document.getElementById('steps-log-date');
-  if (dateEl) dateEl.value = _logStepDate;
+  if (dateEl) dateEl.value = _logDate;
   renderLogStepSections();
 }
 window.stepsLogDateOffset = stepsLogDateOffset;
 
 function stepsLogSetToday() {
-  const today  = typeof localDateStr === 'function' ? localDateStr() : new Date().toISOString().split('T')[0];
-  _logStepDate = today;
+  _logDate = _today();
   const dateEl = document.getElementById('steps-log-date');
-  if (dateEl) dateEl.value = today;
+  if (dateEl) dateEl.value = _logDate;
   renderLogStepSections();
 }
 window.stepsLogSetToday = stepsLogSetToday;
 
-// ── Mode tab helpers ─────────────────────────────────────────
-function switchLogStepMode(sectionId, mode, highlight = true) {
-  const totalPanel = document.getElementById('logstepmode-total-' + sectionId);
-  const rangePanel = document.getElementById('logstepmode-range-' + sectionId);
-  if (totalPanel) totalPanel.style.display = mode === 'total' ? 'flex'  : 'none';
-  if (rangePanel) rangePanel.style.display = mode === 'range' ? 'block' : 'none';
-  if (highlight) highlightLogModeTab(sectionId, mode);
+// ─── Mode tab helpers ────────────────────────────────────────
+function switchLogStepMode(sectionId, mode, highlight) {
+  if (highlight === undefined) highlight = true;
+  const t = document.getElementById('logstepmode-total-' + sectionId);
+  const r = document.getElementById('logstepmode-range-' + sectionId);
+  if (t) t.style.display = mode === 'total' ? 'flex'  : 'none';
+  if (r) r.style.display = mode === 'range' ? 'block' : 'none';
+  if (!highlight) return;
+  ['total','range'].forEach(m => {
+    const btn = document.getElementById('logmodetab-' + m + '-' + sectionId);
+    if (!btn) return;
+    btn.style.background = m === mode ? 'var(--accent-dim)' : 'var(--bg3)';
+    btn.style.color      = m === mode ? 'var(--accent2)'    : 'var(--text-dim)';
+  });
 }
 window.switchLogStepMode = switchLogStepMode;
 
-function highlightLogModeTab(sectionId, activeMode) {
-  ['total', 'range'].forEach(m => {
-    const btn = document.getElementById('logmodetab-' + m + '-' + sectionId);
-    if (!btn) return;
-    btn.style.background = m === activeMode ? 'var(--accent-dim)' : 'var(--bg3)';
-    btn.style.color      = m === activeMode ? 'var(--accent2)'    : 'var(--text-dim)';
-  });
-}
-window.highlightLogModeTab = highlightLogModeTab;
-
 function calcLogStepDiff(sectionId) {
-  const startEl = document.getElementById('logstepstart-' + sectionId);
-  const endEl   = document.getElementById('logstepend-'   + sectionId);
-  const diffEl  = document.getElementById('logstepdiff-'  + sectionId);
-  if (!startEl || !endEl || !diffEl) return;
-  const start = parseInt(startEl.value) || 0;
-  const end   = parseInt(endEl.value)   || 0;
+  const start = parseInt(document.getElementById('logstepstart-' + sectionId)?.value) || 0;
+  const end   = parseInt(document.getElementById('logstepend-'   + sectionId)?.value) || 0;
+  const diffEl = document.getElementById('logstepdiff-' + sectionId);
+  if (!diffEl) return;
   if (start > 0 && end > start) {
     diffEl.textContent = '= ' + (end - start).toLocaleString() + ' steps this walk';
     diffEl.style.color = 'var(--accent2)';
   } else if (end > 0 && end <= start) {
-    diffEl.textContent = 'End steps must be greater than start steps';
+    diffEl.textContent = 'End must be greater than start';
     diffEl.style.color = 'var(--danger)';
   } else {
     diffEl.textContent = '';
@@ -433,84 +406,72 @@ function calcLogStepDiff(sectionId) {
 }
 window.calcLogStepDiff = calcLogStepDiff;
 
+// ─── Shared entry builder ────────────────────────────────────
+function _buildStepEntry(date, total, data) {
+  return {
+    saved:   new Date().toISOString(),
+    date,
+    total:   String(total),
+    morning: String(data.morning?.steps || 0),
+    lunch:   String(data.lunch?.steps   || 0),
+    pre:     String(data.pre?.steps     || 0),
+    post:    String(data.post?.steps    || 0),
+    evening: String(data.evening?.steps || 0),
+  };
+}
+
 // ═══════════════════════════════════════════════════════════
 // BREATHING / DECOMPRESSION
 // ═══════════════════════════════════════════════════════════
-function renderDecompressionSection() {
-  // Decompression section is already in index.html — nothing to inject
-}
+function renderDecompressionSection() { /* already in index.html */ }
 window.renderDecompressionSection = renderDecompressionSection;
 
 let _breathInterval = null;
 
 function startBreath(mode) {
-  if (_breathInterval) clearInterval(_breathInterval);
+  if (_breathInterval) { clearInterval(_breathInterval); _breathInterval = null; }
 
   const ui     = document.getElementById('breathUI');
   const circle = document.getElementById('breathCircle');
   const timer  = document.getElementById('breathTimer');
   const instr  = document.getElementById('breathInstr');
-  if (!ui) return;
-
+  if (!ui || !circle || !timer || !instr) return;
   ui.style.display = 'block';
 
   const patterns = {
-    sigh: { phases: [
-      { label: 'INHALE (nose)',        dur: 2, cls: 'inhale' },
-      { label: 'INHALE TOP-UP (nose)', dur: 1, cls: 'inhale' },
-      { label: 'EXHALE (mouth, long)', dur: 6, cls: 'exhale' },
-    ], rounds: 5 },
-    '478': { phases: [
-      { label: 'INHALE',  dur: 4, cls: 'inhale' },
-      { label: 'HOLD',    dur: 7, cls: 'hold'   },
-      { label: 'EXHALE',  dur: 8, cls: 'exhale' },
-    ], rounds: 4 },
-    scan: { phases: [
-      { label: 'BREATHE IN',  dur: 4, cls: 'inhale' },
-      { label: 'BREATHE OUT', dur: 6, cls: 'exhale' },
-    ], rounds: 10 },
+    sigh: { phases:[{label:'INHALE (nose)',dur:2,cls:'inhale'},{label:'INHALE TOP-UP',dur:1,cls:'inhale'},{label:'EXHALE (slow)',dur:6,cls:'exhale'}], rounds:5 },
+    '478':{ phases:[{label:'INHALE',dur:4,cls:'inhale'},{label:'HOLD',dur:7,cls:'hold'},{label:'EXHALE',dur:8,cls:'exhale'}], rounds:4 },
+    scan: { phases:[{label:'BREATHE IN',dur:4,cls:'inhale'},{label:'BREATHE OUT',dur:6,cls:'exhale'}], rounds:10 },
   };
 
-  const pattern = patterns[mode];
-  if (!pattern) return;
+  const pattern = patterns[mode]; if (!pattern) return;
+  let round = 0, pi = 0, pt = 0;
 
-  let round = 0, phaseIdx = 0, phaseTime = 0;
+  circle.className = 'breath-circle'; circle.textContent = 'READY';
+  timer.textContent = ''; instr.textContent = 'Round 1 of ' + pattern.rounds;
 
-  function tick() {
+  _breathInterval = setInterval(() => {
     if (round >= pattern.rounds) {
-      clearInterval(_breathInterval);
-      circle.textContent = 'DONE ✓';
-      circle.className   = 'breath-circle';
-      timer.textContent  = '';
-      instr.textContent  = 'Great work. Cortisol is dropping.';
-      return;
+      clearInterval(_breathInterval); _breathInterval = null;
+      circle.textContent = 'DONE ✓'; circle.className = 'breath-circle';
+      timer.textContent = ''; instr.textContent = 'Great work.'; return;
     }
-    const phase = pattern.phases[phaseIdx];
-    circle.textContent = phase.label;
-    circle.className   = 'breath-circle ' + phase.cls;
-    timer.textContent  = phase.dur - phaseTime;
-    phaseTime++;
-    if (phaseTime >= phase.dur) {
-      phaseTime = 0;
-      phaseIdx++;
-      if (phaseIdx >= pattern.phases.length) {
-        phaseIdx = 0;
-        round++;
-        if (round < pattern.rounds) instr.textContent = 'Round ' + (round + 1) + ' of ' + pattern.rounds;
+    const phase = pattern.phases[pi];
+    circle.textContent = phase.label; circle.className = 'breath-circle ' + phase.cls;
+    timer.textContent  = phase.dur - pt;
+    if (++pt >= phase.dur) {
+      pt = 0; pi++;
+      if (pi >= pattern.phases.length) {
+        pi = 0; round++;
+        if (round < pattern.rounds) instr.textContent = 'Round ' + (round+1) + ' of ' + pattern.rounds;
       }
     }
-  }
-
-  circle.className   = 'breath-circle';
-  circle.textContent = 'READY';
-  timer.textContent  = '';
-  instr.textContent  = 'Round 1 of ' + pattern.rounds;
-  _breathInterval    = setInterval(tick, 1000);
+  }, 1000);
 }
 window.startBreath = startBreath;
 
 // ═══════════════════════════════════════════════════════════
-// CALORIE UTILITIES — used by workouts-core.js set tracker
+// CALORIE UTILITIES
 // ═══════════════════════════════════════════════════════════
 const EXERCISE_MET = {
   'BENCH PRESS':6.0,'OVERHEAD PRESS':5.5,'BENT-OVER ROW':6.5,'SQUAT':7.0,
@@ -535,62 +496,154 @@ const BODYWEIGHT_PCT = {
 };
 window.BODYWEIGHT_PCT = BODYWEIGHT_PCT;
 
+// ── WEIGHTED_EXERCISES ────────────────────────────────────────
+// Controls whether a weight (lbs/kg) input column appears in the set tracker.
+// Rule: include any exercise where external load is COMMON or USEFUL to log,
+// even if the exercise can also be done bodyweight.
+// All exercise names must match item.name.toUpperCase() exactly.
 const WEIGHTED_EXERCISES = new Set([
-  'BENCH PRESS','OVERHEAD PRESS','INCLINE DB PRESS','BENT-OVER ROW','DB ROW (SINGLE ARM)',
-  'BARBELL ROW','SQUAT','GOBLET SQUAT','BARBELL SQUAT','ROMANIAN DEADLIFT',
-  'DEADLIFT','HIP THRUST','BICEP CURL','HAMMER CURL','LATERAL RAISE',
-  'TRICEP OVERHEAD EXT.','SKULL CRUSHER','LEG PRESS','SHOULDER PRESS',
-  'DUMBBELL BENCH PRESS','DUMBBELL OVERHEAD PRESS','DUMBBELL FLY',
-  'BARBELL HIP THRUST','DUMBBELL BICEP CURL','CABLE BICEP CURL',
+
+  // ── CHEST ──────────────────────────────────────────────────
+  'BENCH PRESS','BARBELL BENCH PRESS','DUMBBELL BENCH PRESS',
+  'INCLINE DB PRESS','INCLINE BARBELL PRESS',
+  'DUMBBELL FLY','CABLE CHEST FLY','PEC DECK FLY',
+  'MACHINE CHEST PRESS','FLOOR PRESS',
+  'PUSH-UP',                     // can be weighted (vest / plate on back)
+  'DECLINE PUSH-UP',             // ditto
+  'DIAMOND PUSH-UP',
+  'ARCHER PUSH-UP',
+  'PSEUDO PLANCHE PUSH-UP',
+
+  // ── BACK / LATS ────────────────────────────────────────────
+  'SINGLE-ARM DB ROW','DB ROW (SINGLE ARM)',
+  'BENT-OVER DB ROW','BENT-OVER ROW','BARBELL ROW',
+  'LAT PULLDOWN','SEATED CABLE ROW','CABLE ROW',
+  'PULL-UP / CHIN-UP','PULL-UP','CHIN-UP','WEIGHTED PULL-UP',
+  'DOORFRAME PULL-UP BAR',       // can add belt weight
+  'INVERTED ROW (TRX)',
+  'BACK EXTENSION (MACHINE)','BACK EXTENSION (BENCH)',
+  'REVERSE HYPEREXTENSION (MACHINE)','REVERSE HYPEREXTENSION (BENCH)','REVERSE HYPEREXTENSION (ADJ. BENCH)',
+  'GOOD MORNING (DB)','GOOD MORNING (BARBELL)',
+  'MEADOWS ROW','CHEST SUPPORTED DB ROW',
+  'FACE PULL (CABLE)',
+
+  // ── SHOULDERS ──────────────────────────────────────────────
+  'DUMBBELL OVERHEAD PRESS','OVERHEAD PRESS','BARBELL OVERHEAD PRESS',
+  'MACHINE SHOULDER PRESS',
+  'LATERAL RAISE','CABLE LATERAL RAISE',
+  'FRONT RAISE (DB)',
+  'REAR DELT RAISE',
+
+  // ── BICEPS ─────────────────────────────────────────────────
+  'DUMBBELL BICEP CURL','BICEP CURL','EZ BAR CURL','PREACHER CURL',
+  'CABLE BICEP CURL','MACHINE BICEP CURL',
+  'CONCENTRATION CURL','INCLINE DB CURL',
+  'HAMMER CURL','REVERSE CURL (DB)','WRIST CURL (DB)',
+
+  // ── TRICEPS ────────────────────────────────────────────────
+  'TRICEP DIP',                  // can be weighted
+  'TRICEP DIP (PORTABLE BARS)',
+  'BENCH DIP',
+  'TRICEP OVERHEAD EXT. (DB)','TRICEP OVERHEAD EXT.',
+  'SKULL CRUSHER (EZ)','CABLE TRICEP PRESSDOWN',
+  'MACHINE TRICEP EXTENSION','TRICEP KICKBACK (DB)',
+
+  // ── CORE / ABS ─────────────────────────────────────────────
+  'CABLE CRUNCH','PALLOF PRESS (CABLE)',
+  'RUSSIAN TWIST',               // can hold plate/DB
+  'AB WHEEL ROLLOUT',
+
+  // ── GLUTES — all common with added weight ─────────────────
+  'GLUTE BRIDGE',                // DB/plate on hips
+  'SINGLE-LEG GLUTE BRIDGE',
+  'WEIGHTED GLUTE BRIDGE (DB)',
+  'HIP THRUST','HIP THRUST (DB)','BARBELL HIP THRUST','MACHINE HIP THRUST',
+  'SINGLE-LEG HIP THRUST',
+  'DONKEY KICK',                 // ankle weights / cable
+  'CABLE GLUTE KICKBACK',
+  'HIP ABDUCTION MACHINE',
+  'LATERAL BAND WALK',           // resistance band = external load
+
+  // ── HAMSTRINGS ─────────────────────────────────────────────
+  'ROMANIAN DEADLIFT (DB)','ROMANIAN DEADLIFT (BAR)','ROMANIAN DEADLIFT',
+  'LYING LEG CURL','SEATED LEG CURL','SINGLE-LEG CURL (MACHINE)',
+  'KETTLEBELL SWING',
+  'DEADLIFT (DB)','CONVENTIONAL DEADLIFT','TRAP BAR DEADLIFT','SUMO DEADLIFT','SUMO DEADLIFT (DB)',
+
+  // ── QUADS ──────────────────────────────────────────────────
+  'GOBLET SQUAT','BARBELL SQUAT','BARBELL FRONT SQUAT','SUMO SQUAT (DB)','SUMO SQUAT (BB)',
+  'LEG PRESS','LEG EXTENSION','HACK SQUAT (MACHINE)',
+  'BULGARIAN SPLIT SQUAT',       // DB or BB
+  'STEP-UP (DB OR BW)',          // can be weighted
+  'REVERSE LUNGE (DB)','REVERSE LUNGE',
+  'WALKING LUNGE (DB)',
+  'LUNGE (BARBELL)',
+  'CURTSY LUNGE (DB)','CURTSY LUNGE',
+  'LATERAL LUNGE (DB)',
+  'SPLIT SQUAT (BB)',
+  'BOX SQUAT (BB)','PAUSE SQUAT (BB)','OVERHEAD SQUAT','SAFETY BAR SQUAT',
+  'SINGLE-LEG GLUTE BRIDGE',
+
+  // ── CALVES ─────────────────────────────────────────────────
+  'STANDING CALF RAISE',         // can hold DBs
+  'SEATED CALF RAISE','CALF PRESS ON LEG PRESS',
+  'CALF RAISE ON STEP (BW)',     // can hold DBs
+  'SINGLE-LEG CALF RAISE',
+
+  // ── FULL BODY / COMPOUNDS ──────────────────────────────────
+  'POWER CLEAN',
+  "FARMER'S CARRY (DB)",'KETTLEBELL FARMER CARRY',
+  'RENEGADE ROW',                // DB required
+
+  // ── CALISTHENICS (weighted progressions) ──────────────────
+  'PULL-UP (STANDARD)',          // weighted belt
+  'DIP (BODYWEIGHT)',            // weighted belt
+  'PISTOL SQUAT',                // can hold DB as counterweight / for load
+  'SHRIMP SQUAT',
+  'WALKING LUNGE',
+  'NORDIC HAMSTRING CURL',
 ]);
 window.WEIGHTED_EXERCISES = WEIGHTED_EXERCISES;
 
 function getWeightKg() {
-  const lbs = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.weight || 0) : 0;
-  return lbs > 0 ? lbs * 0.453592 : 0;
+  try { const lbs = SESSION?.weight || 0; return lbs > 0 ? lbs * 0.453592 : 0; } catch(e) { return 0; }
 }
 window.getWeightKg = getWeightKg;
 
-function metModifier(weightLbs, bodyLbs) {
-  if (!weightLbs || !bodyLbs) return 1;
-  return 1 + (weightLbs / bodyLbs) * 0.33;
-}
+function metModifier(wLbs, bLbs) { return (!wLbs||!bLbs) ? 1 : 1+(wLbs/bLbs)*0.33; }
 window.metModifier = metModifier;
 
 function calcItemCalories(item, weightLbs) {
-  const weightKg = getWeightKg();
-  if (!weightKg) return null;
-  const name       = (item.name || '').toUpperCase();
-  const met        = EXERCISE_MET[name] || 4.0;
-  const secPerRep  = SEC_PER_REP[name]  || DEFAULT_SEC_PER_REP;
-  const repMatch   = (item.sets || '').match(/[×x](\d+)/);
-  const reps       = repMatch ? parseInt(repMatch[1]) : 10;
-  const setsMatch  = (item.sets || '').match(/^(\d+)/);
-  const sets       = setsMatch ? parseInt(setsMatch[1]) : 3;
-  const minutes    = (reps * sets * secPerRep) / 60;
-  const bodyLbs    = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.weight || 0) : 0;
-  const bwPct      = BODYWEIGHT_PCT[name];
-  const effLbs     = weightLbs || (bwPct ? bodyLbs * bwPct : 0);
-  return Math.round(met * metModifier(effLbs, bodyLbs) * weightKg * minutes);
+  try {
+    const kg = getWeightKg(); if (!kg) return null;
+    const name = (item.name||'').toUpperCase();
+    const met  = EXERCISE_MET[name] || 4.0;
+    const spr  = SEC_PER_REP[name]  || DEFAULT_SEC_PER_REP;
+    const rm   = (item.sets||'').match(/[×x](\d+)/); const reps = rm ? parseInt(rm[1]) : 10;
+    const sm   = (item.sets||'').match(/^(\d+)/);    const sets = sm ? parseInt(sm[1]) : 3;
+    const mins = (reps * sets * spr) / 60;
+    const bLbs = SESSION?.weight || 0;
+    const eLbs = weightLbs || (BODYWEIGHT_PCT[name] ? bLbs * BODYWEIGHT_PCT[name] : 0);
+    return Math.round(met * metModifier(eLbs, bLbs) * kg * mins);
+  } catch(e) { return null; }
 }
 window.calcItemCalories = calcItemCalories;
 
 function calcActualCalories(item, actual) {
-  const weightKg = getWeightKg();
-  if (!weightKg) return 0;
-  const sets = (actual && actual.sets) ? actual.sets.filter(s => s?.reps) : [];
-  if (!sets.length) return 0;
-  const name      = (item.name || '').toUpperCase();
-  const met       = EXERCISE_MET[name] || 4.0;
-  const secPerRep = SEC_PER_REP[name]  || DEFAULT_SEC_PER_REP;
-  const bodyLbs   = (typeof SESSION !== 'undefined' && SESSION) ? (SESSION.weight || 0) : 0;
-  const bwPct     = BODYWEIGHT_PCT[name];
-  return sets.reduce((total, s) => {
-    const reps   = parseInt(s.reps) || 0;
-    const effLbs = parseFloat(s.weight) || (bwPct ? bodyLbs * bwPct : 0);
-    const mins   = (reps * secPerRep) / 60;
-    return total + Math.min(Math.round(met * metModifier(effLbs, bodyLbs) * weightKg * mins), 25);
-  }, 0);
+  try {
+    const kg   = getWeightKg(); if (!kg) return 0;
+    const sets = (actual?.sets||[]).filter(s=>s?.reps);
+    if (!sets.length) return 0;
+    const name = (item.name||'').toUpperCase();
+    const met  = EXERCISE_MET[name] || 4.0;
+    const spr  = SEC_PER_REP[name]  || DEFAULT_SEC_PER_REP;
+    const bLbs = SESSION?.weight || 0;
+    return sets.reduce((tot, s) => {
+      const reps = parseInt(s.reps)||0;
+      const eLbs = parseFloat(s.weight)||(BODYWEIGHT_PCT[name]?bLbs*BODYWEIGHT_PCT[name]:0);
+      return tot + Math.min(Math.round(met * metModifier(eLbs,bLbs) * kg * (reps*spr/60)), 25);
+    }, 0);
+  } catch(e) { return 0; }
 }
 window.calcActualCalories = calcActualCalories;
 

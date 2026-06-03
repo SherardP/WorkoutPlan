@@ -167,6 +167,20 @@ async function _saveBodyEntry() {
 
   await encryptedSave('body', body);
 
+  // ── Sync weight back to profile ───────────────────────────
+  // When weight is logged, update SESSION and Firebase profile so
+  // BMI, calorie burn, and all profile displays stay in sync.
+  if (values.weight && SESSION) {
+    SESSION.weight = values.weight;
+    try {
+      await saveUser(SESSION.username, { weight: values.weight });
+    } catch(e) { console.warn('Weight profile sync failed:', e); }
+    // Refresh BMI preview if profile modal is open
+    if (typeof updateBMIPreview === 'function') updateBMIPreview();
+    // Refresh calorie burn card if visible
+    if (typeof updateCalorieBurnDisplay === 'function') updateCalorieBurnDisplay();
+  }
+
   const noteEl = document.getElementById('body-prefill-note');
   if (noteEl) { noteEl.style.color = '#4caf50'; noteEl.textContent = `✓ SAVED for ${date}`; }
   toast('✓ BODY METRICS SAVED');
@@ -356,14 +370,381 @@ async function reloadLogForDate(type) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// STEPS LOG TAB INIT
 // ═══════════════════════════════════════════════════════════
-function initLogStepsPanel() {
-  const dateEl = document.getElementById('steps-log-date');
-  if (dateEl && !dateEl.value) dateEl.value = localDateStr();
-  if (typeof renderLogStepSections === 'function') renderLogStepSections();
-  if (typeof updateLogStepRing === 'function') updateLogStepRing();
+// STEPS LOG TAB — fully self-contained, no external deps
+// ═══════════════════════════════════════════════════════════
+
+const _WALKS = [
+  { id:'morning', label:'MORNING WALK',       pct:0.20, star:false },
+  { id:'lunch',   label:'LUNCH WALK',          pct:0.20, star:false },
+  { id:'pre',     label:'PRE-WORKOUT WALK',    pct:0.10, star:false },
+  { id:'post',    label:'POST-WORKOUT WALK',   pct:0.30, star:true  },
+  { id:'evening', label:'EVENING WIND-DOWN',   pct:0.20, star:false },
+];
+var _lsDate = '';
+var _lsData = {};
+
+// Always read the live userGoals value — never fall back to a stale 10000
+function _lsGoal() {
+  // userGoals is declared as var in utils.js, making it a true global.
+  // Object.assign in loadGoals() mutates it in place so this always reflects
+  // whatever was last saved in Firebase.
+  return (typeof userGoals !== 'undefined' && userGoals.stepGoal && userGoals.stepGoal > 0)
+    ? userGoals.stepGoal : 10000;
 }
+
+async function initLogStepsPanel() {
+  // ── Always load the latest goals first so stepGoal is current ──
+  if (typeof loadGoals === 'function') {
+    try { await loadGoals(); } catch(e) {}
+  }
+  var dateEl = document.getElementById('steps-log-date');
+  _lsDate = localDateStr();
+  if (dateEl && !dateEl.value) dateEl.value = _lsDate;
+  else if (dateEl && dateEl.value) _lsDate = dateEl.value;
+  _renderLogWalkCards();
+  _loadAndRefreshLogSteps();
+}
+
+async function _loadAndRefreshLogSteps() {
+  try {
+    var doc = await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(_lsDate).get();
+    _lsData = {};
+    if (doc.exists) {
+      var raw = doc.data().sections || {};
+      Object.entries(raw).forEach(function(kv) {
+        var k = kv[0], v = kv[1];
+        _lsData[k] = (v && typeof v === 'object') ? v : {steps: Number(v)||0};
+      });
+    }
+  } catch(e) { _lsData = {}; }
+  _renderLogWalkCards();
+  _updateLogRing();
+}
+
+function _renderLogWalkCards() {
+  var el = document.getElementById('logStepSections');
+  if (!el) return;
+  var goal = _lsGoal();
+
+  var html = _WALKS.map(function(s, idx) {
+    var saved    = _lsData[s.id] || {};
+    var done     = saved.steps || 0;
+    var sStart   = saved.startSteps || '';
+    var sEnd     = saved.endSteps   || '';
+    var target   = Math.round(goal * s.pct);
+    var pct      = target > 0 ? Math.min(100, Math.round(done / target * 100)) : 0;
+    var complete = done >= target && target > 0;
+    // Find the most recent endSteps from ANY earlier section (handles skipped walks)
+    var autoStart = sStart;
+    if (!autoStart && idx > 0) {
+      for (var pi = idx - 1; pi >= 0; pi--) {
+        var prevSec = _lsData[_WALKS[pi].id];
+        if (prevSec && prevSec.endSteps) {
+          autoStart = prevSec.endSteps;
+          break;
+        }
+      }
+    }
+    autoStart = autoStart || '';
+    var bc = complete ? '#4caf50' : s.star ? 'var(--accent2)' : 'var(--border)';
+    var lc = s.star ? 'var(--accent2)' : 'var(--text)';
+    var diffText = (sStart && sEnd) ? '= ' + (sEnd - sStart).toLocaleString() + ' steps this walk' : '';
+
+    return '<div class="card mb16" id="logstepcard-' + s.id + '" style="border-left:4px solid ' + bc + ';">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">' +
+        '<div style="font-family:var(--font-mono);font-size:0.75rem;font-weight:700;color:' + lc + ';letter-spacing:.1em;">' + (s.star ? '⭐ ' : '') + s.label + '</div>' +
+        '<div style="font-family:var(--font-mono);font-size:0.65rem;color:' + (complete ? '#4caf50' : 'var(--text-dim)') + ';">' + done.toLocaleString() + ' / ' + target.toLocaleString() + ' steps</div>' +
+      '</div>' +
+      '<div style="height:4px;background:var(--bg3);border-radius:2px;margin-bottom:14px;">' +
+        '<div style="height:100%;width:' + pct + '%;background:' + (complete ? '#4caf50' : 'var(--accent2)') + ';border-radius:2px;transition:width 0.5s;"></div>' +
+      '</div>' +
+      '<div style="display:flex;margin-bottom:12px;border:1px solid var(--border);overflow:hidden;">' +
+        '<button onclick="_lsMode(\'' + s.id + '\',\'total\')" id="lsmtab-total-' + s.id + '" style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;cursor:pointer;border:none;border-right:1px solid var(--border);background:var(--accent-dim);color:var(--accent2);">TOTAL STEPS</button>' +
+        '<button onclick="_lsMode(\'' + s.id + '\',\'range\')" id="lsmtab-range-' + s.id + '" style="flex:1;padding:6px;font-family:var(--font-mono);font-size:0.6rem;cursor:pointer;border:none;background:var(--bg3);color:var(--text-dim);">START → END</button>' +
+      '</div>' +
+      '<div id="lsm-total-' + s.id + '" style="display:flex;gap:8px;align-items:center;">' +
+        '<input type="number" id="lsinput-' + s.id + '" value="' + (done || '') + '" placeholder="Steps for this walk" min="0" max="50000" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;">' +
+        '<button class="btn btn-p" onclick="_lsSave(\'' + s.id + '\',\'total\')" style="white-space:nowrap;font-size:0.65rem;padding:9px 14px;">' + (complete ? '✓ UPDATE' : 'SAVE') + '</button>' +
+      '</div>' +
+      '<div id="lsm-range-' + s.id + '" style="display:none;">' +
+        '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:8px;">' +
+          '<div>' +
+            '<div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">START STEPS</div>' +
+            '<input type="number" id="lsstart-' + s.id + '" value="' + autoStart + '" placeholder="Watch at start" min="0" oninput="_lsDiff(\'' + s.id + '\')" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+          '<div style="font-family:var(--font-display);font-size:1.2rem;color:var(--border2);padding-top:20px;">→</div>' +
+          '<div>' +
+            '<div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--border2);letter-spacing:.1em;margin-bottom:4px;">END STEPS</div>' +
+            '<input type="number" id="lsend-' + s.id + '" value="' + (sEnd || '') + '" placeholder="Watch at end" min="0" oninput="_lsDiff(\'' + s.id + '\')" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:0.85rem;padding:9px 10px;outline:none;box-sizing:border-box;">' +
+          '</div>' +
+        '</div>' +
+        '<div id="lsdiff-' + s.id + '" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);text-align:center;margin-bottom:8px;min-height:18px;">' + diffText + '</div>' +
+        '<button class="btn btn-p" onclick="_lsSave(\'' + s.id + '\',\'range\')" style="width:100%;font-size:0.65rem;padding:9px;">' + (complete ? '✓ UPDATE' : 'SAVE WALK') + '</button>' +
+      '</div>' +
+      (complete ? '<div style="font-family:var(--font-mono);font-size:0.62rem;color:#4caf50;margin-top:8px;text-align:center;">✓ SECTION TARGET MET</div>' : '') +
+    '</div>';
+  }).join('');
+
+  el.innerHTML = html;
+
+  // Restore range tabs
+  _WALKS.forEach(function(s) {
+    if (_lsData[s.id] && (_lsData[s.id].startSteps || _lsData[s.id].endSteps)) {
+      _lsMode(s.id, 'range', false);
+    }
+  });
+
+  // Append any custom walk rows below the 5 fixed sections
+  var customKeys = Object.keys(_lsData).filter(function(k){ return k.indexOf('custom_') === 0; });
+  if (customKeys.length > 0) {
+    var customHtml = '<div style="margin-top:8px;">' +
+      '<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:8px;">ADDITIONAL WALKS</div>';
+    customKeys.forEach(function(k) {
+      var w = _lsData[k] || {};
+      var wSteps = w.steps || 0;
+      var wLabel = w.label || 'Custom Walk';
+      var safeKey = k.replace(/'/g, "\'");
+      customHtml +=
+        '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;' +
+        'margin-bottom:6px;background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--border2);">' +
+          '<div style="flex:1;font-family:var(--font-mono);font-size:0.7rem;color:var(--text);">' + wLabel + '</div>' +
+          '<div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);white-space:nowrap;">' + wSteps.toLocaleString() + ' steps</div>' +
+          '<button data-delkey="' + k + '" class="ls-del-btn" style="font-family:var(--font-mono);font-size:0.58rem;padding:3px 8px;cursor:pointer;background:transparent;border:1px solid var(--danger);color:var(--danger);white-space:nowrap;">✕ DELETE</button>' +
+        '</div>';
+    });
+    customHtml += '</div>';
+    el.innerHTML += customHtml;
+
+    // Attach delete handlers via JS (avoids inline onclick quote escaping issues)
+    el.querySelectorAll('.ls-del-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var key = btn.getAttribute('data-delkey');
+        if (key) _lsDeleteCustom(key);
+      });
+    });
+  }
+}
+
+async function _lsDeleteCustom(key) {
+  if (!_lsData[key]) return;
+  var label = _lsData[key].label || 'Custom Walk';
+  delete _lsData[key];
+
+  var date  = _lsDate || localDateStr();
+  var total = Object.values(_lsData).reduce(function(s,v){return s+(v?v.steps||0:0);},0);
+
+  try {
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(date)
+      .set({sections: _lsData, total: total, date: date, updated: new Date().toISOString()});
+
+    var existing = await encryptedLoad('steps');
+    var idx = existing.findIndex(function(e){return e.date===date;});
+    var entry = _buildEntry(date, total);
+    if (idx >= 0) existing[idx] = entry; else existing.unshift(entry);
+    await encryptedSave('steps', existing);
+
+    _renderLogWalkCards();
+    _updateLogRing();
+    if (typeof loadStats === 'function') loadStats();
+    if (typeof toast === 'function') toast('✓ ' + label + ' DELETED');
+  } catch(e) {
+    if (typeof toast === 'function') toast('ERROR: ' + e.message);
+  }
+}
+window._lsDeleteCustom = _lsDeleteCustom;
+
+function _updateLogRing() {
+  try {
+    var goal  = _lsGoal();
+    // Sum ALL sections including custom walks
+    var total = Object.values(_lsData).reduce(function(s, v) { return s + (v ? (v.steps || 0) : 0); }, 0);
+    var pct   = Math.min(100, Math.round(total / goal * 100));
+    var off   = 345.4 - (345.4 * pct / 100);
+    var today = localDateStr();
+
+    var r = document.getElementById('logStepRingFill');    if(r) r.style.strokeDashoffset = String(off);
+    var p = document.getElementById('logStepRingPct');     if(p) p.textContent = pct + '%';
+    var t = document.getElementById('logStepTodayTotal');  if(t) t.textContent = total.toLocaleString();
+    var g = document.getElementById('logStepGoalDisplay'); if(g) g.textContent = goal.toLocaleString();
+    var l = document.getElementById('logStepsTodayLabel'); if(l) l.textContent = (!_lsDate || _lsDate === today) ? "TODAY'S STEPS" : _lsDate;
+
+    var banner = document.getElementById('steps-log-date-banner');
+    if (banner) {
+      if (_lsDate && _lsDate !== today) {
+        var d = new Date(_lsDate + 'T12:00:00');
+        banner.style.display = 'block';
+        banner.textContent = '📅 LOGGING FOR ' + d.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'}).toUpperCase();
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+  } catch(e) {}
+}
+
+function _buildEntry(date, total) {
+  return {
+    saved: new Date().toISOString(), date: date, total: String(total),
+    morning: String(_lsData.morning ? _lsData.morning.steps||0 : 0),
+    lunch:   String(_lsData.lunch   ? _lsData.lunch.steps||0   : 0),
+    pre:     String(_lsData.pre     ? _lsData.pre.steps||0     : 0),
+    post:    String(_lsData.post    ? _lsData.post.steps||0    : 0),
+    evening: String(_lsData.evening ? _lsData.evening.steps||0 : 0),
+  };
+}
+
+async function _lsSave(sectionId, mode) {
+  try {
+    var steps = 0, startSteps = null, endSteps = null;
+    if (mode === 'range') {
+      startSteps = parseInt(document.getElementById('lsstart-' + sectionId) ? document.getElementById('lsstart-' + sectionId).value : '0') || 0;
+      endSteps   = parseInt(document.getElementById('lsend-'   + sectionId) ? document.getElementById('lsend-'   + sectionId).value : '0') || 0;
+      if (endSteps <= startSteps) { if(typeof toast==='function') toast('END MUST BE GREATER THAN START'); return; }
+      steps = endSteps - startSteps;
+    } else {
+      steps = parseInt(document.getElementById('lsinput-' + sectionId) ? document.getElementById('lsinput-' + sectionId).value : '0') || 0;
+    }
+    _lsData[sectionId] = {steps: steps, startSteps: startSteps, endSteps: endSteps};
+
+    // Propagate endSteps forward to all subsequent sections that don't yet have a startSteps
+    if (mode === 'range' && endSteps) {
+      var idx2 = _WALKS.findIndex(function(s) { return s.id === sectionId; });
+      for (var fi = idx2 + 1; fi < _WALKS.length; fi++) {
+        var fwalk = _WALKS[fi];
+        // Only fill if this section has no saved startSteps yet
+        if (!(_lsData[fwalk.id] && _lsData[fwalk.id].startSteps)) {
+          // Update the DOM input if it's visible (range mode open)
+          var ne = document.getElementById('lsstart-' + fwalk.id);
+          if (ne && !ne.value) ne.value = endSteps;
+        }
+        // Stop propagating once we hit a section that already has its own endSteps saved
+        if (_lsData[fwalk.id] && _lsData[fwalk.id].endSteps) break;
+      }
+    }
+
+    var date  = _lsDate || localDateStr();
+    var total = _WALKS.reduce(function(s,w){return s+(_lsData[w.id]?_lsData[w.id].steps||0:0);},0);
+
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(date)
+      .set({sections: _lsData, total: total, date: date, updated: new Date().toISOString()});
+
+    var existing = await encryptedLoad('steps');
+    var idx = existing.findIndex(function(e){return e.date===date;});
+    var entry = _buildEntry(date, total);
+    if (idx >= 0) existing[idx] = entry; else existing.unshift(entry);
+    await encryptedSave('steps', existing);
+
+    _renderLogWalkCards();
+    _updateLogRing();
+    if (typeof loadStats === 'function') loadStats();
+    var label = (_WALKS.find(function(s){return s.id===sectionId;})||{}).label || sectionId;
+    if (typeof toast === 'function') toast('✓ ' + label + ' SAVED — ' + steps.toLocaleString() + ' STEPS');
+  } catch(e) {
+    if (typeof toast === 'function') toast('ERROR: ' + e.message);
+  }
+}
+
+async function saveLogCustomWalk() {
+  try {
+    var nameEl  = document.getElementById('logCustomWalkName');
+    var stepsEl = document.getElementById('logCustomWalkSteps');
+    var name  = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : 'Custom Walk';
+    var steps = parseInt((stepsEl && stepsEl.value) ? stepsEl.value : '0') || 0;
+    if (!steps) { if(typeof toast==='function') toast('ENTER A STEP COUNT'); return; }
+
+    var date  = _lsDate || localDateStr();
+    var cid   = 'custom_' + Date.now();
+    _lsData[cid] = {steps: steps, label: name};
+
+    // Total = all sections including ALL custom entries
+    var total = Object.values(_lsData).reduce(function(s,v){return s+(v?v.steps||0:0);},0);
+
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('steplog').doc(date)
+      .set({sections: _lsData, total: total, date: date, updated: new Date().toISOString()});
+
+    var existing = await encryptedLoad('steps');
+    var idx = existing.findIndex(function(e){return e.date===date;});
+    var entry = _buildEntry(date, total);
+    if (idx >= 0) existing[idx] = entry; else existing.unshift(entry);
+    await encryptedSave('steps', existing);
+
+    // Clear inputs for next custom walk entry
+    if (nameEl)  nameEl.value  = '';
+    if (stepsEl) stepsEl.value = '';
+
+    // Re-render cards (shows updated sections + custom rows) and update ring
+    _renderLogWalkCards();
+    _updateLogRing();
+    if (typeof loadStats === 'function') loadStats();
+    if (typeof toast === 'function') toast('✓ ' + name + ' — ' + steps.toLocaleString() + ' STEPS LOGGED');
+  } catch(e) {
+    if (typeof toast === 'function') toast('ERROR: ' + e.message);
+  }
+}
+
+async function changeStepsLogDate() {
+  var d = document.getElementById('steps-log-date');
+  if (d) _lsDate = d.value;
+  _renderLogWalkCards();
+  _loadAndRefreshLogSteps();
+}
+
+function stepsLogDateOffset(days) {
+  var base = _lsDate || localDateStr();
+  var d = new Date(base + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  _lsDate = d.toISOString().split('T')[0];
+  var el = document.getElementById('steps-log-date');
+  if (el) el.value = _lsDate;
+  _renderLogWalkCards();
+  _loadAndRefreshLogSteps();
+}
+
+function stepsLogSetToday() {
+  _lsDate = localDateStr();
+  var el = document.getElementById('steps-log-date');
+  if (el) el.value = _lsDate;
+  _renderLogWalkCards();
+  _loadAndRefreshLogSteps();
+}
+
+function _lsMode(id, mode, highlight) {
+  var t = document.getElementById('lsm-total-' + id);
+  var r = document.getElementById('lsm-range-' + id);
+  if (t) t.style.display = mode === 'total' ? 'flex'  : 'none';
+  if (r) r.style.display = mode === 'range' ? 'block' : 'none';
+  if (highlight === false) return;
+  ['total','range'].forEach(function(m) {
+    var b = document.getElementById('lsmtab-' + m + '-' + id);
+    if (!b) return;
+    b.style.background = m === mode ? 'var(--accent-dim)' : 'var(--bg3)';
+    b.style.color      = m === mode ? 'var(--accent2)'    : 'var(--text-dim)';
+  });
+}
+
+function _lsDiff(id) {
+  var s = parseInt((document.getElementById('lsstart-'+id)||{}).value)||0;
+  var e = parseInt((document.getElementById('lsend-'+id)||{}).value)||0;
+  var d = document.getElementById('lsdiff-'+id);
+  if (!d) return;
+  if (s > 0 && e > s) { d.textContent = '= '+(e-s).toLocaleString()+' steps this walk'; d.style.color='var(--accent2)'; }
+  else if (e > 0 && e <= s) { d.textContent='End must be greater than start'; d.style.color='var(--danger)'; }
+  else d.textContent = '';
+}
+
+window.initLogStepsPanel  = initLogStepsPanel;
+window.saveLogCustomWalk  = saveLogCustomWalk;
+window.changeStepsLogDate = changeStepsLogDate;
+window.stepsLogDateOffset = stepsLogDateOffset;
+window.stepsLogSetToday   = stepsLogSetToday;
+window._lsMode            = _lsMode;
+window._lsDiff            = _lsDiff;
+window._lsSave            = _lsSave;
+
 
 // ═══════════════════════════════════════════════════════════
 // NUTRITION — stub (full implementation in nutrition.js)

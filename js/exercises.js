@@ -25,7 +25,7 @@ const EQ_GROUPS = [
   { label:'BICEP CURL MACHINE',  ids:['mach-biccurl'],                           icon:'🔧' },
   { label:'TRICEP MACHINE',      ids:['mach-tricext'],                           icon:'🔧' },
   { label:'HIP ABDUCTION MACH.', ids:['mach-hipabduct'],                         icon:'🔧' },
-  { label:'BACK EXT. BENCH',     ids:['mach-backext'],                           icon:'🔧' },
+  { label:'BACK EXT. BENCH',     ids:['mach-backext','bench-flat','bench-adj'],   icon:'🔧' },
   { label:'CALF MACHINE',        ids:['mach-calf'],                              icon:'🔧' },
   { label:'ASSISTED PULL-UP',    ids:['mach-assisted'],                          icon:'🔧' },
   { label:'RESISTANCE BANDS',    ids:['acc-bands'],                               icon:'🔁' },
@@ -93,7 +93,7 @@ function renderExLib() {
       || grp.ids.includes('__calisthenics__') || grp.ids.includes('__military__')
       || grp.ids.length === 0
       ? true
-      : grp.ids.some(id => userEq[id] || (id === 'db' && (userEq.dumbbells||[]).length > 0));
+      : grp.ids.some(id => userEq[id] || (id === 'db' && (userEq.dumbbells||[]).length > 0) || (id === 'acc-kb' && (userEq.kettlebells||[]).length > 0));
     const hasTag = userHas
       ? `<span style="font-family:var(--font-mono);font-size:0.55rem;color:#4caf50;
           background:rgba(76,175,80,0.15);border:1px solid #4caf50;padding:2px 7px;margin-left:8px;">✓ YOU HAVE THIS</span>`

@@ -126,10 +126,13 @@ function showWizardStep(step) {
                     📊 Not seeing results
                 </button>
                 <button class="btn btn-s wiz-opt" onclick="selectWizardOption('struggle','motivation',this)">
-                    🔥 Staying motivated
+                    🔥 Staying motivated / consistent
                 </button>
                 <button class="btn btn-s wiz-opt" onclick="selectWizardOption('struggle','time',this)">
                     ⏱️ Not enough time
+                </button>
+                <button class="btn btn-s wiz-opt" onclick="selectWizardOption('struggle','injury',this)">
+                    🦵 Pain or injury — need low impact
                 </button>
                 <button class="btn btn-s wiz-opt" onclick="selectWizardOption('struggle','technique',this)">
                     🎯 Technique / form
@@ -252,9 +255,22 @@ async function finishProgramGeneration() {
         if (programWizardData.recovery === 'sore')  flags.push('flag-lowvolume');
         if (programWizardData.recovery === 'tired') flags.push('flag-cortisol');
 
-        // Struggle → results flag
+        // Struggle → flags
+        // ALL struggle options now map to flags so the generator can act on them
         removeFlag('flag-struggle-results');
-        if (programWizardData.struggle === 'results') flags.push('flag-struggle-results');
+        removeFlag('flag-struggle-injury');
+        removeFlag('flag-lowimpact');
+        removeFlag('flag-struggle-time');
+        removeFlag('flag-struggle-motivation');
+
+        if (programWizardData.struggle === 'results')    flags.push('flag-struggle-results');
+        if (programWizardData.struggle === 'injury') {
+            // Injury answer → enforce low-impact + no-plyometric mode
+            flags.push('flag-struggle-injury');
+            flags.push('flag-lowimpact'); // belt-and-suspenders: both flags set
+        }
+        if (programWizardData.struggle === 'time')       flags.push('flag-struggle-time');
+        if (programWizardData.struggle === 'motivation') flags.push('flag-struggle-motivation');
 
         userGoals.specialFlags    = flags;
         userGoals.preferredSplit  = programWizardData.split || 'auto';

@@ -1137,7 +1137,10 @@ async function loadGoals() {
   try {
     const doc = await db.collection('userdata').doc(SESSION.username).collection('goals').doc('settings').get();
     if (doc.exists) {
-      userGoals = { ...userGoals, ...doc.data() };
+      // Mutate in place so ALL modules reading userGoals (window.userGoals, local refs, etc.)
+      // see the updated values — reassigning with spread creates a new object that other
+      // modules never receive.
+      Object.assign(userGoals, doc.data());
       selectedDays = new Set(userGoals.workoutDays || ['mon','tue','wed','thu','fri','sat']);
       currentFreqGoal = userGoals.workoutFreq || 6;
       currentDurationGoal = userGoals.sessionDuration || 90;

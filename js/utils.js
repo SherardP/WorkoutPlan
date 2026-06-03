@@ -449,12 +449,12 @@ const DEFAULT_WALK_SECTIONS = [
   {id:'evening', label:'EVENING WALK',       time:'After 7 PM',pct:0.15,  note:'Wind-down · final daily activity',                    star:false},
 ];
 
-let userGoals = { stepGoal:10000, workoutFreq:6, workoutDays:['mon','tue','wed','thu','fri','sat'], sessionDuration:90 };
-let selectedDays = new Set(['mon','tue','wed','thu','fri','sat']);
-let currentFreqGoal = 6;
-let currentDurationGoal = 90;
+var userGoals = { stepGoal:10000, workoutFreq:6, workoutDays:['mon','tue','wed','thu','fri','sat'], sessionDuration:90 };
+var selectedDays = new Set(['mon','tue','wed','thu','fri','sat']);
+var currentFreqGoal = 6;
+var currentDurationGoal = 90;
 // todayStepData stores per-section: { id: { steps, startSteps, endSteps } }
-let todayStepData = {};
+var todayStepData = {};
 
 // Export for other modules
 window.utils = {

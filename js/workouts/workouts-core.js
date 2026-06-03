@@ -136,9 +136,17 @@ const EX_DB = [
   {id:'pull_up',         name:'Pull-Up / Chin-Up',          muscles:['lats','biceps','back-upper'],        eq:['rack-pullup'],                 impact:'low',  goals:['size','strength','tone'],         sets_h:'4×6–10',  sets_s:'4×4–6',  rest_h:120, rest_s:150, ytId:'eGo4IYlbE5g'},
   {id:'doorframe_pullup',name:'Doorframe Pull-Up Bar',      muscles:['lats','biceps'],                     eq:['acc-pullbar'],                 impact:'low',  goals:['size','strength','tone'],         sets_h:'4×6–10',  sets_s:'4×4–6',  rest_h:120, rest_s:150, ytId:'eGo4IYlbE5g'},
   {id:'inverted_row',    name:'Inverted Row (TRX)',         muscles:['back-upper','biceps'],               eq:['acc-trx'],                     impact:'low',  goals:['tone','recomp','general'],        sets_h:'3×12',    sets_s:'3×8',    rest_h:90,  rest_s:120, ytId:'LRN-CmKuByI'},
-  {id:'back_ext',        name:'Back Extension',             muscles:['back-lower'],                        eq:['mach-backext'],                impact:'low',  goals:['strength','posture'],             sets_h:'3×12–15', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'ph3pOHHCMnk'},
+  {id:'back_ext',        name:'Back Extension (Machine)',    muscles:['back-lower'],                        eq:['mach-backext'],                impact:'low',  goals:['strength','posture'],             sets_h:'3×12–15', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'ph3pOHHCMnk'},
+  {id:'back_ext_bench',  name:'Back Extension (Bench)',       muscles:['back-lower','glutes'],               eq:['bench-flat'],                  impact:'low',  goals:['strength','posture','lowimpact'], sets_h:'3×12–15', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'ph3pOHHCMnk'},
+  {id:'rev_hyper_mach',  name:'Reverse Hyperextension (Machine)',muscles:['back-lower','glutes','hamstrings'],  eq:['mach-backext'],                impact:'low',  goals:['strength','posture'],             sets_h:'3×12–15', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'ph3pOHHCMnk'},
+  {id:'rev_hyper_bench', name:'Reverse Hyperextension (Bench)', muscles:['back-lower','glutes','hamstrings'],   eq:['bench-flat'],                  impact:'low',  goals:['strength','posture','lowimpact'], sets_h:'3×12–15', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'ph3pOHHCMnk'},
+  {id:'rev_hyper_adj',   name:'Reverse Hyperextension (Adj. Bench)',muscles:['back-lower','glutes','hamstrings'],eq:['bench-adj'],                  impact:'low',  goals:['strength','posture','lowimpact'], sets_h:'3×12–15', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'ph3pOHHCMnk'},
+  {id:'superman_hold',   name:'Superman Hold',                  muscles:['back-lower','glutes'],               eq:[],                              impact:'low',  goals:['posture','general','lowimpact'],  sets_h:'3×12',    sets_s:'3×10',   rest_h:60,  rest_s:60,  ytId:'cc6UVNM5oMI'},
+  {id:'prone_hip_ext',   name:'Prone Hip Extension (Floor)',    muscles:['back-lower','glutes'],               eq:[],                              impact:'low',  goals:['posture','lowimpact','tone'],     sets_h:'3×15/side',sets_s:'3×12',   rest_h:45,  rest_s:60,  ytId:'ph3pOHHCMnk'},
   {id:'superman',        name:'Superman Hold',              muscles:['back-lower'],                        eq:[],                              impact:'low',  goals:['posture','general','lowimpact'],  sets_h:'3×12',    sets_s:'3×10',   rest_h:60,  rest_s:60,  ytId:'cc6UVNM5oMI'},
   {id:'good_morning_db', name:'Good Morning (DB)',          muscles:['back-lower','hamstrings'],           eq:['db'],                          impact:'low',  goals:['strength','posture'],             sets_h:'3×12',    sets_s:'3×8',    rest_h:90,  rest_s:120, ytId:'YA-h3n9l5x0'},
+  {id:'meadows_row',     name:'Meadows Row',                muscles:['back-upper','lats'],                 eq:['bar-olympic'],                 impact:'low',  goals:['size','strength'],                sets_h:'3×10–12', sets_s:'3×8',    rest_h:90,  rest_s:120, ytId:'G8l_8chR5BE'},
+  {id:'chest_supported_row',name:'Chest Supported DB Row', muscles:['back-upper','lats','biceps'],        eq:['db','bench-adj'],              impact:'low',  goals:['size','tone'],                    sets_h:'4×10–12', sets_s:'4×8',    rest_h:90,  rest_s:120, ytId:'FWJR5Ve8bnQ'},
 
   // ── SHOULDERS ───────────────────────────────────────────
   {id:'db_ohp',          name:'Dumbbell Overhead Press',   muscles:['shoulders','triceps'],               eq:['db'],                          impact:'low',  goals:['size','strength','tone'],         sets_h:'4×10–12', sets_s:'4×5–6',  rest_h:90,  rest_s:150, ytId:'qEwKCR5JCog'},
@@ -149,6 +157,7 @@ const EX_DB = [
   {id:'rear_delt_raise', name:'Rear Delt Raise',           muscles:['back-upper','shoulders'],            eq:['db'],                          impact:'low',  goals:['posture','size','tone'],          sets_h:'3×15',    sets_s:'3×12',   rest_h:60,  rest_s:60,  ytId:'Rep-GkxHMKU'},
   {id:'face_pull',       name:'Face Pull (Cable)',         muscles:['back-upper','shoulders'],            eq:['mach-cable','mach-latpull'],   impact:'low',  goals:['posture','tone'],                 sets_h:'3×15–20', sets_s:'3×12',   rest_h:60,  rest_s:60,  ytId:'rep-GkxHMKU'},
   {id:'band_pull_apart', name:'Band Pull-Apart',           muscles:['back-upper','shoulders'],            eq:['acc-bands'],                   impact:'low',  goals:['posture','general','lowimpact'],  sets_h:'3×20',    sets_s:'3×15',   rest_h:45,  rest_s:60,  ytId:'0kgSBxbG6zo'},
+  {id:'cable_lateral',   name:'Cable Lateral Raise',       muscles:['shoulders'],                         eq:['mach-cable'],                  impact:'low',  goals:['size','tone'],                    sets_h:'3×15–20', sets_s:'3×12',   rest_h:60,  rest_s:60,  ytId:'3VcKaXpzqRo'},
 
   // ── ARMS — BICEPS ───────────────────────────────────────
   {id:'db_curl',         name:'Dumbbell Bicep Curl',       muscles:['biceps'],                            eq:['db'],                          impact:'low',  goals:['size','tone'],                    sets_h:'3×12',    sets_s:'3×8',    rest_h:60,  rest_s:90,  ytId:'ykJmrZ5v0Oo'},
@@ -157,6 +166,10 @@ const EX_DB = [
   {id:'preacher_curl',   name:'Preacher Curl',             muscles:['biceps'],                            eq:['rack-preacher'],               impact:'low',  goals:['size','tone'],                    sets_h:'3×12',    sets_s:'3×8',    rest_h:90,  rest_s:90,  ytId:'ykJmrZ5v0Oo'},
   {id:'cable_curl',      name:'Cable Bicep Curl',          muscles:['biceps'],                            eq:['mach-cable','mach-latpull'],   impact:'low',  goals:['size','tone'],                    sets_h:'3×12–15', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'ykJmrZ5v0Oo'},
   {id:'mach_curl',       name:'Machine Bicep Curl',        muscles:['biceps'],                            eq:['mach-biccurl'],                impact:'low',  goals:['size','tone','beginner'],         sets_h:'3×12',    sets_s:'3×8',    rest_h:60,  rest_s:90,  ytId:'ykJmrZ5v0Oo'},
+  {id:'concentration_curl',name:'Concentration Curl',      muscles:['biceps'],                            eq:['db'],                          impact:'low',  goals:['size','tone'],                    sets_h:'3×10–12', sets_s:'3×8',    rest_h:60,  rest_s:90,  ytId:'ykJmrZ5v0Oo'},
+  {id:'incline_curl',    name:'Incline DB Curl',            muscles:['biceps'],                            eq:['db','bench-adj'],              impact:'low',  goals:['size','strength'],                sets_h:'3×10–12', sets_s:'3×8',    rest_h:60,  rest_s:90,  ytId:'ykJmrZ5v0Oo'},
+  {id:'reverse_curl',    name:'Reverse Curl (DB)',          muscles:['biceps','forearms'],                 eq:['db'],                          impact:'low',  goals:['tone','general'],                 sets_h:'3×12',    sets_s:'3×10',   rest_h:60,  rest_s:60,  ytId:'0xyZbNqL_U0'},
+  {id:'wrist_curl',      name:'Wrist Curl (DB)',            muscles:['forearms'],                          eq:['db'],                          impact:'low',  goals:['strength','general'],             sets_h:'3×15–20', sets_s:'3×12',   rest_h:45,  rest_s:45,  ytId:'0xyZbNqL_U0'},
 
   // ── ARMS — TRICEPS ──────────────────────────────────────
   {id:'tricep_dip',      name:'Tricep Dip',                muscles:['triceps','chest','shoulders'],       eq:['rack-dip'],                    impact:'low',  goals:['size','strength','tone'],         sets_h:'3×10–15', sets_s:'4×6–8',  rest_h:90,  rest_s:120, ytId:'0326dy_-CzM'},
@@ -166,6 +179,8 @@ const EX_DB = [
   {id:'cable_tricep',    name:'Cable Tricep Pressdown',    muscles:['triceps'],                           eq:['mach-cable','mach-latpull'],   impact:'low',  goals:['size','tone'],                    sets_h:'3×12–15', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'2-LAMcpzODU'},
   {id:'mach_tricep',     name:'Machine Tricep Extension',  muscles:['triceps'],                           eq:['mach-tricext'],                impact:'low',  goals:['size','tone','beginner'],         sets_h:'3×12',    sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'2-LAMcpzODU'},
   {id:'close_grip_push', name:'Close-Grip Push-Up',        muscles:['triceps','chest'],                   eq:[],                              impact:'low',  goals:['tone','general'],                 sets_h:'3×12',    sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'J0DXcc8W4h8'},
+  {id:'bench_dip',       name:'Bench Dip',                 muscles:['triceps','chest','shoulders'],        eq:['bench-flat'],                  impact:'low',  goals:['size','tone','beginner'],         sets_h:'3×12–15', sets_s:'3×8–12', rest_h:60,  rest_s:90,  ytId:'0326dy_-CzM'},
+  {id:'tricep_kickback', name:'Tricep Kickback (DB)',       muscles:['triceps'],                           eq:['db'],                          impact:'low',  goals:['tone','size'],                    sets_h:'3×12–15', sets_s:'3×10',   rest_h:45,  rest_s:60,  ytId:'_gsUck-7f74'},
 
   // ── CORE / ABS ──────────────────────────────────────────
   {id:'plank', name:'Plank', muscles:['core'], eq:[], impact:'low', goals:['tone','fat','general','lowimpact'], sets_h:'3×30–60s', sets_s:'3×30s', rest_h:45, rest_s:60, ytId:'ASdvN_XEl_c',
@@ -184,17 +199,26 @@ const EX_DB = [
   {id:'ab_roller',       name:'Ab Wheel Rollout',          muscles:['core'],                              eq:['acc-abroll'],                  impact:'low',  goals:['size','strength'],                sets_h:'3×8–12',  sets_s:'3×8',    rest_h:90,  rest_s:90,  ytId:'AGEwnbDNiLs'},
   {id:'cable_crunch',    name:'Cable Crunch',              muscles:['core'],                              eq:['mach-cable','mach-latpull'],   impact:'low',  goals:['size','tone'],                    sets_h:'3×15',    sets_s:'3×12',   rest_h:60,  rest_s:90,  ytId:'AV5U7oGSGOY'},
   {id:'pallof_press',    name:'Pallof Press (Cable)',      muscles:['core'],                              eq:['mach-cable'],                  impact:'low',  goals:['posture','strength'],             sets_h:'3×12/side',sets_s:'3×10', rest_h:60,  rest_s:90,  ytId:'AV5U7oGSGOY'},
+  {id:'bicycle_crunch',  name:'Bicycle Crunch',            muscles:['core'],                              eq:[],                              impact:'low',  goals:['fat','tone'],                     sets_h:'3×20–30', sets_s:'3×15–25',rest_h:45,  rest_s:45,  ytId:'MKmrqckCjpI'},
+  {id:'toe_touch_crunch',name:'Toe Touch Crunch',          muscles:['core'],                              eq:[],                              impact:'low',  goals:['tone','fat'],                     sets_h:'3×20',    sets_s:'3×15',   rest_h:45,  rest_s:45,  ytId:'MKmrqckCjpI'},
+  {id:'flutter_kicks',   name:'Flutter Kicks',             muscles:['core'],                              eq:[],                              impact:'low',  goals:['tone','endurance'],               sets_h:'4×30–40', sets_s:'4×40',   rest_h:30,  rest_s:45,  ytId:'ASdvN_XEl_c'},
 
   // ── GLUTES ──────────────────────────────────────────────
   {id:'glute_bridge',    name:'Glute Bridge',              muscles:['glutes','hamstrings'],               eq:[],                              impact:'low',  goals:['size','tone','fat','lowimpact'],  sets_h:'4×15–20', sets_s:'3×12',   rest_h:60,  rest_s:90,  ytId:'wPM8icPu6H8'},
-  {id:'hip_thrust_db',   name:'Hip Thrust (DB)',           muscles:['glutes','hamstrings'],               eq:['db','bench-flat'],             impact:'low',  goals:['size','strength','tone'],         sets_h:'4×12–15', sets_s:'4×8',    rest_h:90,  rest_s:120, ytId:'wPM8icPu6H8'},
-  {id:'hip_thrust_bb',   name:'Barbell Hip Thrust',        muscles:['glutes','hamstrings'],               eq:['bar-olympic','bench-flat'],    impact:'low',  goals:['size','strength'],                sets_h:'4×10–12', sets_s:'4×6–8',  rest_h:120, rest_s:150, ytId:'SEdqd6lZKyk'},
+  {id:'glute_bridge_sl', name:'Single-Leg Glute Bridge',   muscles:['glutes','hamstrings','core'],        eq:[],                              impact:'low',  goals:['size','tone','fat','lowimpact'],  sets_h:'3×12/side', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'wPM8icPu6H8'},
+  {id:'glute_bridge_weighted',name:'Weighted Glute Bridge (DB)',muscles:['glutes','hamstrings'],          eq:['db'],                          impact:'low',  goals:['size','strength','tone'],         sets_h:'4×12–15', sets_s:'4×10',  rest_h:90,  rest_s:120, ytId:'wPM8icPu6H8'},
+  {id:'hip_thrust_sl',   name:'Single-Leg Hip Thrust',     muscles:['glutes','hamstrings','core'],        eq:[],                              impact:'low',  goals:['size','tone','strength'],         sets_h:'3×10/side', sets_s:'3×8',    rest_h:90,  rest_s:120, ytId:'wPM8icPu6H8'},
+  {id:'hip_thrust_db',   name:'Hip Thrust (DB)',           muscles:['glutes','hamstrings'],               eq:['db'],                          impact:'low',  goals:['size','strength','tone'],         sets_h:'4×12–15', sets_s:'4×8',    rest_h:90,  rest_s:120, ytId:'wPM8icPu6H8'},
+  {id:'hip_thrust_bb',   name:'Barbell Hip Thrust',        muscles:['glutes','hamstrings'],               eq:['bar-olympic'],                 impact:'low',  goals:['size','strength'],                sets_h:'4×10–12', sets_s:'4×6–8',  rest_h:120, rest_s:150, ytId:'SEdqd6lZKyk'},
   {id:'rdl_db',          name:'Romanian Deadlift (DB)',    muscles:['hamstrings','glutes','back-lower'],  eq:['db'],                          impact:'low',  goals:['size','strength','tone'],         sets_h:'4×10–12', sets_s:'4×5–6',  rest_h:90,  rest_s:150, ytId:'JCXUYuzwNrM'},
   {id:'rdl_bb',          name:'Romanian Deadlift (Bar)',   muscles:['hamstrings','glutes','back-lower'],  eq:['bar-olympic'],                 impact:'low',  goals:['size','strength'],                sets_h:'4×8–10',  sets_s:'5×4–6',  rest_h:120, rest_s:180, ytId:'JCXUYuzwNrM'},
   {id:'hip_abduct_mach', name:'Hip Abduction Machine',    muscles:['hips','glutes'],                     eq:['mach-hipabduct'],              impact:'low',  goals:['tone','size','fat'],              sets_h:'3×15–20', sets_s:'3×12',   rest_h:60,  rest_s:90,  ytId:'jNvzBdHwCBs'},
   {id:'fire_hydrant',    name:'Fire Hydrant',              muscles:['hips','glutes'],                     eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×15/side',sets_s:'3×12', rest_h:45,  rest_s:60,  ytId:'la-bz6yYIIA'},
   {id:'donkey_kick',     name:'Donkey Kick',               muscles:['hips','glutes'],                     eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×15/side',sets_s:'3×12', rest_h:45,  rest_s:60,  ytId:'SJ1iR_0Srew'},
   {id:'cable_kickback',  name:'Cable Glute Kickback',      muscles:['hips','glutes'],                     eq:['mach-cable','acc-anklestrap'], impact:'low',  goals:['tone','size','fat'],              sets_h:'3×15/side',sets_s:'3×12', rest_h:60,  rest_s:90,  ytId:'SJ1iR_0Srew'},
+  {id:'hip_thrust_mach', name:'Machine Hip Thrust',        muscles:['glutes','hamstrings'],               eq:['mach-hipabduct'],              impact:'low',  goals:['size','tone','beginner'],         sets_h:'4×12–15', sets_s:'4×8–10', rest_h:90,  rest_s:120, ytId:'wPM8icPu6H8'},
+  {id:'hip_abduct_bw',   name:'Hip Abduction (Lying BW)',  muscles:['hips','glutes'],                     eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×20/side',sets_s:'3×15', rest_h:45,  rest_s:45,  ytId:'jNvzBdHwCBs'},
+  {id:'lateral_band_walk',name:'Lateral Band Walk',        muscles:['hips','glutes'],                     eq:['acc-bands'],                   impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×15/dir', sets_s:'3×12', rest_h:45,  rest_s:60,  ytId:'a5G4RJfVi2U'},
 
   // ── QUADS ───────────────────────────────────────────────
   {id:'goblet_squat',    name:'Goblet Squat',              muscles:['quads','glutes','core'],             eq:['db'],                          impact:'low',  goals:['size','strength','tone','fat'],   sets_h:'4×10–12', sets_s:'4×5–6',  rest_h:90,  rest_s:150, ytId:'MxsFDhcyFyE'},
@@ -205,6 +229,30 @@ const EX_DB = [
   {id:'step_up',         name:'Step-Up (DB or BW)',        muscles:['quads','glutes'],                    eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×10/side',sets_s:'3×8',   rest_h:60,  rest_s:90,  ytId:'5clYkSsgbnU'},
   {id:'wall_sit',        name:'Wall Sit',                  muscles:['quads'],                             eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×30–60s',sets_s:'3×30s',  rest_h:60,  rest_s:60,  ytId:'y-wV4Venusw'},
   {id:'sumo_squat',      name:'Sumo Squat (DB)',           muscles:['quads','glutes','hamstrings'],       eq:['db'],                          impact:'low',  goals:['size','tone'],                    sets_h:'4×12',    sets_s:'4×8',    rest_h:90,  rest_s:120, ytId:'p0FvazKRN2A'},
+  {id:'bb_front_squat',  name:'Barbell Front Squat',       muscles:['quads','glutes','core'],             eq:['bar-olympic','rack-power'],    impact:'low',  goals:['size','strength'],                sets_h:'4×8–10',  sets_s:'5×4–6',  rest_h:150, rest_s:180, ytId:'bEv6CCg2BC8'},
+  {id:'reverse_lunge',   name:'Reverse Lunge',             muscles:['quads','glutes'],                    eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×10/side',sets_s:'3×8',   rest_h:60,  rest_s:90,  ytId:'xrjMX9RLuHs'},
+  {id:'reverse_lunge_db',name:'Reverse Lunge (DB)',        muscles:['quads','glutes','hamstrings'],       eq:['db'],                          impact:'low',  goals:['size','tone','strength'],         sets_h:'3×10/side',sets_s:'3×8',   rest_h:90,  rest_s:120, ytId:'xrjMX9RLuHs'},
+  {id:'lateral_lunge',   name:'Lateral Lunge (DB)',        muscles:['quads','glutes','hamstrings'],       eq:['db'],                          impact:'low',  goals:['tone','size'],                    sets_h:'3×10/side',sets_s:'3×8',   rest_h:60,  rest_s:90,  ytId:'D7KaRcUTQeE'},
+  {id:'hack_squat',      name:'Hack Squat (Machine)',      muscles:['quads','glutes'],                    eq:['mach-legpress'],               impact:'low',  goals:['size','strength'],                sets_h:'4×10–12', sets_s:'4×6–8',  rest_h:90,  rest_s:150, ytId:'IZxyjrxqgFY'},
+  // ── Squat variations ────────────────────────────────────
+  {id:'box_squat',       name:'Box Squat (BB)',            muscles:['quads','glutes','hamstrings'],       eq:['bar-olympic','rack-power'],    impact:'low',  goals:['size','strength'],                sets_h:'4×6–8',   sets_s:'5×3–5',  rest_h:150, rest_s:240, ytId:'bEv6CCg2BC8'},
+  {id:'pause_squat',     name:'Pause Squat (BB)',          muscles:['quads','glutes','core'],             eq:['bar-olympic','rack-power'],    impact:'low',  goals:['strength','size'],                sets_h:'4×5–6',   sets_s:'4×3–4',  rest_h:150, rest_s:180, ytId:'bEv6CCg2BC8'},
+  {id:'overhead_squat',  name:'Overhead Squat',            muscles:['quads','glutes','core','shoulders'], eq:['bar-olympic'],                 impact:'low',  goals:['strength','posture'],             sets_h:'4×5–8',   sets_s:'4×3–5',  rest_h:120, rest_s:180, ytId:'bEv6CCg2BC8'},
+  {id:'safety_squat',    name:'Safety Bar Squat',          muscles:['quads','glutes','hamstrings'],       eq:['bar-safety','rack-power'],     impact:'low',  goals:['size','strength'],                sets_h:'4×8–10',  sets_s:'5×4–6',  rest_h:150, rest_s:240, ytId:'bEv6CCg2BC8'},
+  {id:'jump_squat',      name:'Jump Squat',                muscles:['quads','glutes'],                    eq:[],                              impact:'high', goals:['fat','endurance','recomp'],       sets_h:'4×10–12', sets_s:'4×8',    rest_h:60,  rest_s:90,  ytId:'aclHkVaku9U', knee_stress:true, plyo:true, block_from_generator:true},
+  {id:'sissy_squat',     name:'Sissy Squat',               muscles:['quads'],                             eq:[],                              impact:'low',  goals:['size','tone'],                    sets_h:'3×10–15', sets_s:'3×8',    rest_h:60,  rest_s:90,  ytId:'m0FOpx_-eE0'},
+  {id:'cossack_squat',   name:'Cossack Squat',             muscles:['quads','glutes','hamstrings'],       eq:[],                              impact:'low',  goals:['tone','lowimpact','posture'],     sets_h:'3×8/side',sets_s:'3×6',   rest_h:60,  rest_s:90,  ytId:'D7KaRcUTQeE'},
+  {id:'sumo_squat_bb',   name:'Sumo Squat (BB)',           muscles:['quads','glutes','hamstrings'],       eq:['bar-olympic','rack-power'],    impact:'low',  goals:['size','strength'],                sets_h:'4×8–10',  sets_s:'4×5–6',  rest_h:120, rest_s:180, ytId:'bEv6CCg2BC8'},
+  // ── Lunge variations ────────────────────────────────────
+  {id:'forward_lunge',   name:'Forward Lunge (BW)',        muscles:['quads','glutes'],                    eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×12/side',sets_s:'3×10', rest_h:60,  rest_s:90,  ytId:'D7KaRcUTQeE'},
+  {id:'walking_lunge_db',name:'Walking Lunge (DB)',        muscles:['quads','glutes','hamstrings'],       eq:['db'],                          impact:'low',  goals:['size','tone','fat'],              sets_h:'3×12/leg',sets_s:'3×10',  rest_h:90,  rest_s:120, ytId:'D7KaRcUTQeE'},
+  {id:'lunge_bb',        name:'Lunge (Barbell)',           muscles:['quads','glutes','hamstrings'],       eq:['bar-olympic'],                 impact:'low',  goals:['size','strength'],                sets_h:'4×8/side',sets_s:'4×6',   rest_h:120, rest_s:150, ytId:'D7KaRcUTQeE'},
+  {id:'curtsy_lunge',    name:'Curtsy Lunge',              muscles:['glutes','quads','hips'],             eq:[],                              impact:'low',  goals:['tone','fat','lowimpact'],         sets_h:'3×12/side',sets_s:'3×10', rest_h:60,  rest_s:60,  ytId:'D7KaRcUTQeE'},
+  {id:'curtsy_lunge_db', name:'Curtsy Lunge (DB)',         muscles:['glutes','quads','hips'],             eq:['db'],                          impact:'low',  goals:['size','tone'],                    sets_h:'3×12/side',sets_s:'3×10', rest_h:60,  rest_s:90,  ytId:'D7KaRcUTQeE'},
+  {id:'split_squat_bb',  name:'Split Squat (BB)',          muscles:['quads','glutes','hamstrings'],       eq:['bar-olympic','rack-power'],    impact:'low',  goals:['size','strength'],                sets_h:'4×8/side',sets_s:'4×6',   rest_h:120, rest_s:150, ytId:'2C-uNgbwi_k'},
+  // ── Deadlift/hip hinge variations ───────────────────────
+  {id:'sumo_deadlift',   name:'Sumo Deadlift',             muscles:['hamstrings','glutes','quads','back-lower'],eq:['bar-olympic'],          impact:'low',  goals:['size','strength'],                sets_h:'4×6–8',   sets_s:'5×3–5',  rest_h:180, rest_s:240, ytId:'op9kVnSso6Q'},
+  {id:'sumo_deadlift_db',name:'Sumo Deadlift (DB)',        muscles:['hamstrings','glutes','quads'],       eq:['db'],                          impact:'low',  goals:['size','strength','tone'],         sets_h:'4×10–12', sets_s:'4×6–8',  rest_h:120, rest_s:150, ytId:'op9kVnSso6Q'},
 
   // ── HAMSTRINGS ──────────────────────────────────────────
   {id:'leg_curl',        name:'Lying Leg Curl',            muscles:['hamstrings'],                        eq:['mach-legcurl'],                impact:'low',  goals:['size','tone'],                    sets_h:'3×12–15', sets_s:'3×8–10', rest_h:90,  rest_s:90,  ytId:'ELOCsoDSmrg'},
@@ -213,20 +261,30 @@ const EX_DB = [
   {id:'deadlift_db',     name:'Deadlift (DB)',             muscles:['hamstrings','glutes','back-lower'],  eq:['db'],                          impact:'low',  goals:['size','strength'],                sets_h:'4×10',    sets_s:'4×6',    rest_h:120, rest_s:180, ytId:'op9kVnSso6Q'},
   {id:'deadlift_bb',     name:'Conventional Deadlift',     muscles:['hamstrings','glutes','back-lower','back-upper'],eq:['bar-olympic'],  impact:'low',  goals:['size','strength'],                sets_h:'4×6–8',   sets_s:'5×3–5',  rest_h:180, rest_s:240, ytId:'op9kVnSso6Q'},
   {id:'trap_deadlift',   name:'Trap Bar Deadlift',         muscles:['hamstrings','quads','glutes','back-lower'],eq:['bar-trap'],         impact:'low',  goals:['size','strength'],                sets_h:'4×8',     sets_s:'5×3–5',  rest_h:150, rest_s:240, ytId:'yGAoFUlScLw'},
+  {id:'seated_leg_curl', name:'Seated Leg Curl',           muscles:['hamstrings'],                        eq:['mach-legcurl'],                impact:'low',  goals:['size','tone'],                    sets_h:'3×12–15', sets_s:'3×10',   rest_h:60,  rest_s:90,  ytId:'ELOCsoDSmrg'},
+  {id:'single_leg_curl', name:'Single-Leg Curl (Machine)', muscles:['hamstrings'],                        eq:['mach-legcurl'],                impact:'low',  goals:['size','tone'],                    sets_h:'3×12/side',sets_s:'3×10', rest_h:60,  rest_s:90,  ytId:'ELOCsoDSmrg'},
+  {id:'good_morning_bb', name:'Good Morning (Barbell)',    muscles:['back-lower','hamstrings','glutes'],   eq:['bar-olympic'],                 impact:'low',  goals:['strength','posture'],             sets_h:'3×10–12', sets_s:'3×8',    rest_h:90,  rest_s:120, ytId:'YA-h3n9l5x0'},
 
   // ── CALVES ──────────────────────────────────────────────
   {id:'standing_calf',   name:'Standing Calf Raise',       muscles:['calves'],                            eq:[],                              impact:'low',  goals:['size','tone','general'],          sets_h:'4×15–20', sets_s:'4×10',   rest_h:60,  rest_s:60,  ytId:'gwLzBIX8rqY'},
   {id:'seated_calf',     name:'Seated Calf Raise',         muscles:['calves'],                            eq:['mach-calf'],                   impact:'low',  goals:['size','tone'],                    sets_h:'4×15–20', sets_s:'4×10',   rest_h:60,  rest_s:60,  ytId:'YJmF8LB4Qos'},
   {id:'leg_press_calf',  name:'Calf Press on Leg Press',   muscles:['calves'],                            eq:['mach-legpress'],               impact:'low',  goals:['size','tone'],                    sets_h:'4×15–20', sets_s:'4×12',   rest_h:60,  rest_s:60,  ytId:'gwLzBIX8rqY'},
+  {id:'calf_raise_step', name:'Calf Raise on Step (BW)',   muscles:['calves'],                            eq:[],                              impact:'low',  goals:['size','tone','general'],          sets_h:'4×20–25', sets_s:'4×15',   rest_h:45,  rest_s:60,  ytId:'gwLzBIX8rqY'},
+  {id:'single_leg_calf', name:'Single-Leg Calf Raise',     muscles:['calves'],                            eq:[],                              impact:'low',  goals:['size','strength'],                sets_h:'3×15/side',sets_s:'3×12', rest_h:45,  rest_s:60,  ytId:'gwLzBIX8rqY'},
 
   // ── CARDIO / CONDITIONING ───────────────────────────────
   {id:'treadmill_walk',  name:'Treadmill Walk',            muscles:[],                                    eq:['cardio-treadmill'],            impact:'low',  goals:['fat','endurance','lowimpact'],    sets_h:'1×20–30min',sets_s:'1×15min',rest_h:0,   rest_s:0,   ytId:''},
-  {id:'treadmill_run',   name:'Treadmill Run',             muscles:[],                                    eq:['cardio-treadmill'],            impact:'high', goals:['fat','endurance'],                sets_h:'1×20–30min',sets_s:'1×15min',rest_h:0,   rest_s:0,   ytId:''},
+  {id:'treadmill_run',   name:'Treadmill Run',             muscles:[],                                    eq:['cardio-treadmill'],            impact:'high', goals:['fat','endurance'],                sets_h:'1×20–30min',sets_s:'1×15min',rest_h:0,   rest_s:0,   ytId:'', knee_stress:true},
   {id:'bike_steady',     name:'Stationary Bike (steady)',  muscles:[],                                    eq:['cardio-bike-up','cardio-bike-rec'],impact:'low',goals:['fat','endurance','lowimpact'], sets_h:'1×20–30min',sets_s:'1×15min',rest_h:0,   rest_s:0,   ytId:''},
   {id:'rowing_machine',  name:'Rowing Machine',            muscles:['back-upper','core'],                 eq:['cardio-rower'],                impact:'low',  goals:['fat','endurance','size'],         sets_h:'5×500m',  sets_s:'4×500m', rest_h:90,  rest_s:120, ytId:''},
   {id:'elliptical',      name:'Elliptical',                muscles:[],                                    eq:['cardio-elliptical'],           impact:'low',  goals:['fat','endurance','lowimpact'],    sets_h:'1×25min', sets_s:'1×20min',rest_h:0,   rest_s:0,   ytId:''},
-  {id:'jump_rope',       name:'Jump Rope',                 muscles:[],                                    eq:['acc-jumprope'],                impact:'high', goals:['fat','endurance'],                sets_h:'5×2min',  sets_s:'4×1min', rest_h:60,  rest_s:60,  ytId:''},
+  {id:'jump_rope',       name:'Jump Rope',                 muscles:[],                                    eq:['acc-jumprope'],                impact:'high', goals:['fat','endurance'],                sets_h:'5×2min',  sets_s:'4×1min', rest_h:60,  rest_s:60,  ytId:'', knee_stress:true, plyo:true},
   {id:'hiit_bike',       name:'HIIT Air Bike Intervals',   muscles:[],                                    eq:['cardio-airbike'],              impact:'low',  goals:['fat','endurance','recomp'],       sets_h:'8×20s on/40s off',sets_s:'6×20s',rest_h:0,rest_s:0, ytId:''},
+  {id:'stairmill',       name:'Stairmill / StepMill',      muscles:['quads','glutes','calves'],            eq:['cardio-stairmill'],            impact:'low',  goals:['fat','endurance','tone'],         sets_h:'1×20–30min',sets_s:'1×15min',rest_h:0,  rest_s:0,  ytId:''},
+  {id:'power_clean',     name:'Power Clean',               muscles:['quads','glutes','back-upper','shoulders'],eq:['bar-olympic'],            impact:'high', goals:['strength','fat','endurance'],     sets_h:'5×3–5',   sets_s:'5×2–3',  rest_h:180, rest_s:240, ytId:'op9kVnSso6Q'},
+  {id:'db_farmer_carry', name:"Farmer's Carry (DB)",       muscles:['forearms','core','traps'],            eq:['db'],                          impact:'low',  goals:['strength','general'],             sets_h:'4×30 sec', sets_s:'4×30 sec',rest_h:60, rest_s:90,  ytId:'mKDJeqHcTEk', block_from_generator:true},
+  {id:'sled_push',       name:'Sled Push / Prowler',       muscles:['quads','glutes','shoulders','core'],  eq:['acc-sled'],                    impact:'high', goals:['fat','endurance','strength'],     sets_h:'6×20m',   sets_s:'6×20m',  rest_h:90,  rest_s:90,  ytId:'', block_from_generator:true},
+  {id:'battle_ropes',    name:'Battle Ropes',              muscles:['shoulders','core','back-upper'],       eq:['acc-battleropes'],             impact:'low',  goals:['fat','endurance'],                sets_h:'6×30s on/30s off',sets_s:'5×30s',rest_h:0, rest_s:0,  ytId:'', block_from_generator:true},
 
   // ── YOGA ────────────────────────────────────────────────
   // All yoga is bodyweight (eq:[]) and categorized by style/goal
@@ -421,12 +479,12 @@ const EX_DB = [
   {id:'mil_sprint_25',   name:'Sprint Intervals (25–50m)', muscles:[],                                    eq:[],              impact:'high', goals:['military','fat','endurance'],       sets_h:'8×25m',   sets_s:'10×25m', rest_h:60, rest_s:60,  ytId:''},
   {id:'mil_sprint_400',  name:'400m Repeats',              muscles:[],                                    eq:[],              impact:'high', goals:['military','endurance'],             sets_h:'4×400m',  sets_s:'6×400m', rest_h:120,rest_s:120, ytId:''},
   {id:'mil_run_2mi',     name:'2-Mile Run (timed)',        muscles:[],                                    eq:[],              impact:'high', goals:['military','endurance'],             sets_h:'1×2mi',   sets_s:'1×2mi',  rest_h:0,  rest_s:0,   ytId:''},
-  {id:'mil_burpee_circ', name:'Burpee + Pull-Up Circuit',  muscles:['chest','back-upper','core','quads'], eq:['rack-pullup','acc-pullbar'], impact:'high', goals:['military','fat','endurance'], sets_h:'5×5',    sets_s:'5×8',    rest_h:90, rest_s:60,  ytId:'eGo4IYlbE5g', desc:'5 burpees immediately into 5 pull-ups — no rest between. This is 1 round. Rest 90 sec between rounds. The combination taxes both pushing and pulling muscles with a cardiovascular demand. Significantly harder than burpees alone.'},
-  {id:'mil_kb_carry',    name:'Kettlebell Farmer Carry',   muscles:['forearms','core','traps'],            eq:['acc-kb'],      impact:'low',  goals:['military','strength','endurance'],  sets_h:'4×40m',   sets_s:'5×40m',  rest_h:60, rest_s:60,  ytId:'mKDJeqHcTEk'},
+  {id:'mil_burpee_circ', name:'Burpee + Pull-Up Circuit',  muscles:['chest','back-upper','core','quads'], eq:['rack-pullup','acc-pullbar'], impact:'high', goals:['military','fat','endurance'], sets_h:'5×5',    sets_s:'5×8',    rest_h:90, rest_s:60,  ytId:'eGo4IYlbE5g', block_from_generator:true, desc:'5 burpees immediately into 5 pull-ups — no rest between. This is 1 round. Rest 90 sec between rounds. The combination taxes both pushing and pulling muscles with a cardiovascular demand. Significantly harder than burpees alone.'},
+  {id:'mil_kb_carry',    name:'Kettlebell Farmer Carry',   muscles:['forearms','core','traps'],            eq:['acc-kb'],      impact:'low',  goals:['military','strength'],              sets_h:'4×30 sec',sets_s:'5×30 sec',rest_h:60, rest_s:60,  ytId:'mKDJeqHcTEk'},
   {id:'mil_ruck_march',  name:'Ruck March (30–45 lb pack)',muscles:[],                                    eq:[],              impact:'low',  goals:['military','endurance','fat'],        sets_h:'1×3–5 mi',sets_s:'1×3mi', rest_h:0,  rest_s:0,   ytId:''},
   {id:'mil_sandbag_squat',name:'Sandbag Squat',            muscles:['quads','glutes','core'],             eq:[],              impact:'low',  goals:['military','strength','endurance'],  sets_h:'4×15',    sets_s:'5×12',   rest_h:60, rest_s:90,  ytId:'aclHkVaku9U'},
-  {id:'mil_broad_jump',  name:'Broad Jump / Standing Jump',muscles:['quads','glutes'],                    eq:[],              impact:'high', goals:['military','strength'],              sets_h:'4×5',     sets_s:'5×5',    rest_h:90, rest_s:120, ytId:'aclHkVaku9U'},
-  {id:'mil_pt_circuit',  name:'PT Circuit (AMRAP)',        muscles:['chest','core','quads','back-upper'],  eq:[],              impact:'high', goals:['military','endurance','fat'],       sets_h:'3×10min', sets_s:'5×10min',rest_h:120,rest_s:90,  ytId:'IODxDxX7oi4', desc:'AMRAP = As Many Rounds As Possible. Set a 10-minute timer. Each round: 10 push-ups → 15 sit-ups → 20 air squats → (5 pull-ups if bar available, or 10 rows). Rest only when needed. Log how many complete rounds you finish. Beat that number next session. This is standard military PT conditioning — the goal is not perfection, it is sustained effort.'},
+  {id:'mil_broad_jump',  name:'Broad Jump / Standing Jump',muscles:['quads','glutes'],                    eq:[],              impact:'high', goals:['military','strength'],              sets_h:'4×5',     sets_s:'5×5',    rest_h:90, rest_s:120, ytId:'aclHkVaku9U', knee_stress:true, plyo:true},
+  {id:'mil_pt_circuit',  name:'PT Circuit (AMRAP)',        muscles:['chest','core','quads','back-upper'],  eq:[],              impact:'high', goals:['military','endurance','fat'],       sets_h:'3×10min', sets_s:'5×10min',rest_h:120,rest_s:90,  ytId:'IODxDxX7oi4', block_from_generator:true, desc:'AMRAP = As Many Rounds As Possible. Set a 10-minute timer. Each round: 10 push-ups → 15 sit-ups → 20 air squats → (5 pull-ups if bar available, or 10 rows). Rest only when needed. Log how many complete rounds you finish. Beat that number next session. This is standard military PT conditioning — the goal is not perfection, it is sustained effort.'},
 ];
 
 // ── Warm-ups & cool-downs (no equipment needed) ──────────
@@ -631,7 +689,11 @@ const COOLDOWN_DB = {
 // ── Helpers ──────────────────────────────────────────────
 function userHasEquipment(req, eq) {
   if (!req || req.length === 0) return true; // bodyweight
-  return req.every(r => eq[r]);
+  return req.every(r => {
+    if (r === 'db')     return (eq.dumbbells   || []).length > 0;
+    if (r === 'acc-kb') return (eq.kettlebells  || []).length > 0;
+    return !!eq[r];
+  });
 }
 
 function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, count, sessionType, goalPriority, glutesIsPriority, alreadyUsed, variationBoost) {
@@ -658,6 +720,9 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
     .filter(e => {
       if (!userHasEquipment(e.eq, eq)) return false;
       if (isLowImpact && e.impact === 'high') return false;
+      // knee_stress:true exercises (plyometrics, jumping, running) are blocked when
+      // low-impact mode is active — even if their impact rating isn't 'high'
+      if (isLowImpact && e.knee_stress) return false;
       if (e.block_from_generator) return false;
 
       // Mode-exclusive sessions (yoga/pilates/calisthenics/military) only draw
@@ -754,18 +819,72 @@ function pickExercises(musclePriority, goalIds, eq, isLowImpact, isStrength, cou
   // When glutes are priority, allow multiple glute-primary exercises (up to 3)
   // Also block exercises from the same movement FAMILY in the same session
   const EXERCISE_FAMILIES = {
-    // All burpee variants — never pair two burpees in same session
-    'cal_burpee':      'burpee', 'mil_burpee_circ': 'burpee', 'mil_pt_circuit': 'burpee',
-    'cal_pushup':      'pushup', 'cal_diamond_pu':  'pushup', 'cal_archer_pu': 'pushup',
-      'cal_pseudo_planch':'pushup', 'push_up': 'pushup', 'mil_pushup_max':'pushup',
-    'cal_pullup':      'pullup', 'cal_chinup':      'pullup', 'cal_archer_pu2':'pullup',
-      'cal_muscle_up':  'pullup', 'mil_pullup_max': 'pullup',
-    'cal_dip':         'dip',    'bench_dip':       'dip',
-    'bb_squat':        'squat',  'goblet_squat':    'squat',  'cal_bw_squat':  'squat',
-      'sumo_squat':    'squat',  'leg_press':       'squat',
-    'rdl_db':          'deadlift','rdl_bb':          'deadlift','deadlift_db':  'deadlift',
-      'deadlift_bb':   'deadlift','trap_deadlift':   'deadlift',
-    'hip_thrust_db':   'hinge',  'hip_thrust_bb':   'hinge',  'glute_bridge':  'hinge',
+    // ── Burpee family — never two in same session ──────────────
+    'cal_burpee':        'burpee', 'mil_burpee_circ':  'burpee', 'mil_pt_circuit':   'burpee',
+
+    // ── Pushup family — one per session, period ────────────────
+    // Includes ALL horizontal push variations so the generator never stacks them
+    'push_up':           'pushup', 'decline_push':     'pushup', 'diamond_push':     'pushup',
+    'close_grip_push':   'pushup', 'cal_pushup':       'pushup', 'cal_diamond_pu':   'pushup',
+    'cal_archer_pu':     'pushup', 'cal_pseudo_planch':'pushup', 'mil_pushup_max':   'pushup',
+    'archer_push':       'pushup',
+
+    // ── Dip family ──────────────────────────────────────────────
+    'tricep_dip':        'dip',    'portable_dip':     'dip',    'bench_dip':        'dip',
+    'cal_dip':           'dip',
+
+    // ── Pull family ─────────────────────────────────────────────
+    'pull_up':           'pullup', 'doorframe_pullup': 'pullup', 'cal_pullup':       'pullup',
+    'cal_chinup':        'pullup', 'cal_archer_pu2':   'pullup', 'cal_muscle_up':    'pullup',
+    'mil_pullup_max':    'pullup',
+
+    // ── Bench press family ──────────────────────────────────────
+    'db_bench':          'benchpress', 'bb_bench':     'benchpress', 'db_incline':   'benchpress',
+    'bb_incline':        'benchpress', 'mach_chest_press':'benchpress',
+
+    // ── Row family ──────────────────────────────────────────────
+    'db_row':            'row',    'bent_row_db':      'row',    'bb_row':           'row',
+    'seated_row':        'row',    'cable_row':        'row',    'chest_supported_row':'row',
+    'meadows_row':       'row',    'inverted_row':     'row',
+
+    // ── Overhead press family ───────────────────────────────────
+    'db_ohp':            'ohp',    'bb_ohp':           'ohp',    'mach_shoulder':    'ohp',
+
+    // ── Squat family ─────────────────────────────────────────────
+    'bb_squat':          'squat',  'bb_front_squat':   'squat',  'goblet_squat':     'squat',
+    'cal_bw_squat':      'squat',  'sumo_squat':       'squat',  'sumo_squat_bb':    'squat',
+    'leg_press':         'squat',  'hack_squat':       'squat',  'box_squat':        'squat',
+    'pause_squat':       'squat',  'safety_squat':     'squat',  'overhead_squat':   'squat',
+    'jump_squat':        'squat',  'sissy_squat':      'squat',
+
+    // ── Lunge family ─────────────────────────────────────────────
+    'bss':               'lunge',  'step_up':          'lunge',  'reverse_lunge':    'lunge',
+    'reverse_lunge_db':  'lunge',  'forward_lunge':    'lunge',  'walking_lunge_db': 'lunge',
+    'lunge_bb':          'lunge',  'curtsy_lunge':     'lunge',  'curtsy_lunge_db':  'lunge',
+    'lateral_lunge':     'lunge',  'split_squat_bb':   'lunge',  'cal_lunge':        'lunge',
+    'cal_pistol':        'lunge',  'cal_shrimp_squat': 'lunge',
+
+    // ── Deadlift / hinge family ──────────────────────────────────
+    'rdl_db':            'deadlift','rdl_bb':           'deadlift','deadlift_db':     'deadlift',
+    'deadlift_bb':       'deadlift','trap_deadlift':    'deadlift','sumo_deadlift':   'deadlift',
+    'sumo_deadlift_db':  'deadlift','good_morning_db':  'deadlift','good_morning_bb': 'deadlift',
+
+    // ── Hip thrust / glute bridge family ─────────────────────────
+    'hip_thrust_db':     'hinge',  'hip_thrust_bb':    'hinge',  'glute_bridge':     'hinge',
+    'hip_thrust_mach':   'hinge',  'hip_thrust_sl':    'hinge',  'glute_bridge_sl':  'hinge',
+    'glute_bridge_weighted':'hinge',
+    // ── Back extension / hyper family ────────────────────────
+    'back_ext':          'backext','back_ext_bench':    'backext','rev_hyper_mach':    'backext',
+    'rev_hyper_bench':   'backext','rev_hyper_adj':     'backext','superman_hold':     'backext',
+
+    // ── Curl family ──────────────────────────────────────────────
+    'db_curl':           'curl',   'ez_curl':          'curl',   'preacher_curl':    'curl',
+    'cable_curl':        'curl',   'mach_curl':        'curl',   'concentration_curl':'curl',
+    'incline_curl':      'curl',
+
+    // ── Tricep extension family ──────────────────────────────────
+    'tricep_ext_db':     'tricepext','skull_crusher':   'tricepext','cable_tricep':  'tricepext',
+    'mach_tricep':       'tricepext',
   };
 
   const chosen = [];
@@ -871,12 +990,18 @@ function generateProgram() {
   const isYoga          = focus.includes('focus-yoga');
 
   // Wizard flags
-  const isMorning       = flags.includes('flag-morning');       // cortisol high — avoid HIIT
-  const isEvening       = flags.includes('flag-evening');        // avoid stimulant circuits
-  const isOnOff         = flags.includes('flag-onoff');          // on/off trainer — add variety
-  const isLowVolume     = flags.includes('flag-lowvolume');      // gets sore — reduce sets
-  const isHighCortisol  = flags.includes('flag-cortisol');       // tired/stressed — lower intensity
-  const wantsResults    = flags.includes('flag-struggle-results');// not seeing results — max variation
+  const isMorning       = flags.includes('flag-morning');         // cortisol high — avoid HIIT
+  const isEvening       = flags.includes('flag-evening');          // avoid stimulant circuits
+  const isOnOff         = flags.includes('flag-onoff');            // on/off trainer — add variety
+  const isLowVolume     = flags.includes('flag-lowvolume');        // gets sore — reduce sets
+  const isHighCortisol  = flags.includes('flag-cortisol');         // tired/stressed — lower intensity
+  const wantsResults    = flags.includes('flag-struggle-results'); // not seeing results — max variation
+  // Injury / pain flags — these override exercise selection regardless of goals
+  // flag-struggle-injury = wizard "Getting Hurt or Having Pain" answer
+  // flag-lowimpact = profile Special Considerations "Low Impact Only"
+  // Either one enforces the full low-impact + no-knee-stress filter
+  const hasInjuryFlag   = flags.includes('flag-struggle-injury') || flags.includes('flag-injury');
+  const effectiveLowImpact = isLowImpact || hasInjuryFlag; // used in pickExercises calls below
   const isPilates    = focus.includes('focus-pilates');
   const isCalisthenics = focus.includes('focus-calisthenics');
   const isMilitary   = focus.includes('focus-military');
@@ -1118,12 +1243,12 @@ function generateProgram() {
   };
 
   // Build cardio finisher if fat loss / endurance goal
-  const cardioFinisher = (isFatLoss || isEndurance) && !suppressHIIT ? EX_DB.filter(e => {
-    if (!userHasEquipment(e.eq, eq)) return false;
-    if (isLowImpact && e.impact === 'high') return false;
-    if (e.block_from_generator) return false;
-    return e.goals.includes('fat') || e.goals.includes('endurance');
-  }).slice(0,1) : [];
+  // Cardio finisher — removed from generator entirely.
+  // Cardio is handled by the Steps system (walks, post-workout walk).
+  // Injecting a cardio exercise into a strength session creates the exact
+  // problem the user reported: "farmer carry 40-60m / battle ropes" appearing
+  // in workouts. Fat loss and endurance goals are served by the step goal system.
+  const cardioFinisher = [];
 
   // Build per-day workout
   const programDays = {};
@@ -1167,7 +1292,7 @@ function generateProgram() {
     const alreadyUsed = usedExerciseIds[sessionKey] || new Set();
 
     const exercises = pickExercises(
-      boostedMuscles, goalIds, eq, isLowImpact, isStrength, exCount,
+      boostedMuscles, goalIds, eq, effectiveLowImpact, isStrength, exCount,
       ds.type, goalPriorityMap, glutesIsPriority, alreadyUsed, variationBoost
     );
 
@@ -1175,28 +1300,66 @@ function generateProgram() {
     usedExerciseIds[sessionKey] = alreadyUsed;
     exercises.forEach(e => alreadyUsed.add(e.id));
 
-    // Add cardio finisher on some days for fat loss
-    if ((isFatLoss || isEndurance) && cardioFinisher.length > 0 && idx % 2 === 0) {
-      exercises.push(cardioFinisher[0]);
-    }
+    // Cardio finisher intentionally disabled — cardio is handled by the Steps system.
 
     // ── PUMP WORKOUT — 2–3 lighter high-rep exercises, same muscles, different from core ──
-    // Hard-exclude core exercise EX_DB ids so there's truly zero overlap.
-    // pickExercises only penalises alreadyUsed — so we pre-filter EX_DB down to
-    // exercises NOT in the core set, run the scorer on that subset, then restore EX_DB.
+    // Hard-exclude core exercise IDs AND their movement families so the pump never
+    // repeats the same movement pattern as the core workout.
+    // e.g. if core has push_up → pump cannot pick decline_push, diamond_push, etc.
     const coreExIds = new Set(exercises.map(e => {
-      // Generated ids are "gen_day_idx_exId" — extract the base EX_DB id
       const parts = e.id.split('_');
       return parts.length >= 4 ? parts.slice(3).join('_') : e.id;
     }));
 
+    // Build the family exclusion list from core exercises
+    // We need a local copy of EXERCISE_FAMILIES here (it's defined inside pickExercises)
+    // so we duplicate the family map at this scope for pump filtering
+    const _pumpFamilyMap = {
+      'push_up':'pushup','decline_push':'pushup','diamond_push':'pushup','close_grip_push':'pushup',
+      'cal_pushup':'pushup','cal_diamond_pu':'pushup','cal_archer_pu':'pushup',
+      'cal_pseudo_planch':'pushup','mil_pushup_max':'pushup','archer_push':'pushup',
+      'tricep_dip':'dip','portable_dip':'dip','bench_dip':'dip','cal_dip':'dip',
+      'pull_up':'pullup','doorframe_pullup':'pullup','cal_pullup':'pullup',
+      'cal_chinup':'pullup','cal_archer_pu2':'pullup','cal_muscle_up':'pullup','mil_pullup_max':'pullup',
+      'db_bench':'benchpress','bb_bench':'benchpress','db_incline':'benchpress',
+      'bb_incline':'benchpress','mach_chest_press':'benchpress',
+      'db_row':'row','bent_row_db':'row','bb_row':'row','seated_row':'row',
+      'cable_row':'row','chest_supported_row':'row','meadows_row':'row','inverted_row':'row',
+      'db_ohp':'ohp','bb_ohp':'ohp','mach_shoulder':'ohp',
+      'bb_squat':'squat','bb_front_squat':'squat','goblet_squat':'squat','cal_bw_squat':'squat',
+      'sumo_squat':'squat','sumo_squat_bb':'squat','leg_press':'squat','hack_squat':'squat',
+      'box_squat':'squat','pause_squat':'squat','safety_squat':'squat','jump_squat':'squat',
+      'bss':'lunge','step_up':'lunge','reverse_lunge':'lunge','reverse_lunge_db':'lunge',
+      'forward_lunge':'lunge','walking_lunge_db':'lunge','lunge_bb':'lunge',
+      'curtsy_lunge':'lunge','curtsy_lunge_db':'lunge','lateral_lunge':'lunge',
+      'split_squat_bb':'lunge','cal_lunge':'lunge','cal_pistol':'lunge',
+      'rdl_db':'deadlift','rdl_bb':'deadlift','deadlift_db':'deadlift',
+      'deadlift_bb':'deadlift','trap_deadlift':'deadlift','sumo_deadlift':'deadlift',
+      'sumo_deadlift_db':'deadlift','good_morning_db':'deadlift','good_morning_bb':'deadlift',
+      'hip_thrust_db':'hinge','hip_thrust_bb':'hinge','glute_bridge':'hinge','hip_thrust_mach':'hinge',
+      'hip_thrust_sl':'hinge','glute_bridge_sl':'hinge','glute_bridge_weighted':'hinge',
+      'back_ext':'backext','back_ext_bench':'backext','rev_hyper_mach':'backext',
+      'rev_hyper_bench':'backext','rev_hyper_adj':'backext','superman_hold':'backext',
+      'db_curl':'curl','ez_curl':'curl','preacher_curl':'curl','cable_curl':'curl',
+      'mach_curl':'curl','concentration_curl':'curl','incline_curl':'curl',
+      'tricep_ext_db':'tricepext','skull_crusher':'tricepext','cable_tricep':'tricepext','mach_tricep':'tricepext',
+      'cal_burpee':'burpee','mil_burpee_circ':'burpee','mil_pt_circuit':'burpee',
+    };
+    const coreFamilies = new Set(
+      [...coreExIds].map(id => _pumpFamilyMap[id]).filter(Boolean)
+    );
+
     // Temporarily swap EX_DB to the filtered subset for the pump pick
     const _fullEX_DB = EX_DB.splice(0);                        // remove all items
-    const pumpPool   = _fullEX_DB.filter(e => !coreExIds.has(e.id) && !e.block_from_generator);
-    EX_DB.push(...pumpPool);                                    // only non-core exercises
+    const pumpPool   = _fullEX_DB.filter(e =>
+      !coreExIds.has(e.id) &&
+      !e.block_from_generator &&
+      !coreFamilies.has(_pumpFamilyMap[e.id])   // exclude same movement family
+    );
+    EX_DB.push(...pumpPool);                                    // only non-core, non-same-family exercises
 
     const pumpExercises = pickExercises(
-      boostedMuscles, goalIds, eq, isLowImpact,
+      boostedMuscles, goalIds, eq, effectiveLowImpact,
       false,         // pump is never strength-focused — always hypertrophy/tone rep ranges
       3,             // pick up to 3 pump exercises
       ds.type, goalPriorityMap, glutesIsPriority,
@@ -1249,7 +1412,7 @@ function generateProgram() {
   });
 
   // Build science summary
-  const summary = buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, isYoga, isPilates, isCalisthenics, isMilitary, defaultSets: goals.defaultSets, exCount, goals, bpg, eq });
+  const summary = buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, hasInjuryFlag, isHIIT, isYoga, isPilates, isCalisthenics, isMilitary, defaultSets: goals.defaultSets, exCount, goals, bpg, eq });
 
   return {
     generatedAt: new Date().toISOString(),
@@ -1260,7 +1423,7 @@ function generateProgram() {
   };
 }
 
-function buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, isHIIT, isYoga, isPilates, isCalisthenics, isMilitary, defaultSets, exCount, goals, bpg, eq }) {
+function buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStrength, isHypertrophy, isTone, isFatLoss, isEndurance, isLowImpact, hasInjuryFlag, isHIIT, isYoga, isPilates, isCalisthenics, isMilitary, defaultSets, exCount, goals, bpg, eq }) {
   const lines = [];
 
   // Sets goal note — always show
@@ -1285,7 +1448,7 @@ function buildProgramSummary({ splitLabel, freq, isBeginner, isAdvanced, isStren
   }
 
   // Low impact note
-  if (isLowImpact) lines.push({ icon:'🦵', head:'Low Impact Modifications Applied', body:`High-impact exercises (jumping, running) have been excluded. All exercises use controlled movement. Leg press replaces heavy squats where appropriate. Joint-friendly progressions prioritized.` });
+  if (isLowImpact || hasInjuryFlag) lines.push({ icon:'🦵', head:'Low Impact & Joint-Safe Program', body:`High-impact exercises (jumping, running, plyometrics) have been excluded. Knee-stress exercises (jump squats, burpees, box jumps) are blocked. All exercises use controlled movement. Progressions prioritize joint health over load.` });
 
   // Body part overrides
   const sizeGoals = Object.entries(bpg).filter(([,g]) => g === 'size').map(([id]) => id.replace('bp-',''));
@@ -1927,7 +2090,13 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = f
       const checked    = !!workoutChecks[item.id];
       const typeC      = item.type ? typeColor[item.type]||'var(--border2)' : badgeColor[item.badge]||'var(--border2)';
       const typeL      = item.type ? typeLabel[item.type]||'' : item.badge||'';
-      const isWeighted = WEIGHTED_EXERCISES.has(item.name?.toUpperCase());
+      // isWeighted: true if in the known-weighted set OR if the user has previously
+      // logged weight for this exercise (covers "glute bridge + DB" etc.)
+      const _savedActualPre = exerciseActuals[item.id] || {};
+      const _hasSavedWeight = (_savedActualPre.sets || []).some(s => s?.weight && parseFloat(s.weight) > 0)
+        || (exerciseWeights[item.id] && parseFloat(exerciseWeights[item.id]) > 0)
+        || !!_savedActualPre.weightToggled; // explicit user opt-in flag
+      const isWeighted = WEIGHTED_EXERCISES.has(item.name?.toUpperCase()) || _hasSavedWeight;
       const savedLbs   = exerciseWeights[item.id] || '';
       const itemCals   = getWeightKg() ? calcItemCalories(item, savedLbs) : null;
       const weightKg   = getWeightKg();
@@ -2133,7 +2302,7 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = f
             </div>`;
           })()}
 
-          ${isWeighted && weightKg ? `
+          ${weightKg ? (isWeighted ? `
           <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin:8px 0;">
             <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--border2);letter-spacing:.12em;margin-bottom:8px;">
               WEIGHT USED — updates calorie estimate
@@ -2141,26 +2310,36 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = f
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <div style="display:flex;align-items:center;gap:6px;">
                 <input type="number" id="wt-lbs-${item.id}" value="${savedLbs}"
-                  placeholder="lbs" min="0" max="500" step="2.5"
+                  placeholder="lbs" min="0" max="1000" step="2.5"
                   oninput="syncWeightInput('${item.id}','lbs')"
-                  style="width:72px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
-                  font-family:var(--font-mono);font-size:0.85rem;padding:6px 8px;outline:none;text-align:center;">
+                  style="width:80px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+                  font-family:var(--font-mono);font-size:0.9rem;padding:7px 10px;outline:none;text-align:center;">
                 <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);">lbs</span>
               </div>
               <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);">/</span>
               <div style="display:flex;align-items:center;gap:6px;">
                 <input type="number" id="wt-kg-${item.id}" value="${savedLbs ? (savedLbs*0.453592).toFixed(1) : ''}"
-                  placeholder="kg" min="0" max="250" step="1.25"
+                  placeholder="kg" min="0" max="500" step="1.25"
                   oninput="syncWeightInput('${item.id}','kg')"
-                  style="width:72px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
-                  font-family:var(--font-mono);font-size:0.85rem;padding:6px 8px;outline:none;text-align:center;">
+                  style="width:80px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+                  font-family:var(--font-mono);font-size:0.9rem;padding:7px 10px;outline:none;text-align:center;">
                 <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);">kg</span>
               </div>
               <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);">
                 ~<span id="cal-live-${item.id}">${itemCals||'—'}</span> kcal
               </div>
             </div>
-          </div>` : ''}
+          </div>` : `
+          <div id="wt-toggle-wrap-${item.id}" style="margin:8px 0;">
+            <button onclick="enableWeightLog('${item.id}','${dayId}')"
+              style="width:100%;padding:7px;font-family:var(--font-mono);font-size:0.6rem;
+              letter-spacing:.1em;cursor:pointer;border:1px dashed var(--border2);
+              background:transparent;color:var(--border2);transition:all 0.2s;"
+              onmouseover="this.style.borderColor='var(--accent2)';this.style.color='var(--accent2)';"
+              onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--border2)';">
+              ＋ LOG WEIGHT USED (optional — e.g. plate on hips, ankle weight, vest)
+            </button>
+          </div>`) : ''}
 
           <button onclick="toggleCheck('${item.id}','${dayId}')" style="margin-top:8px;width:100%;padding:8px;
             font-family:var(--font-mono);font-size:0.65rem;letter-spacing:.1em;cursor:pointer;border:none;
@@ -2173,6 +2352,142 @@ function renderWorkoutSection(title, icon, subtitle, items, dayId, skippable = f
     }).join('')}
   </div>`;
 }
+
+// ── enableWeightLog — called when user taps "＋ LOG WEIGHT USED" on a BW exercise ──
+// Replaces the toggle button with the full lbs/kg weight inputs and saves the
+// weightToggled flag to exerciseActuals so the input reappears on next load.
+async function enableWeightLog(itemId, dayId) {
+  // Mark in actuals so re-render shows the input next time
+  if (!exerciseActuals[itemId]) exerciseActuals[itemId] = { sets: [] };
+  exerciseActuals[itemId].weightToggled = true;
+
+  const wrapEl = document.getElementById('wt-toggle-wrap-' + itemId);
+  if (!wrapEl) return;
+
+  const savedLbs = exerciseWeights[itemId] || '';
+  const itemCals = getWeightKg() ? calcItemCalories(findExerciseById(itemId), savedLbs) : null;
+
+  wrapEl.innerHTML = `
+    <div style="background:var(--bg3);border:1px solid var(--accent2)44;padding:12px;margin:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--accent2);letter-spacing:.12em;">
+          WEIGHT USED — updates calorie estimate
+        </div>
+        <button onclick="disableWeightLog('${itemId}','${dayId}')"
+          style="font-family:var(--font-mono);font-size:0.52rem;padding:2px 8px;cursor:pointer;
+          background:transparent;border:1px solid var(--border);color:var(--text-dim);">✕ REMOVE</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" id="wt-lbs-${itemId}" value="${savedLbs}"
+            placeholder="lbs" min="0" max="1000" step="2.5"
+            oninput="syncWeightInput('${itemId}','lbs')"
+            style="width:80px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.9rem;padding:7px 10px;outline:none;text-align:center;">
+          <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);">lbs</span>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--border2);">/</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" id="wt-kg-${itemId}" value="${savedLbs ? (savedLbs*0.453592).toFixed(1) : ''}"
+            placeholder="kg" min="0" max="500" step="1.25"
+            oninput="syncWeightInput('${itemId}','kg')"
+            style="width:80px;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+            font-family:var(--font-mono);font-size:0.9rem;padding:7px 10px;outline:none;text-align:center;">
+          <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--border2);">kg</span>
+        </div>
+        <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);">
+          ~<span id="cal-live-${itemId}">${itemCals||'—'}</span> kcal
+        </div>
+      </div>
+    </div>`;
+
+  // Also inject LBS inputs into existing set table rows immediately (no full re-render needed)
+  const block = document.getElementById('exblock-' + itemId);
+  if (block) {
+    const table = block.querySelector('table');
+    if (table) {
+      // Add LBS header if not present
+      const headerRow = table.querySelector('tr');
+      if (headerRow && !headerRow.querySelector('.lbs-col-header')) {
+        const repsHeader = headerRow.querySelectorAll('th')[1]; // REPS header
+        if (repsHeader) {
+          const lbsTh = document.createElement('th');
+          lbsTh.className = 'lbs-col-header';
+          lbsTh.style.cssText = 'font-family:var(--font-mono);font-size:0.52rem;color:var(--border2);text-align:left;padding:4px 6px;';
+          lbsTh.textContent = 'LBS';
+          repsHeader.insertAdjacentElement('afterend', lbsTh);
+        }
+      }
+      // Add LBS input to each data row
+      const dataRows = table.querySelectorAll('tr:not(:first-child)');
+      dataRows.forEach((row, si) => {
+        if (row.querySelector('.lbs-col-cell')) return; // already has it
+        const repsCell = row.querySelectorAll('td')[1];
+        if (repsCell) {
+          const existing = exerciseActuals[itemId]?.sets?.[si];
+          const td = document.createElement('td');
+          td.className = 'lbs-col-cell';
+          td.style.cssText = 'padding:4px 5px;';
+          td.innerHTML = `<input type="number" id="set-wt-${itemId}-${si}"
+            value="${existing?.weight || savedLbs || ''}"
+            placeholder="lbs" min="0" max="1000" step="2.5"
+            oninput="saveSetData('${itemId}','${dayId}',${si});updateItemCalBadge('${itemId}')"
+            style="width:62px;background:var(--bg2);border:1px solid var(--border);
+            color:var(--text);font-family:var(--font-mono);font-size:0.8rem;
+            padding:4px 6px;outline:none;text-align:center;">`;
+          repsCell.insertAdjacentElement('afterend', td);
+        }
+      });
+    }
+  }
+
+  // Persist the toggle flag
+  const today = getWorkoutDate();
+  try {
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('wkchecks').doc(today).set({
+        checks: workoutChecks,
+        actuals: exerciseActuals,
+        dayId,
+        updated: new Date().toISOString()
+      }, { merge: true });
+  } catch(e) { /* non-critical */ }
+}
+window.enableWeightLog = enableWeightLog;
+
+// ── disableWeightLog — removes the weight input and clears the toggle flag ──
+async function disableWeightLog(itemId, dayId) {
+  if (exerciseActuals[itemId]) {
+    delete exerciseActuals[itemId].weightToggled;
+    // Also clear any saved weight
+    (exerciseActuals[itemId].sets || []).forEach(s => { if (s) delete s.weight; });
+    delete exerciseWeights[itemId];
+  }
+  const wrapEl = document.getElementById('wt-toggle-wrap-' + itemId);
+  if (wrapEl) {
+    wrapEl.innerHTML = `
+      <button onclick="enableWeightLog('${itemId}','${dayId}')"
+        style="width:100%;padding:7px;font-family:var(--font-mono);font-size:0.6rem;
+        letter-spacing:.1em;cursor:pointer;border:1px dashed var(--border2);
+        background:transparent;color:var(--border2);transition:all 0.2s;"
+        onmouseover="this.style.borderColor='var(--accent2)';this.style.color='var(--accent2)';"
+        onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--border2)';">
+        ＋ LOG WEIGHT USED (optional — e.g. plate on hips, ankle weight, vest)
+      </button>`;
+  }
+  // Persist
+  const today = getWorkoutDate();
+  try {
+    await db.collection('userdata').doc(SESSION.username)
+      .collection('wkchecks').doc(today).set({
+        checks: workoutChecks,
+        actuals: exerciseActuals,
+        dayId,
+        updated: new Date().toISOString()
+      }, { merge: true });
+  } catch(e) { /* non-critical */ }
+}
+window.disableWeightLog = disableWeightLog;
 
 // Calculate calories for a single set given reps and weight
 function calcSetCalories(item, reps, weightLbs) {
